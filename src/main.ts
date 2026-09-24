@@ -67,6 +67,25 @@ car.setPose(physics.x, physics.z, physics.yaw);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 const mobile = window.matchMedia('(pointer: coarse)').matches;
+if (mobile) {
+  let lastTapTime = 0;
+  let lastTapX = 0;
+  let lastTapY = 0;
+  document.addEventListener('touchend', event => {
+    if (event.changedTouches.length !== 1 || event.touches.length !== 0) return;
+    const touch = event.changedTouches[0];
+    const doubleTap = lastTapTime > 0 && event.timeStamp - lastTapTime < 350
+      && Math.hypot(touch.clientX - lastTapX, touch.clientY - lastTapY) < 48;
+    if (doubleTap) {
+      if (event.cancelable) event.preventDefault();
+      lastTapTime = 0;
+    } else {
+      lastTapTime = event.timeStamp;
+      lastTapX = touch.clientX;
+      lastTapY = touch.clientY;
+    }
+  }, { passive: false });
+}
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.35 : 1.8));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
