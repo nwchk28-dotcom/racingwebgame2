@@ -125,23 +125,6 @@ function box(
   return object;
 }
 
-function signTexture(text: string, background: string, foreground: string): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 256;
-  const c = canvas.getContext('2d')!;
-  c.fillStyle = background;
-  c.fillRect(0, 0, canvas.width, canvas.height);
-  c.fillStyle = foreground;
-  c.font = 'italic 900 124px Arial, sans-serif';
-  c.textAlign = 'center';
-  c.textBaseline = 'middle';
-  c.fillText(text, 512, 132, 950);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
 export class Track {
   readonly roadHalfWidth = ROAD_HALF_WIDTH;
   readonly barrierHalfWidth = 12.3;
@@ -286,7 +269,6 @@ export class Track {
 
   private addStartLine(scene: THREE.Scene): void {
     const start = this.samples[0];
-    const tangent = new THREE.Vector3(Math.sin(this.startYaw), 0, Math.cos(this.startYaw));
     const normal = this.normals[0];
     const paint = new THREE.MeshBasicMaterial({ color: '#f5f5f0', side: THREE.DoubleSide });
     for (let i = -7; i < 7; i++) {
@@ -297,27 +279,10 @@ export class Track {
       tile.position.set(start.x + normal.x * (i + 0.5), 0.06, start.z + normal.z * (i + 0.5));
       scene.add(tile);
     }
-    const bannerPosition = start.clone().addScaledVector(tangent, 7);
-    for (const side of [-1, 1]) {
-      const postX = bannerPosition.x + normal.x * side * 10;
-      const postZ = bannerPosition.z + normal.z * side * 10;
-      box(scene, [0.55, 8.8, 0.55],
-        [postX, 4.4, postZ], 0x202b2f);
-      this.colliders.push({ x: postX, z: postZ, radius: 0.42 });
-    }
-    const beam = box(scene, [20.5, 2.1, 0.7], [bannerPosition.x, 8.05, bannerPosition.z], 0x1b3439);
-    beam.rotation.y = this.startYaw;
-    const sign = new THREE.Mesh(
-      new THREE.PlaneGeometry(18.5, 1.7),
-      new THREE.MeshBasicMaterial({ map: signTexture('APEX ONE  •  TIME ATTACK', '#1a393d', '#e4f3ed'), side: THREE.DoubleSide }),
-    );
-    sign.position.set(bannerPosition.x, 8.05, bannerPosition.z - 0.37);
-    sign.rotation.y = this.startYaw + Math.PI;
-    scene.add(sign);
   }
 
   private addBuildings(scene: THREE.Scene): void {
-    // The first straight passes a compact pit complex; signs use original wording.
+    // The first straight passes a compact pit complex.
     for (let i = 0; i < 6; i++) {
       const z = 30 + i * 30;
       box(scene, [28, 8, 26], [37, 4, z], 0x344247);
@@ -330,16 +295,6 @@ export class Track {
     box(scene, [24, 1.5, 62], [-43, 11.5, 110], 0x202a2d);
     for (let row = 0; row < 4; row++) {
       box(scene, [17, 0.45, 54], [-42, 2.1 + row * 2.2, 110], row % 2 ? 0x536769 : 0x718183);
-    }
-    for (const [x, z, angle] of [[-41, 225, 0], [-179, 273, 0.9], [-210, -112, 1.1], [70, -160, 0.3]] as const) {
-      const panel = new THREE.Mesh(
-        new THREE.PlaneGeometry(22, 5.5),
-        new THREE.MeshBasicMaterial({ map: signTexture('DRIVE THE LINE', '#16343b', '#e5eee9'), side: THREE.DoubleSide }),
-      );
-      panel.position.set(x, 4.5, z);
-      panel.rotation.y = angle + Math.PI;
-      scene.add(panel);
-      box(scene, [0.22, 6, 0.22], [x - 9, 3, z], 0x39474a);
     }
   }
 
