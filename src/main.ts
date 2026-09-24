@@ -68,6 +68,19 @@ car.setPose(physics.x, physics.z, physics.yaw);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 const mobile = window.matchMedia('(pointer: coarse)').matches;
 if (mobile) {
+  // Safari can treat simultaneous steering and pedal touches as a page pinch.
+  // Cancel the native gesture while leaving Pointer Events for both controls intact.
+  const preventNativeGesture = (event: Event) => {
+    if (event.cancelable) event.preventDefault();
+  };
+  const preventMultiTouchGesture = (event: TouchEvent) => {
+    if (event.touches.length > 1) preventNativeGesture(event);
+  };
+  document.addEventListener('touchstart', preventMultiTouchGesture, { passive: false, capture: true });
+  document.addEventListener('touchmove', preventMultiTouchGesture, { passive: false, capture: true });
+  for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+    document.addEventListener(type, preventNativeGesture, { passive: false, capture: true });
+  }
   let lastTapTime = 0;
   let lastTapX = 0;
   let lastTapY = 0;

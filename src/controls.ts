@@ -8,6 +8,9 @@ export class Controls {
   private steeringPointer: number | null = null;
   private throttlePointer: number | null = null;
   private brakePointer: number | null = null;
+  private steeringTouch: number | null = null;
+  private throttleTouch: number | null = null;
+  private brakeTouch: number | null = null;
   private steeringTrack: HTMLElement;
   private steeringThumb: HTMLElement;
 
@@ -19,6 +22,7 @@ export class Controls {
     this.bindSteering();
     this.bindPedal(throttle, 'throttle');
     this.bindPedal(brake, 'brake');
+    this.bindTouchControls(throttle, brake);
     window.addEventListener('keydown', event => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(event.key)) event.preventDefault();
       this.keys.add(event.key.toLowerCase());
@@ -31,7 +35,8 @@ export class Controls {
     const left = this.keys.has('a') || this.keys.has('arrowleft');
     const right = this.keys.has('d') || this.keys.has('arrowright');
     return {
-      steer: this.steeringPointer !== null ? this.touchSteer : Number(right) - Number(left),
+      steer: this.steeringPointer !== null || this.steeringTouch !== null
+        ? this.touchSteer : Number(right) - Number(left),
       throttle: Number(this.touchThrottle || this.keys.has('w') || this.keys.has('arrowup')),
       brake: Number(this.touchBrake || this.keys.has('s') || this.keys.has('arrowdown')),
     };
@@ -42,6 +47,7 @@ export class Controls {
     this.touchSteer = 0;
     this.touchThrottle = this.touchBrake = false;
     this.steeringPointer = this.throttlePointer = this.brakePointer = null;
+    this.steeringTouch = this.throttleTouch = this.brakeTouch = null;
     this.steeringThumb.style.left = '50%';
     document.querySelector('#throttle')?.classList.remove('pressed');
     document.querySelector('#brake')?.classList.remove('pressed');
@@ -55,6 +61,7 @@ export class Controls {
       this.steeringThumb.style.left = `${(this.touchSteer + 1) * 50}%`;
     };
     this.steeringTrack.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'touch') return;
       if (this.steeringPointer !== null) return;
       event.preventDefault();
       this.steeringPointer = event.pointerId;
@@ -77,6 +84,7 @@ export class Controls {
 
   private bindPedal(element: HTMLElement, kind: 'throttle' | 'brake'): void {
     element.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'touch') return;
       event.preventDefault();
       const pointer = kind === 'throttle' ? this.throttlePointer : this.brakePointer;
       if (pointer !== null) return;
@@ -105,5 +113,74 @@ export class Controls {
     element.addEventListener('pointerup', release);
     element.addEventListener('pointercancel', release);
     element.addEventListener('lostpointercapture', release);
+  }
+
+  private bindTouchControls(throttle: HTMLElement, brake: HTMLElement): void {
+    const updateSteering = (clientX: number) => {
+      const rect = this.steeringTrack.getBoundingClientRect();
+      const fraction = (clientX - rect.left) / rect.width;
+      this.touchSteer = Math.max(-1, Math.min(1, (fraction - 0.5) * 2));
+      this.steeringThumb.style.left = `${(this.touchSteer + 1) * 50}%`;
+      this.steeringTrack.setAttribute('aria-valuenow', this.touchSteer.toFixed(2));
+    };
+    this.steeringTrack.addEventListener('touchstart', event => {
+      if (this.steeringTouch !== null) return;
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+      this.steeringTouch = touch.identifier;
+      updateSteering(touch.clientX);
+      if (event.cancelable) event.preventDefault();
+    }, { passive: false });
+
+    const bindTouchPedal = (element: HTMLElement, kind: 'throttle' | 'brake') => {
+      element.addEventListener('touchstart', event => {
+        const touch = event.changedTouches[0];
+        if (!touch) return;
+        if (kind === 'throttle') {
+          if (this.throttleTouch !== null) return;
+          this.throttleTouch = touch.identifier;
+          this.touchThrottle = true;
+        } else {
+          if (this.brakeTouch !== null) return;
+          this.brakeTouch = touch.identifier;
+          this.touchBrake = true;
+        }
+        element.classList.add('pressed');
+        if (event.cancelable) event.preventDefault();
+      }, { passive: false });
+    };
+    bindTouchPedal(throttle, 'throttle');
+    bindTouchPedal(brake, 'brake');
+
+    document.addEventListener('touchmove', event => {
+      for (const touch of Array.from(event.changedTouches)) {
+        if (touch.identifier !== this.steeringTouch) continue;
+        updateSteering(touch.clientX);
+        if (event.cancelable) event.preventDefault();
+      }
+    }, { passive: false });
+
+    const release = (event: TouchEvent) => {
+      for (const touch of Array.from(event.changedTouches)) {
+        if (touch.identifier === this.steeringTouch) {
+          this.steeringTouch = null;
+          this.touchSteer = 0;
+          this.steeringThumb.style.left = '50%';
+          this.steeringTrack.setAttribute('aria-valuenow', '0');
+        }
+        if (touch.identifier === this.throttleTouch) {
+          this.throttleTouch = null;
+          this.touchThrottle = false;
+          throttle.classList.remove('pressed');
+        }
+        if (touch.identifier === this.brakeTouch) {
+          this.brakeTouch = null;
+          this.touchBrake = false;
+          brake.classList.remove('pressed');
+        }
+      }
+    };
+    document.addEventListener('touchend', release);
+    document.addEventListener('touchcancel', release);
   }
 }
