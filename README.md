@@ -22,7 +22,7 @@ npm run dev
 
 ## エンジン音
 
-実車のエンジン録音を使用しています。音源は [Edvvc / Ed Pond, “Red-Bull-Cosworth-STR1-2006-David-Coulthard.ogg”](https://commons.wikimedia.org/wiki/File:Red-Bull-Cosworth-STR1-2006-David-Coulthard.ogg)（[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)）。Goodwood Festival of Speedでのコース脇からの録音で、オンボード録音ではありません。Wikimedia CommonsのMP3変換版を収録し、再生時にエンジン音の連続区間を抽出、ループ端をクロスフェードし、速度に合わせて音程を変えています。音源ファイルとその改変部分はCC BY-SA 3.0で利用できます。
+実車のエンジン録音を使用しています。音源は [Edvvc / Ed Pond, “Red-Bull-Cosworth-STR1-2006-David-Coulthard.ogg”](https://commons.wikimedia.org/wiki/File:Red-Bull-Cosworth-STR1-2006-David-Coulthard.ogg)（[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)）。Goodwood Festival of Speedでのコース脇からの録音で、オンボード録音ではありません。Wikimedia CommonsのMP3変換版を収録し、再生時に周期の安定した部分から波形を作ります。録音の時間経過は再生せず、車速とギアから音程を決めています。音源ファイルとその改変部分はCC BY-SA 3.0で利用できます。
 
 ## GitHub Pages
 
