@@ -18,8 +18,8 @@ export interface ObstacleCollider {
 
 const ROAD_HALF_WIDTH = 9.5;
 const CURB_OUTER_EDGE = ROAD_HALF_WIDTH + 1.2;
-const RAIL_OFFSET = ROAD_HALF_WIDTH + 5.5;
-const SAMPLE_COUNT = 720;
+const SAMPLE_COUNT = 1440;
+const CURB_STRIPE_LENGTH = 4;
 
 const nodes = [
   [0, 0], [0, 95], [3, 210], [-46, 288], [-147, 303],
@@ -62,14 +62,12 @@ function makeRibbon(
   outer: number,
   y: number,
   uvScale = 16,
-  segmentFilter?: (segment: number) => boolean,
 ): THREE.BufferGeometry {
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
   let vertex = 0;
   for (let i = 0; i < SAMPLE_COUNT; i++) {
-    if (segmentFilter && !segmentFilter(i)) continue;
     for (const j of [i, i + 1]) {
       const p = points[j];
       const n = normals[j];
@@ -88,22 +86,40 @@ function makeRibbon(
   return geometry;
 }
 
-function makeRail(points: THREE.Vector3[], normals: THREE.Vector3[], offset: number,
-  bottom: number, top: number): THREE.BufferGeometry {
+function makeStripedCurb(
+  points: THREE.Vector3[], normals: THREE.Vector3[], distances: number[],
+  inner: number, outer: number,
+): THREE.BufferGeometry {
   const positions: number[] = [];
+  const colors: number[] = [];
   const indices: number[] = [];
-  for (let i = 0; i <= SAMPLE_COUNT; i++) {
-    const p = points[i];
-    const n = normals[i];
-    positions.push(p.x + n.x * offset, bottom, p.z + n.z * offset);
-    positions.push(p.x + n.x * offset, top, p.z + n.z * offset);
-    if (i < SAMPLE_COUNT) {
-      const v = i * 2;
-      indices.push(v, v + 2, v + 1, v + 1, v + 2, v + 3);
+  const stripeColors = [new THREE.Color('#be332d'), new THREE.Color('#efece3')];
+  let vertex = 0;
+  for (let i = 0; i < SAMPLE_COUNT; i++) {
+    const from = distances[i];
+    const to = distances[i + 1];
+    let cursor = from;
+    while (cursor < to - 1e-6) {
+      const stripe = Math.floor((cursor + 1e-6) / CURB_STRIPE_LENGTH);
+      const end = Math.min(to, (stripe + 1) * CURB_STRIPE_LENGTH);
+      const color = stripeColors[stripe % 2];
+      for (const distance of [cursor, end]) {
+        const t = (distance - from) / (to - from);
+        const point = points[i].clone().lerp(points[i + 1], t);
+        const normal = normals[i].clone().lerp(normals[i + 1], t).normalize();
+        for (const offset of [inner, outer]) {
+          positions.push(point.x + normal.x * offset, 0.038, point.z + normal.z * offset);
+          colors.push(color.r, color.g, color.b);
+        }
+      }
+      indices.push(vertex, vertex + 2, vertex + 1, vertex + 1, vertex + 2, vertex + 3);
+      vertex += 4;
+      cursor = end;
     }
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   return geometry;
@@ -130,7 +146,7 @@ function box(
 export class Track {
   readonly roadHalfWidth = ROAD_HALF_WIDTH;
   readonly curbOuterEdge = CURB_OUTER_EDGE;
-  readonly barrierHalfWidth = RAIL_OFFSET - 0.2;
+  readonly outerFence: { centerX: number; centerZ: number; radius: number };
   readonly colliders: ObstacleCollider[] = [];
   readonly samples: THREE.Vector3[] = [];
   readonly normals: THREE.Vector3[] = [];
@@ -141,7 +157,7 @@ export class Track {
 
   constructor(scene: THREE.Scene) {
     const curve = new THREE.CatmullRomCurve3(
-      nodes.map(([x, z]) => new THREE.Vector3(x, 0, z)), true, 'catmullrom', 0.35,
+      nodes.map(([x, z]) => new THREE.Vector3(x, 0, z)), true, 'catmullrom', 1,
     );
     for (let i = 0; i <= SAMPLE_COUNT; i++) {
       const t = i / SAMPLE_COUNT;
@@ -155,6 +171,12 @@ export class Track {
     this.start = this.samples[0].clone();
     const tangent = curve.getTangentAt(0);
     this.startYaw = Math.atan2(tangent.x, tangent.z);
+    const xValues = this.samples.map(point => point.x);
+    const zValues = this.samples.map(point => point.z);
+    const centerX = (Math.min(...xValues) + Math.max(...xValues)) / 2;
+    const centerZ = (Math.min(...zValues) + Math.max(...zValues)) / 2;
+    const furthest = Math.max(...this.samples.map(point => Math.hypot(point.x - centerX, point.z - centerZ)));
+    this.outerFence = { centerX, centerZ, radius: furthest + 45 };
 
     this.buildScene(scene);
   }
@@ -230,8 +252,7 @@ export class Track {
 
     const shoulderMaterial = new THREE.MeshStandardMaterial({ color: '#818b80', roughness: 1, side: THREE.DoubleSide });
     const lineMaterial = new THREE.MeshStandardMaterial({ color: '#f4f2e7', roughness: 0.72, side: THREE.DoubleSide });
-    const curbRed = new THREE.MeshStandardMaterial({ color: '#be332d', roughness: 0.82, side: THREE.DoubleSide });
-    const curbWhite = new THREE.MeshStandardMaterial({ color: '#efece3', roughness: 0.82, side: THREE.DoubleSide });
+    const curbMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, side: THREE.DoubleSide });
     const railMaterial = new THREE.MeshStandardMaterial({ color: '#d7dedc', roughness: 0.35, metalness: 0.7, side: THREE.DoubleSide });
 
     for (const side of [-1, 1]) {
@@ -240,35 +261,38 @@ export class Track {
       scene.add(new THREE.Mesh(makeRibbon(this.samples, this.normals, near, far, 0.01), shoulderMaterial));
       scene.add(new THREE.Mesh(makeRibbon(this.samples, this.normals,
         side * (ROAD_HALF_WIDTH - 0.33), side * (ROAD_HALF_WIDTH - 0.1), 0.04), lineMaterial));
-      for (let colorIndex = 0; colorIndex < 2; colorIndex++) {
-        const curb = new THREE.Mesh(
-          makeRibbon(this.samples, this.normals, side * ROAD_HALF_WIDTH, side * CURB_OUTER_EDGE, 0.038, 16,
-            i => Math.floor(this.distances[i] / 4) % 2 === colorIndex),
-          colorIndex === 0 ? curbRed : curbWhite,
-        );
-        scene.add(curb);
-      }
-      for (const height of [0.65, 1.15, 1.65]) {
-        scene.add(new THREE.Mesh(makeRail(this.samples, this.normals,
-          side * RAIL_OFFSET, height - 0.15, height + 0.15), railMaterial));
-      }
-      const postGeometry = new THREE.BoxGeometry(0.14, 1.9, 0.14);
-      const posts = new THREE.InstancedMesh(postGeometry, railMaterial, 120);
-      const matrix = new THREE.Matrix4();
-      for (let i = 0; i < 120; i++) {
-        const index = Math.floor(i / 120 * SAMPLE_COUNT);
-        const p = this.samples[index];
-        const n = this.normals[index];
-        matrix.makeTranslation(p.x + n.x * side * RAIL_OFFSET, 0.95, p.z + n.z * side * RAIL_OFFSET);
-        posts.setMatrixAt(i, matrix);
-      }
-      posts.castShadow = true;
-      scene.add(posts);
+      scene.add(new THREE.Mesh(
+        makeStripedCurb(this.samples, this.normals, this.distances, side * ROAD_HALF_WIDTH, side * CURB_OUTER_EDGE),
+        curbMaterial,
+      ));
     }
 
+    this.addOuterFence(scene, railMaterial);
     this.addStartLine(scene);
     this.addBuildings(scene);
     this.addTrees(scene);
+  }
+
+  private addOuterFence(scene: THREE.Scene, material: THREE.Material): void {
+    const { centerX, centerZ, radius } = this.outerFence;
+    const visibleRadius = radius + 0.15;
+    for (const height of [0.65, 1.15, 1.65]) {
+      const rail = new THREE.Mesh(new THREE.TorusGeometry(visibleRadius, 0.15, 6, 384), material);
+      rail.rotation.x = Math.PI / 2;
+      rail.position.set(centerX, height, centerZ);
+      scene.add(rail);
+    }
+    const count = Math.ceil(2 * Math.PI * visibleRadius / 7);
+    const posts = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.09, 1.9, 6), material, count);
+    const matrix = new THREE.Matrix4();
+    for (let i = 0; i < count; i++) {
+      const angle = i / count * Math.PI * 2;
+      matrix.makeTranslation(centerX + Math.cos(angle) * visibleRadius, 0.95,
+        centerZ + Math.sin(angle) * visibleRadius);
+      posts.setMatrixAt(i, matrix);
+    }
+    posts.castShadow = true;
+    scene.add(posts);
   }
 
   private addStartLine(scene: THREE.Scene): void {
@@ -319,6 +343,7 @@ export class Track {
       const x = -350 + rand() * 650;
       const z = -310 + rand() * 730;
       if (this.nearest(x, z).distance < 33) continue;
+      if (Math.hypot(x - this.outerFence.centerX, z - this.outerFence.centerZ) > this.outerFence.radius - 8) continue;
       const scale = 0.6 + rand() * 0.9;
       matrix.compose(new THREE.Vector3(x, 2.5 * scale, z), new THREE.Quaternion(),
         new THREE.Vector3(scale, scale, scale));

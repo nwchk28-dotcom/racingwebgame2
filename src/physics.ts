@@ -29,7 +29,7 @@ export class CarPhysics {
   collided = false;
 
   constructor(private readonly track: Pick<Track,
-    'start' | 'startYaw' | 'roadHalfWidth' | 'curbOuterEdge' | 'barrierHalfWidth' | 'colliders' | 'nearest'>) {
+    'start' | 'startYaw' | 'curbOuterEdge' | 'outerFence' | 'colliders' | 'nearest'>) {
     this.reset();
   }
 
@@ -48,8 +48,6 @@ export class CarPhysics {
   }
 
   step(input: DriverInput, dt: number): void {
-    const trackPosition = this.track.nearest(this.x, this.z);
-    this.offTrack = trackPosition.distance > this.track.curbOuterEdge;
     const forwardX = Math.sin(this.yaw);
     const forwardZ = Math.cos(this.yaw);
     const rightX = forwardZ;
@@ -57,22 +55,21 @@ export class CarPhysics {
     const forwardVelocity = this.vx * forwardX + this.vz * forwardZ;
     const lateralVelocity = this.vx * rightX + this.vz * rightZ;
     const speed = this.speed;
-    const grip = this.offTrack ? 4.3 : 24;
+    const grip = 24;
     const maxSteer = 0.34 / (1 + speed / 34);
     // The onboard camera faces local +Z, so screen-right corresponds to world -X.
     const steerAngle = -input.steer * maxSteer;
     const geometricYaw = forwardVelocity * Math.tan(steerAngle) / 3.1;
     const limitedYaw = Math.max(-grip / Math.max(speed, 4),
       Math.min(grip / Math.max(speed, 4), geometricYaw));
-    const yawResponse = this.offTrack ? 2.5 : 7;
-    this.yawRate += (limitedYaw - this.yawRate) * Math.min(1, yawResponse * dt);
+    this.yawRate += (limitedYaw - this.yawRate) * Math.min(1, 7 * dt);
     this.yaw += this.yawRate * dt;
 
-    const engine = input.throttle * (this.offTrack ? 10 : 19) * Math.max(0, 1 - speed / 93);
-    const braking = input.brake * (this.offTrack ? 14 : 30);
+    const engine = input.throttle * 19 * Math.max(0, 1 - speed / 93);
+    const braking = input.brake * 30;
     const forwardAcceleration = engine - Math.sign(forwardVelocity) * braking;
-    const lateralAcceleration = Math.max(-grip, Math.min(grip, -lateralVelocity * (this.offTrack ? 1.5 : 7)));
-    const drag = 0.0023 * speed * speed + (this.offTrack ? 4.5 : 0.8);
+    const lateralAcceleration = Math.max(-grip, Math.min(grip, -lateralVelocity * 7));
+    const drag = 0.0023 * speed * speed + 0.8;
     const dragX = speed > 0.01 ? -this.vx / speed * drag : 0;
     const dragZ = speed > 0.01 ? -this.vz / speed * drag : 0;
     this.vx += (forwardX * forwardAcceleration + rightX * lateralAcceleration + dragX) * dt;
@@ -107,22 +104,24 @@ export class CarPhysics {
     this.collided = false;
     const cos = Math.cos(this.yaw);
     const sin = Math.sin(this.yaw);
-    // Test the wing and wheels, not only the car center, so a sideways car cannot
-    // put its nose through the rail. A few projection passes resolve corners.
+    // Test the wing and wheels, not only the car center, so a sideways car
+    // cannot put its nose through the circular perimeter fence.
     for (let pass = 0; pass < 3; pass++) {
       let deepest = 0;
       let collisionNormalX = 0;
       let collisionNormalZ = 0;
+      const { centerX, centerZ, radius } = this.track.outerFence;
       for (const [localX, localZ] of BODY_CONTACTS) {
         const pointX = this.x + localX * cos + localZ * sin;
         const pointZ = this.z - localX * sin + localZ * cos;
-        const position = this.track.nearest(pointX, pointZ);
-        const penetration = Math.abs(position.signedDistance) - this.track.barrierHalfWidth;
+        const dx = pointX - centerX;
+        const dz = pointZ - centerZ;
+        const distance = Math.hypot(dx, dz);
+        const penetration = distance - radius;
         if (penetration <= deepest) continue;
-        const side = Math.sign(position.signedDistance);
         deepest = penetration;
-        collisionNormalX = position.normalX * side;
-        collisionNormalZ = position.normalZ * side;
+        collisionNormalX = dx / distance;
+        collisionNormalZ = dz / distance;
       }
       if (deepest <= 0) break;
       this.x -= collisionNormalX * deepest;

@@ -6,15 +6,14 @@ import type { Track } from './track';
 const straightTrack = {
   start: new Vector3(0, 0, 0),
   startYaw: 0,
-  roadHalfWidth: 9.5,
   curbOuterEdge: 10.7,
-  barrierHalfWidth: 14.8,
+  outerFence: { centerX: 0, centerZ: 0, radius: 500 },
   colliders: [],
   nearest: (x: number, z: number) => ({
     progress: z / 1000, distance: Math.abs(x),
     centerX: 0, centerZ: z, normalX: 1, normalZ: 0, signedDistance: x,
   }),
-} satisfies Pick<Track, 'start' | 'startYaw' | 'roadHalfWidth' | 'curbOuterEdge' | 'barrierHalfWidth' | 'colliders' | 'nearest'>;
+} satisfies Pick<Track, 'start' | 'startYaw' | 'curbOuterEdge' | 'outerFence' | 'colliders' | 'nearest'>;
 
 describe('car physics', () => {
   it('accelerates, steers and brakes', () => {
@@ -46,24 +45,45 @@ describe('car physics', () => {
     expect(car.x).toBeGreaterThan(0);
   });
 
-  it('stops at the guardrail instead of passing through', () => {
-    const car = new CarPhysics(straightTrack);
-    car.x = 13.2;
+  it('stops at the circular perimeter fence instead of passing through', () => {
+    const car = new CarPhysics({ ...straightTrack,
+      outerFence: { centerX: -60, centerZ: 40, radius: 50 },
+    });
+    car.x = -11.4;
+    car.z = 40;
     car.vx = 35;
     car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
     expect(car.collided).toBe(true);
-    expect(car.x).toBeLessThanOrEqual(13.3);
+    expect(car.x).toBeLessThanOrEqual(-11.6);
     expect(car.vx).toBeLessThan(0);
   });
 
-  it('keeps the front wing inside the guardrail when the car is sideways', () => {
-    const car = new CarPhysics(straightTrack);
-    car.x = 10.7;
+  it('keeps the front wing inside the circular fence when sideways', () => {
+    const car = new CarPhysics({ ...straightTrack,
+      outerFence: { centerX: 0, centerZ: 0, radius: 50 },
+    });
+    car.x = 46.5;
     car.yaw = Math.PI / 2;
     car.vx = 15;
     car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
     expect(car.collided).toBe(true);
-    expect(car.x + 4.3).toBeLessThanOrEqual(14.8 + 0.001);
+    expect(car.x + 4.3).toBeLessThanOrEqual(50 + 0.001);
+  });
+
+  it('handles on-track and off-track surfaces the same way', () => {
+    const inside = new CarPhysics(straightTrack);
+    const outside = new CarPhysics(straightTrack);
+    outside.x = 13;
+    inside.vz = outside.vz = 28;
+    const input = { steer: 0.45, throttle: 0.7, brake: 0 };
+    for (let i = 0; i < 40; i++) {
+      inside.step(input, 1 / 120);
+      outside.step(input, 1 / 120);
+    }
+    expect(outside.offTrack).toBe(true);
+    expect(outside.yaw).toBeCloseTo(inside.yaw, 8);
+    expect(outside.vx).toBeCloseTo(inside.vx, 8);
+    expect(outside.vz).toBeCloseTo(inside.vz, 8);
   });
 
   it('keeps the lap legal while a tire touches the curb and flags four wheels beyond it', () => {
