@@ -5,6 +5,11 @@ const BODY_CONTACTS = [
   [-1.6, 2.4], [1.6, 2.4],
   [-1.6, -1.75], [1.6, -1.75],
 ] as const;
+const WHEEL_CONTACTS = [
+  [-1.19, 2.42], [1.19, 2.42],
+  [-1.26, -1.75], [1.26, -1.75],
+] as const;
+const TIRE_HALF_WIDTH = 0.205;
 
 export interface DriverInput {
   steer: number;
@@ -20,10 +25,11 @@ export class CarPhysics {
   vz = 0;
   yawRate = 0;
   offTrack = false;
+  allWheelsOffTrack = false;
   collided = false;
 
   constructor(private readonly track: Pick<Track,
-    'start' | 'startYaw' | 'roadHalfWidth' | 'barrierHalfWidth' | 'colliders' | 'nearest'>) {
+    'start' | 'startYaw' | 'roadHalfWidth' | 'curbOuterEdge' | 'barrierHalfWidth' | 'colliders' | 'nearest'>) {
     this.reset();
   }
 
@@ -37,12 +43,13 @@ export class CarPhysics {
     this.yaw = this.track.startYaw;
     this.vx = this.vz = this.yawRate = 0;
     this.offTrack = false;
+    this.allWheelsOffTrack = false;
     this.collided = false;
   }
 
   step(input: DriverInput, dt: number): void {
     const trackPosition = this.track.nearest(this.x, this.z);
-    this.offTrack = trackPosition.distance > this.track.roadHalfWidth;
+    this.offTrack = trackPosition.distance > this.track.curbOuterEdge;
     const forwardX = Math.sin(this.yaw);
     const forwardZ = Math.cos(this.yaw);
     const rightX = forwardZ;
@@ -75,6 +82,25 @@ export class CarPhysics {
     this.x += this.vx * dt;
     this.z += this.vz * dt;
     this.resolveCollisions();
+    this.offTrack = this.track.nearest(this.x, this.z).distance > this.track.curbOuterEdge;
+    this.allWheelsOffTrack = this.offTrack && this.areAllWheelsOutsideCurbs();
+  }
+
+  private areAllWheelsOutsideCurbs(): boolean {
+    const cos = Math.cos(this.yaw);
+    const sin = Math.sin(this.yaw);
+    let side = 0;
+    for (const [localX, localZ] of WHEEL_CONTACTS) {
+      const wheelX = this.x + localX * cos + localZ * sin;
+      const wheelZ = this.z - localX * sin + localZ * cos;
+      const signedDistance = this.track.nearest(wheelX, wheelZ).signedDistance;
+      // A tire still touching the curb keeps the lap valid.
+      if (Math.abs(signedDistance) <= this.track.curbOuterEdge + TIRE_HALF_WIDTH) return false;
+      const wheelSide = Math.sign(signedDistance);
+      if (side !== 0 && wheelSide !== side) return false;
+      side = wheelSide;
+    }
+    return true;
   }
 
   private resolveCollisions(): void {

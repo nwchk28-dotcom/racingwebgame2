@@ -16,8 +16,13 @@ npm run dev
 - スマホ: 横向きにして、左のスライダーで操舵、右のペダルで加速と制動
 - PC: A/D または左右矢印で操舵、W/上矢印で加速、S/下矢印で制動
 - Esc: 一時停止、R: スタート地点にリセット
+- 右上の音符ボタン: エンジン音のオン・オフ
 
-コースアウト、逆走、ガードレールへの接触があった周回はベストタイムに記録されません。記録はそのブラウザの `localStorage` に保存されます。
+縁石の外端まではコース内です。4輪すべてが外に出るか、逆走、ガードレールへの接触があった周回はベストタイムに記録されません。記録はそのブラウザの `localStorage` に保存されます。
+
+## エンジン音
+
+実車のエンジン録音を使用しています。音源は [Edvvc / Ed Pond, “Red-Bull-Cosworth-STR1-2006-David-Coulthard.ogg”](https://commons.wikimedia.org/wiki/File:Red-Bull-Cosworth-STR1-2006-David-Coulthard.ogg)（[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)）。Goodwood Festival of Speedでのコース脇からの録音で、オンボード録音ではありません。Wikimedia CommonsのMP3変換版を収録し、再生時にエンジン音の連続区間を抽出、ループ端をクロスフェードし、速度に合わせて音程を変えています。音源ファイルとその改変部分はCC BY-SA 3.0で利用できます。
 
 ## GitHub Pages
 

@@ -33,7 +33,7 @@ export class LapTracker {
     this.reverseDistance = 0;
   }
 
-  update(progress: number, distanceFromCenter: number, speed: number, dt: number): LapEvent | null {
+  update(progress: number, allWheelsOffTrack: boolean, speed: number, dt: number): LapEvent | null {
     if (!this.started) {
       if (speed < 0.5) {
         this.previousProgress = progress;
@@ -43,7 +43,7 @@ export class LapTracker {
     }
 
     this.lapTime += dt;
-    if (distanceFromCenter > 7.7) this.invalidate('コースアウト');
+    if (allWheelsOffTrack) this.invalidate('コースアウト');
 
     let delta = progress - this.previousProgress;
     if (delta < -0.5) delta += 1;

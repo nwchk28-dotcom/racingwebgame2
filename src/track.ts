@@ -16,7 +16,9 @@ export interface ObstacleCollider {
   radius: number;
 }
 
-const ROAD_HALF_WIDTH = 7;
+const ROAD_HALF_WIDTH = 9.5;
+const CURB_OUTER_EDGE = ROAD_HALF_WIDTH + 1.2;
+const RAIL_OFFSET = ROAD_HALF_WIDTH + 5.5;
 const SAMPLE_COUNT = 720;
 
 const nodes = [
@@ -127,7 +129,8 @@ function box(
 
 export class Track {
   readonly roadHalfWidth = ROAD_HALF_WIDTH;
-  readonly barrierHalfWidth = 12.3;
+  readonly curbOuterEdge = CURB_OUTER_EDGE;
+  readonly barrierHalfWidth = RAIL_OFFSET - 0.2;
   readonly colliders: ObstacleCollider[] = [];
   readonly samples: THREE.Vector3[] = [];
   readonly normals: THREE.Vector3[] = [];
@@ -233,12 +236,13 @@ export class Track {
 
     for (const side of [-1, 1]) {
       const near = side * ROAD_HALF_WIDTH;
-      const far = side * (ROAD_HALF_WIDTH + 2.2);
+      const far = side * (CURB_OUTER_EDGE + 1.05);
       scene.add(new THREE.Mesh(makeRibbon(this.samples, this.normals, near, far, 0.01), shoulderMaterial));
-      scene.add(new THREE.Mesh(makeRibbon(this.samples, this.normals, side * 6.67, side * 6.9, 0.04), lineMaterial));
+      scene.add(new THREE.Mesh(makeRibbon(this.samples, this.normals,
+        side * (ROAD_HALF_WIDTH - 0.33), side * (ROAD_HALF_WIDTH - 0.1), 0.04), lineMaterial));
       for (let colorIndex = 0; colorIndex < 2; colorIndex++) {
         const curb = new THREE.Mesh(
-          makeRibbon(this.samples, this.normals, side * 7.05, side * 8.15, 0.038, 16,
+          makeRibbon(this.samples, this.normals, side * ROAD_HALF_WIDTH, side * CURB_OUTER_EDGE, 0.038, 16,
             i => Math.floor(this.distances[i] / 4) % 2 === colorIndex),
           colorIndex === 0 ? curbRed : curbWhite,
         );
@@ -246,7 +250,7 @@ export class Track {
       }
       for (const height of [0.65, 1.15, 1.65]) {
         scene.add(new THREE.Mesh(makeRail(this.samples, this.normals,
-          side * 12.5, height - 0.15, height + 0.15), railMaterial));
+          side * RAIL_OFFSET, height - 0.15, height + 0.15), railMaterial));
       }
       const postGeometry = new THREE.BoxGeometry(0.14, 1.9, 0.14);
       const posts = new THREE.InstancedMesh(postGeometry, railMaterial, 120);
@@ -255,7 +259,7 @@ export class Track {
         const index = Math.floor(i / 120 * SAMPLE_COUNT);
         const p = this.samples[index];
         const n = this.normals[index];
-        matrix.makeTranslation(p.x + n.x * side * 12.5, 0.95, p.z + n.z * side * 12.5);
+        matrix.makeTranslation(p.x + n.x * side * RAIL_OFFSET, 0.95, p.z + n.z * side * RAIL_OFFSET);
         posts.setMatrixAt(i, matrix);
       }
       posts.castShadow = true;
@@ -271,7 +275,7 @@ export class Track {
     const start = this.samples[0];
     const normal = this.normals[0];
     const paint = new THREE.MeshBasicMaterial({ color: '#f5f5f0', side: THREE.DoubleSide });
-    for (let i = -7; i < 7; i++) {
+    for (let i = -Math.floor(ROAD_HALF_WIDTH); i < Math.floor(ROAD_HALF_WIDTH); i++) {
       if (i % 2 === 0) continue;
       const tile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1.5), paint);
       tile.rotation.x = -Math.PI / 2;

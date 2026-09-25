@@ -6,14 +6,15 @@ import type { Track } from './track';
 const straightTrack = {
   start: new Vector3(0, 0, 0),
   startYaw: 0,
-  roadHalfWidth: 7,
-  barrierHalfWidth: 12.3,
+  roadHalfWidth: 9.5,
+  curbOuterEdge: 10.7,
+  barrierHalfWidth: 14.8,
   colliders: [],
   nearest: (x: number, z: number) => ({
     progress: z / 1000, distance: Math.abs(x),
     centerX: 0, centerZ: z, normalX: 1, normalZ: 0, signedDistance: x,
   }),
-} satisfies Pick<Track, 'start' | 'startYaw' | 'roadHalfWidth' | 'barrierHalfWidth' | 'colliders' | 'nearest'>;
+} satisfies Pick<Track, 'start' | 'startYaw' | 'roadHalfWidth' | 'curbOuterEdge' | 'barrierHalfWidth' | 'colliders' | 'nearest'>;
 
 describe('car physics', () => {
   it('accelerates, steers and brakes', () => {
@@ -47,22 +48,32 @@ describe('car physics', () => {
 
   it('stops at the guardrail instead of passing through', () => {
     const car = new CarPhysics(straightTrack);
-    car.x = 10.7;
+    car.x = 13.2;
     car.vx = 35;
     car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
     expect(car.collided).toBe(true);
-    expect(car.x).toBeLessThanOrEqual(10.8);
+    expect(car.x).toBeLessThanOrEqual(13.3);
     expect(car.vx).toBeLessThan(0);
   });
 
   it('keeps the front wing inside the guardrail when the car is sideways', () => {
     const car = new CarPhysics(straightTrack);
-    car.x = 8.2;
+    car.x = 10.7;
     car.yaw = Math.PI / 2;
     car.vx = 15;
     car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
     expect(car.collided).toBe(true);
-    expect(car.x + 4.3).toBeLessThanOrEqual(12.3 + 0.001);
+    expect(car.x + 4.3).toBeLessThanOrEqual(14.8 + 0.001);
+  });
+
+  it('keeps the lap legal while a tire touches the curb and flags four wheels beyond it', () => {
+    const car = new CarPhysics(straightTrack);
+    car.x = 11.9;
+    car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
+    expect(car.allWheelsOffTrack).toBe(false);
+    car.x = 12.3;
+    car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
+    expect(car.allWheelsOffTrack).toBe(true);
   });
 
   it('cannot drive through an obstacle post', () => {

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CarVisual } from './car';
 import { Controls } from './controls';
+import { EngineAudio, gearAtSpeed } from './engineAudio';
 import { LapTracker, formatTime } from './lap';
 import { CarPhysics } from './physics';
 import { Track } from './track';
@@ -16,6 +17,7 @@ app.innerHTML = `
     <div class="brand"><span class="brand-mark">A<span>1</span></span><span class="brand-name">APEX <strong>ONE</strong><small>TIME ATTACK</small></span></div>
     <div class="track-name"><span class="live-dot"></span> NOVA CIRCUIT <span class="track-meta">/ DRY / 23°C</span></div>
     <div class="top-actions">
+      <button id="sound-button" class="icon-button" type="button" aria-label="音を消す" title="エンジン音を切り替え">♪</button>
       <button id="reset-button" class="icon-button" type="button" aria-label="スタート地点に戻る" title="リセット (R)">↻</button>
       <button id="pause-button" class="icon-button" type="button" aria-label="一時停止" title="一時停止 (Esc)">Ⅱ</button>
     </div>
@@ -28,7 +30,7 @@ app.innerHTML = `
       <div id="current-time" class="current-time">00:00.000</div>
       <div class="best-row"><span>PERSONAL BEST</span><strong id="best-time">--:--.---</strong></div>
     </div>
-    <div class="speed-panel"><div class="speed-caption">SPEED</div><div class="speed-main"><strong id="speed">000</strong><span>KM/H</span></div><div class="speed-line"><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span></div></div>
+    <div class="speed-panel"><div class="speed-caption">SPEED <span class="gear-label">GEAR <b id="gear">1</b></span></div><div class="speed-main"><strong id="speed">000</strong><span>KM/H</span></div><div class="speed-line"><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span></div></div>
     <div class="drive-hint"><span class="hint-label">DRIVE MODE</span><strong>ONBOARD</strong><small>CHASE THE NEXT LAP</small></div>
   </main>
 
@@ -108,6 +110,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 app.querySelector('#scene')!.appendChild(renderer.domElement);
 
 const controls = new Controls(app);
+const engineAudio = new EngineAudio();
 const readBest = (): number | null => {
   try {
     const value = Number(localStorage.getItem(STORAGE_KEY));
@@ -117,6 +120,8 @@ const readBest = (): number | null => {
 const laps = new LapTracker(track.length, readBest());
 
 const speedElement = app.querySelector<HTMLElement>('#speed')!;
+const gearElement = app.querySelector<HTMLElement>('#gear')!;
+const soundButton = app.querySelector<HTMLButtonElement>('#sound-button')!;
 const currentTimeElement = app.querySelector<HTMLElement>('#current-time')!;
 const bestTimeElement = app.querySelector<HTMLElement>('#best-time')!;
 const lapNumberElement = app.querySelector<HTMLElement>('#lap-number')!;
@@ -149,7 +154,9 @@ function toast(message: string, kind = ''): void {
 }
 
 function refreshHud(): void {
-  speedElement.textContent = String(Math.round(physics.speed * 3.6)).padStart(3, '0');
+  const kmh = physics.speed * 3.6;
+  speedElement.textContent = String(Math.round(kmh)).padStart(3, '0');
+  gearElement.textContent = String(gearAtSpeed(kmh).gear);
   currentTimeElement.textContent = formatTime(laps.lapTime);
   bestTimeElement.textContent = formatTime(laps.bestTime);
   lapNumberElement.textContent = String(laps.lapNumber).padStart(2, '0');
@@ -163,6 +170,7 @@ function refreshHud(): void {
 function reset(): void {
   controls.clear();
   physics.reset();
+  engineAudio.update(0, 0);
   laps.reset(0);
   car.setPose(physics.x, physics.z, physics.yaw);
   refreshHud();
@@ -174,10 +182,14 @@ function setPaused(value: boolean): void {
   paused = value;
   pauseOverlay.hidden = !value;
   if (value) controls.clear();
+  else engineAudio.unlock();
+  engineAudio.setActive(!value);
   lastFrame = performance.now();
 }
 
 function start(): void {
+  engineAudio.unlock();
+  engineAudio.setActive(true);
   active = true;
   paused = false;
   startOverlay.hidden = true;
@@ -188,6 +200,12 @@ function start(): void {
 }
 
 app.querySelector('#start-button')!.addEventListener('click', start);
+soundButton.addEventListener('click', () => {
+  engineAudio.unlock();
+  engineAudio.setMuted(!engineAudio.isMuted);
+  soundButton.textContent = engineAudio.isMuted ? '×' : '♪';
+  soundButton.setAttribute('aria-label', engineAudio.isMuted ? '音を出す' : '音を消す');
+});
 app.querySelector('#pause-button')!.addEventListener('click', () => setPaused(!paused));
 app.querySelector('#resume-button')!.addEventListener('click', () => setPaused(false));
 app.querySelector('#reset-button')!.addEventListener('click', reset);
@@ -212,7 +230,7 @@ function frame(now: number): void {
       physics.step(controls.value, 1 / 120);
       const position = track.nearest(physics.x, physics.z);
       if (physics.collided) laps.invalidate('接触');
-      const event = laps.update(position.progress, position.distance, physics.speed, 1 / 120);
+      const event = laps.update(position.progress, physics.allWheelsOffTrack, physics.speed, 1 / 120);
       if (event) {
         if (event.newBest) {
           try { localStorage.setItem(STORAGE_KEY, String(event.time)); } catch { /* private mode */ }
@@ -228,6 +246,7 @@ function frame(now: number): void {
     }
     car.setPose(physics.x, physics.z, physics.yaw);
     car.animate(controls.value.steer, physics.speed, elapsed);
+    engineAudio.update(physics.speed * 3.6, controls.value.throttle);
     refreshHud();
   }
   renderer.render(scene, car.camera);
