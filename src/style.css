@@ -65,3 +65,15 @@ html,body,#app,#app *,#scene,canvas,.menu-overlay,.rotate-overlay,button{touch-a
 .course-map-legend{width:6px;height:6px;border-radius:50%;background:#f04438;box-shadow:0 0 6px #f04438}
 @media(pointer:coarse){.course-map{top:62px;right:max(19px,env(safe-area-inset-right));width:138px;padding:7px 7px 5px}.course-map-heading{font-size:7px}.course-map-caption{font-size:6px}}
 @media(max-height:400px) and (pointer:coarse){.course-map{width:118px;top:58px}.course-map-heading{font-size:6px}.course-map-caption{font-size:5px}}
+
+/* The pause menu uses two columns when the visible landscape viewport is short. */
+@media(orientation:landscape) and (max-height:640px){
+  #pause-overlay{padding:max(12px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
+  #pause-overlay .pause-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,38%);align-items:center;column-gap:clamp(12px,3vw,32px);width:100%;max-width:900px}
+  .pause-copy,.pause-actions{min-width:0}
+  #pause-overlay .menu-kicker{font-size:clamp(8px,1.1vw,11px);letter-spacing:.14em}
+  #pause-overlay .pause-card h2{font-size:clamp(42px,6.2vw,74px);line-height:.78;margin:10px 0 12px}
+  #pause-overlay .pause-card p{font-size:clamp(10px,1.45vw,13px);line-height:1.4;margin:0}
+  #pause-overlay .pause-actions .primary-button,#pause-overlay .pause-actions .secondary-button{width:100%;height:clamp(38px,10vh,48px);margin:0 0 8px;font-size:clamp(15px,2.3vw,21px)}
+  #pause-overlay .pause-actions .secondary-button:last-child{margin-bottom:0}
+}

@@ -1,4 +1,12 @@
 import type { Track } from './track';
+import { gearAtSpeed, TOP_SPEED_MPS } from './vehicleTuning';
+
+const ENGINE_FORCE = 19;
+const ENGINE_CUTOFF_MPS = 135;
+const BASE_DRAG = 0.8;
+// Full throttle in eighth gear balances drag at about 340 km/h.
+const AERO_DRAG = (ENGINE_FORCE * (1 - TOP_SPEED_MPS / ENGINE_CUTOFF_MPS) - BASE_DRAG) /
+  (TOP_SPEED_MPS * TOP_SPEED_MPS);
 
 const BODY_CONTACTS = [
   [-1.55, 4.3], [1.55, 4.3],
@@ -65,11 +73,13 @@ export class CarPhysics {
     this.yawRate += (limitedYaw - this.yawRate) * Math.min(1, 7 * dt);
     this.yaw += this.yawRate * dt;
 
-    const engine = input.throttle * 19 * Math.max(0, 1 - speed / 93);
+    const gearRev = gearAtSpeed(speed * 3.6).rev;
+    const engine = input.throttle * ENGINE_FORCE * Math.max(0, 1 - speed / ENGINE_CUTOFF_MPS) *
+      (0.94 + 0.06 * gearRev);
     const braking = input.brake * 30;
     const forwardAcceleration = engine - Math.sign(forwardVelocity) * braking;
     const lateralAcceleration = Math.max(-grip, Math.min(grip, -lateralVelocity * 7));
-    const drag = 0.0023 * speed * speed + 0.8;
+    const drag = AERO_DRAG * speed * speed + BASE_DRAG;
     const dragX = speed > 0.01 ? -this.vx / speed * drag : 0;
     const dragZ = speed > 0.01 ? -this.vz / speed * drag : 0;
     this.vx += (forwardX * forwardAcceleration + rightX * lateralAcceleration + dragX) * dt;

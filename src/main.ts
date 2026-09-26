@@ -9,6 +9,7 @@ import { CarPhysics } from './physics';
 import { Track } from './track';
 import { TRACKS, type TrackDefinition, type TrackId } from './trackData';
 import { TrackPath } from './trackPath';
+import { TOP_SPEED_KMH } from './vehicleTuning';
 import './style.css';
 
 function coursePreview(definition: TrackDefinition): { outline: string; length: number } {
@@ -101,7 +102,10 @@ app.innerHTML = `
   </section>
 
   <section id="pause-overlay" class="menu-overlay paused" hidden>
-    <div class="menu-card pause-card"><div class="menu-kicker"><span class="kicker-line"></span> SESSION PAUSED</div><h2>TAKE A<br /><em>BREATH.</em></h2><p>走行を再開するか、スタート地点からやり直せます。</p><button id="resume-button" class="primary-button" type="button">RESUME <span>↗</span></button><button id="restart-button" class="secondary-button" type="button">RESTART LAP</button><button id="menu-button" class="secondary-button" type="button">SELECT CIRCUIT</button></div>
+    <div class="menu-card pause-card">
+      <div class="pause-copy"><div class="menu-kicker"><span class="kicker-line"></span> SESSION PAUSED</div><h2>TAKE A<br /><em>BREATH.</em></h2><p>走行を再開するか、スタート地点からやり直せます。</p></div>
+      <div class="pause-actions"><button id="resume-button" class="primary-button" type="button">RESUME <span>↗</span></button><button id="restart-button" class="secondary-button" type="button">RESTART LAP</button><button id="menu-button" class="secondary-button" type="button">SELECT CIRCUIT</button></div>
+    </div>
   </section>
 
   <div id="rotate-overlay" class="rotate-overlay"><div class="rotate-icon">↻</div><strong>横向きでプレイしてください</strong><p>端末を回転すると、コックピットが表示されます。</p></div>
@@ -225,7 +229,7 @@ function refreshHud(): void {
   lapStateElement.textContent = laps.valid ? 'VALID LAP' : `INVALID • ${laps.invalidReason}`;
   lapStateElement.classList.toggle('invalid', !laps.valid);
   const speedTicks = app.querySelectorAll<HTMLElement>('.speed-tick');
-  const tickCount = Math.min(speedTicks.length, Math.ceil(physics.speed * 3.6 / 38));
+  const tickCount = Math.min(speedTicks.length, Math.ceil(kmh / (TOP_SPEED_KMH / speedTicks.length)));
   speedTicks.forEach((tick, index) => tick.classList.toggle('active', index < tickCount));
 }
 

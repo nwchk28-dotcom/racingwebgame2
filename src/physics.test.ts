@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
 import { CarPhysics } from './physics';
 import type { Track } from './track';
+import { gearAtSpeed, TOP_SPEED_KMH } from './vehicleTuning';
 
 const straightTrack = {
   start: new Vector3(0, 0, 0),
@@ -107,5 +108,16 @@ describe('car physics', () => {
     expect(car.collided).toBe(true);
     expect(car.z).toBeLessThanOrEqual(9.9);
     expect(car.vz).toBeLessThan(0);
+  });
+
+  it('approaches 340 km/h in eighth gear on a long straight', () => {
+    const car = new CarPhysics({ ...straightTrack,
+      outerFence: { centerX: 0, centerZ: 0, radius: 10000 },
+    });
+    for (let i = 0; i < 120 * 45; i++) car.step({ steer: 0, throttle: 1, brake: 0 }, 1 / 120);
+    const kmh = car.speed * 3.6;
+    expect(kmh).toBeGreaterThan(TOP_SPEED_KMH - 2);
+    expect(kmh).toBeLessThan(TOP_SPEED_KMH + 1);
+    expect(gearAtSpeed(kmh).gear).toBe(8);
   });
 });

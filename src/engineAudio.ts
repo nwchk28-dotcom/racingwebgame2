@@ -1,15 +1,7 @@
 import { extractEngineHarmonics } from './engineWaveform';
+import { gearAtSpeed, TOP_SPEED_KMH } from './vehicleTuning';
 
-const GEAR_END_SPEEDS = [32, 58, 86, 115, 142, 166, 185, 215] as const;
-
-export function gearAtSpeed(kmh: number): { gear: number; rev: number } {
-  const speed = Math.max(0, kmh);
-  const index = GEAR_END_SPEEDS.findIndex(limit => speed < limit);
-  const gearIndex = index < 0 ? GEAR_END_SPEEDS.length - 1 : index;
-  const low = gearIndex === 0 ? 0 : GEAR_END_SPEEDS[gearIndex - 1];
-  const high = GEAR_END_SPEEDS[gearIndex];
-  return { gear: gearIndex + 1, rev: Math.min(1, (speed - low) / (high - low)) };
-}
+export { gearAtSpeed } from './vehicleTuning';
 
 export function pitchAtSpeed(kmh: number): number {
   const { gear, rev } = gearAtSpeed(kmh);
@@ -73,7 +65,7 @@ export class EngineAudio {
     const now = this.context.currentTime;
     this.source?.frequency.setTargetAtTime(pitchAtSpeed(speedKmh), now, 0.055);
     const volume = this.active && !this.muted && this.source
-      ? 0.1 + Math.min(speedKmh / 225, 1) * 0.12 + throttle * 0.08
+      ? 0.1 + Math.min(speedKmh / TOP_SPEED_KMH, 1) * 0.12 + throttle * 0.08
       : 0;
     this.gain.gain.setTargetAtTime(volume, now, 0.045);
   }
