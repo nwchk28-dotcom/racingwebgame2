@@ -110,7 +110,7 @@ describe('car physics', () => {
     expect(car.vz).toBeLessThan(0);
   });
 
-  it('approaches 340 km/h in eighth gear on a long straight', () => {
+  it('approaches 300 km/h in eighth gear on a long straight', () => {
     const car = new CarPhysics({ ...straightTrack,
       outerFence: { centerX: 0, centerZ: 0, radius: 10000 },
     });
@@ -119,5 +119,17 @@ describe('car physics', () => {
     expect(kmh).toBeGreaterThan(TOP_SPEED_KMH - 2);
     expect(kmh).toBeLessThan(TOP_SPEED_KMH + 1);
     expect(gearAtSpeed(kmh).gear).toBe(8);
+  });
+
+  it('gains cornering and braking grip from downforce at high speed', () => {
+    const turning = new CarPhysics(straightTrack);
+    turning.vz = 80;
+    turning.step({ steer: 1, throttle: 0, brake: 0 }, 1 / 120);
+    expect(Math.abs(turning.yawRate)).toBeGreaterThan(0.025);
+
+    const braking = new CarPhysics(straightTrack);
+    braking.vz = 80;
+    braking.step({ steer: 0, throttle: 0, brake: 1 }, 1 / 120);
+    expect(80 - braking.vz).toBeGreaterThan(0.32);
   });
 });

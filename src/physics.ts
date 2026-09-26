@@ -4,7 +4,7 @@ import { gearAtSpeed, TOP_SPEED_MPS } from './vehicleTuning';
 const ENGINE_FORCE = 19;
 const ENGINE_CUTOFF_MPS = 135;
 const BASE_DRAG = 0.8;
-// Full throttle in eighth gear balances drag at about 340 km/h.
+// Full throttle in eighth gear balances drag at the configured top speed.
 const AERO_DRAG = (ENGINE_FORCE * (1 - TOP_SPEED_MPS / ENGINE_CUTOFF_MPS) - BASE_DRAG) /
   (TOP_SPEED_MPS * TOP_SPEED_MPS);
 
@@ -63,7 +63,9 @@ export class CarPhysics {
     const forwardVelocity = this.vx * forwardX + this.vz * forwardZ;
     const lateralVelocity = this.vx * rightX + this.vz * rightZ;
     const speed = this.speed;
-    const grip = 24;
+    // Aerodynamic load grows with speed and raises cornering and braking grip.
+    const downforce = 0.0032 * speed * speed;
+    const grip = 24 + downforce;
     const maxSteer = 0.34 / (1 + speed / 34);
     // The onboard camera faces local +Z, so screen-right corresponds to world -X.
     const steerAngle = -input.steer * maxSteer;
@@ -76,7 +78,7 @@ export class CarPhysics {
     const gearRev = gearAtSpeed(speed * 3.6).rev;
     const engine = input.throttle * ENGINE_FORCE * Math.max(0, 1 - speed / ENGINE_CUTOFF_MPS) *
       (0.94 + 0.06 * gearRev);
-    const braking = input.brake * 30;
+    const braking = input.brake * (30 + downforce * 0.65);
     const forwardAcceleration = engine - Math.sign(forwardVelocity) * braking;
     const lateralAcceleration = Math.max(-grip, Math.min(grip, -lateralVelocity * 7));
     const drag = AERO_DRAG * speed * speed + BASE_DRAG;

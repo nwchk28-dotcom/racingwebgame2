@@ -53,12 +53,12 @@ export class CarVisual {
   readonly camera: THREE.PerspectiveCamera;
   private readonly frontWheels: THREE.Group[] = [];
   private readonly wheelMeshes: THREE.Mesh[] = [];
-  private readonly baseCameraY = 1.88;
+  private readonly baseCameraY = 2.45;
 
   constructor() {
-    this.camera = new THREE.PerspectiveCamera(80, 1, 0.055, 1100);
+    this.camera = new THREE.PerspectiveCamera(68, 1, 0.055, 1100);
     this.camera.position.set(0, this.baseCameraY, -0.7);
-    this.camera.lookAt(0, 1.49, 24);
+    this.camera.lookAt(0, 1.95, 32);
     this.group.add(this.camera);
     this.build();
   }

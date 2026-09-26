@@ -4,18 +4,18 @@ import { EngineAudio, gearAtSpeed, pitchAtSpeed } from './engineAudio';
 describe('engine gears', () => {
   it('raises revs within each gear and drops them on an upshift', () => {
     expect(gearAtSpeed(0)).toEqual({ gear: 1, rev: 0 });
-    expect(gearAtSpeed(54).rev).toBeGreaterThan(gearAtSpeed(10).rev);
-    expect(gearAtSpeed(55).gear).toBe(2);
-    expect(gearAtSpeed(55).rev).toBe(0);
-    expect(gearAtSpeed(92).rev).toBeGreaterThan(gearAtSpeed(65).rev);
-    expect(gearAtSpeed(300).gear).toBe(8);
-    expect(gearAtSpeed(340).rev).toBe(1);
+    expect(gearAtSpeed(49).rev).toBeGreaterThan(gearAtSpeed(10).rev);
+    expect(gearAtSpeed(50).gear).toBe(2);
+    expect(gearAtSpeed(50).rev).toBe(0);
+    expect(gearAtSpeed(81).rev).toBeGreaterThan(gearAtSpeed(60).rev);
+    expect(gearAtSpeed(265).gear).toBe(8);
+    expect(gearAtSpeed(300).rev).toBe(1);
   });
 
   it('maps a given speed to one stable pitch, with a drop at each upshift', () => {
     expect(pitchAtSpeed(0)).toBe(130);
-    expect(pitchAtSpeed(55)).toBe(156);
-    const boundaries = [0, 55, 93, 132, 174, 216, 258, 300, 340];
+    expect(pitchAtSpeed(50)).toBe(156);
+    const boundaries = [0, 50, 82, 116, 153, 190, 228, 265, 300];
     for (let gear = 0; gear < boundaries.length - 1; gear++) {
       const low = boundaries[gear];
       const high = boundaries[gear + 1];
@@ -23,7 +23,7 @@ describe('engine gears', () => {
       if (gear < boundaries.length - 2) expect(pitchAtSpeed(high)).toBeLessThan(pitchAtSpeed(high - 0.1));
     }
     expect(pitchAtSpeed(200)).toBeGreaterThan(pitchAtSpeed(20));
-    expect(pitchAtSpeed(400)).toBe(pitchAtSpeed(340));
+    expect(pitchAtSpeed(400)).toBe(pitchAtSpeed(300));
   });
 
   it('keeps pitch unchanged when only throttle or playback time changes', () => {

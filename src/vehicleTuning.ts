@@ -1,8 +1,8 @@
-export const TOP_SPEED_KMH = 340;
+export const TOP_SPEED_KMH = 300;
 export const TOP_SPEED_MPS = TOP_SPEED_KMH / 3.6;
 
 // Approximate redline speeds for the eight forward gears.
-export const GEAR_END_SPEEDS = [55, 93, 132, 174, 216, 258, 300, TOP_SPEED_KMH] as const;
+export const GEAR_END_SPEEDS = [50, 82, 116, 153, 190, 228, 265, TOP_SPEED_KMH] as const;
 
 export function gearAtSpeed(kmh: number): { gear: number; rev: number } {
   const speed = Math.max(0, kmh);
