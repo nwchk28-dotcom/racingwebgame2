@@ -78,7 +78,7 @@ describe('three circuits', () => {
     for (const definition of TRACKS.filter(item => item.timingLine)) {
       const original = new TrackPath({ ...definition, timingLine: undefined });
       const [x, z] = definition.timingLine!;
-      const oldLine = original.nearest(x, z);
+      const oldLine = original.nearest(-x, z);
       const [minimum, maximum] = expectedOldProgress[definition.id as 'monza' | 'silverstone'];
       expect(oldLine.distance).toBeLessThan(15);
       expect(oldLine.progress).toBeGreaterThan(minimum);

@@ -16,13 +16,14 @@ function coursePreview(definition: TrackDefinition): { outline: string; length: 
   const xs = path.samples.map(point => point.x);
   const zs = path.samples.map(point => point.z);
   const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
   const minZ = Math.min(...zs);
-  const scale = Math.min(138 / (Math.max(...xs) - minX), 68 / (Math.max(...zs) - minZ));
+  const scale = Math.min(138 / (maxX - minX), 68 / (Math.max(...zs) - minZ));
   const step = Math.max(1, Math.floor(path.sampleCount / 100));
   const points: string[] = [];
   for (let i = 0; i < path.sampleCount; i += step) {
     const point = path.samples[i];
-    points.push(`${(11 + (point.x - minX) * scale).toFixed(1)},${(76 - (point.z - minZ) * scale).toFixed(1)}`);
+    points.push(`${(11 + (maxX - point.x) * scale).toFixed(1)},${(76 - (point.z - minZ) * scale).toFixed(1)}`);
   }
   return {
     outline: `<svg viewBox="0 0 160 86" aria-hidden="true"><polyline points="${points.join(' ')}" /></svg>`,

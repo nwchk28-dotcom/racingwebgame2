@@ -24,7 +24,10 @@ export class TrackPath {
   private readonly cells = new Map<string, number[]>();
 
   constructor(readonly definition: TrackDefinition) {
-    const source = definition.points.map(([x, z]) => new THREE.Vector3(x, 0, z));
+    // The onboard camera faces local +Z, whose screen-right is world -X.
+    // Mirror source eastings into world space so the driver sees the same
+    // left/right turns as the published circuit layout.
+    const source = definition.points.map(([x, z]) => new THREE.Vector3(-x, 0, z));
     let getPoint: (fraction: number) => THREE.Vector3;
     let approximateLength: number;
     let sourceScale = 1;
@@ -82,7 +85,7 @@ export class TrackPath {
       }
       if (definition.timingLine) {
         const [x, z] = definition.timingLine;
-        const line = new THREE.Vector3(x * sourceScale, 0, z * sourceScale);
+        const line = new THREE.Vector3(-x * sourceScale, 0, z * sourceScale);
         let closest = 0;
         for (let i = 1; i < this.sampleCount; i++) {
           if (this.samples[i].distanceToSquared(line) < this.samples[closest].distanceToSquared(line)) closest = i;

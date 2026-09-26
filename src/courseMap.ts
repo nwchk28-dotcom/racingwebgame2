@@ -19,7 +19,8 @@ export function createCourseMap(path: TrackPath): CourseMap {
   const left = 14 + (152 - (maxX - minX) * scale) / 2;
   const bottom = 116 - (84 - (maxZ - minZ) * scale) / 2;
   const project = (x: number, z: number) => ({
-    x: left + (x - minX) * scale,
+    // Undo TrackPath's world-space mirror: the HUD keeps the real layout.
+    x: left + (maxX - x) * scale,
     y: bottom - (z - minZ) * scale,
   });
   const step = Math.max(1, Math.floor(path.sampleCount / 220));
