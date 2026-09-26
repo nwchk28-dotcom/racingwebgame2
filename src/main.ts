@@ -1,13 +1,47 @@
 import * as THREE from 'three';
 import { CarVisual } from './car';
+import { readBestTime, saveBestTime } from './bestTimes';
 import { Controls } from './controls';
 import { EngineAudio, gearAtSpeed } from './engineAudio';
 import { LapTracker, formatTime } from './lap';
 import { CarPhysics } from './physics';
 import { Track } from './track';
+import { TRACKS, type TrackDefinition, type TrackId } from './trackData';
+import { TrackPath } from './trackPath';
 import './style.css';
 
-const STORAGE_KEY = 'apex-one:best-lap:v1';
+function coursePreview(definition: TrackDefinition): { outline: string; length: number } {
+  const path = new TrackPath(definition);
+  const xs = path.samples.map(point => point.x);
+  const zs = path.samples.map(point => point.z);
+  const minX = Math.min(...xs);
+  const minZ = Math.min(...zs);
+  const scale = Math.min(138 / (Math.max(...xs) - minX), 68 / (Math.max(...zs) - minZ));
+  const step = Math.max(1, Math.floor(path.sampleCount / 100));
+  const points: string[] = [];
+  for (let i = 0; i < path.sampleCount; i += step) {
+    const point = path.samples[i];
+    points.push(`${(11 + (point.x - minX) * scale).toFixed(1)},${(76 - (point.z - minZ) * scale).toFixed(1)}`);
+  }
+  return {
+    outline: `<svg viewBox="0 0 160 86" aria-hidden="true"><polyline points="${points.join(' ')}" /></svg>`,
+    length: path.length,
+  };
+}
+
+const trackCards = TRACKS.map((definition, index) => {
+  const preview = coursePreview(definition);
+  return `
+  <button class="track-option${index === 0 ? ' selected' : ''}" type="button"
+    data-track-id="${definition.id}" aria-pressed="${index === 0}">
+    <span class="track-option-top"><b>0${index + 1}</b><span>${definition.location}</span></span>
+    ${preview.outline}
+    <strong>${definition.name}</strong>
+    <span class="track-option-bottom"><span>${(preview.length / 1000).toFixed(definition.targetLength ? 3 : 2)} KM</span>
+      <span>BEST <b data-best-for="${definition.id}">--:--.---</b></span></span>
+  </button>`;
+}).join('');
+
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
   <div id="scene" aria-hidden="true"></div>
@@ -15,7 +49,7 @@ app.innerHTML = `
 
   <header class="topbar">
     <div class="brand"><span class="brand-mark">A<span>1</span></span><span class="brand-name">APEX <strong>ONE</strong><small>TIME ATTACK</small></span></div>
-    <div class="track-name"><span class="live-dot"></span> NOVA CIRCUIT <span class="track-meta">/ DRY / 23°C</span></div>
+    <div class="track-name"><span class="live-dot"></span> <span id="current-track-name">NOVA CIRCUIT</span> <span class="track-meta">/ DRY / 23°C</span></div>
     <div class="top-actions">
       <button id="sound-button" class="icon-button" type="button" aria-label="音を消す" title="エンジン音を切り替え">♪</button>
       <button id="reset-button" class="icon-button" type="button" aria-label="スタート地点に戻る" title="リセット (R)">↻</button>
@@ -46,25 +80,27 @@ app.innerHTML = `
       <div class="menu-kicker"><span class="kicker-line"></span> ONE CAR. ONE CIRCUIT. ONE LAP.</div>
       <h1>FIND YOUR<br /><em>APEX.</em></h1>
       <p>オンボード視点で、自己ベストを塗り替えよう。</p>
-      <div class="menu-details"><span><b>01</b> NOVA CIRCUIT</span><span><b>∞</b> TIME ATTACK</span></div>
+      <div class="track-select-heading"><span>SELECT CIRCUIT</span><span>SOLO TIME ATTACK / 03 TRACKS</span></div>
+      <div class="track-options" role="group" aria-label="コースを選択">${trackCards}</div>
       <button id="start-button" class="primary-button" type="button">START ENGINE <span>↗</span></button>
       <div class="menu-help"><span class="desktop-help">W / ↑ 加速　S / ↓ ブレーキ　A D / ← → ハンドル</span><span class="mobile-help">左のスライダーでハンドル、右のペダルで運転</span></div>
     </div>
-    <div class="menu-footer"><span>APEX ONE / ORIGINAL RACING EXPERIENCE</span><span>01 — 01</span></div>
+    <div class="menu-footer"><span>APEX ONE / ORIGINAL RACING EXPERIENCE</span><span>01 — 03</span></div>
   </section>
 
   <section id="pause-overlay" class="menu-overlay paused" hidden>
-    <div class="menu-card pause-card"><div class="menu-kicker"><span class="kicker-line"></span> SESSION PAUSED</div><h2>TAKE A<br /><em>BREATH.</em></h2><p>走行を再開するか、スタート地点からやり直せます。</p><button id="resume-button" class="primary-button" type="button">RESUME <span>↗</span></button><button id="restart-button" class="secondary-button" type="button">RESTART LAP</button></div>
+    <div class="menu-card pause-card"><div class="menu-kicker"><span class="kicker-line"></span> SESSION PAUSED</div><h2>TAKE A<br /><em>BREATH.</em></h2><p>走行を再開するか、スタート地点からやり直せます。</p><button id="resume-button" class="primary-button" type="button">RESUME <span>↗</span></button><button id="restart-button" class="secondary-button" type="button">RESTART LAP</button><button id="menu-button" class="secondary-button" type="button">SELECT CIRCUIT</button></div>
   </section>
 
   <div id="rotate-overlay" class="rotate-overlay"><div class="rotate-icon">↻</div><strong>横向きでプレイしてください</strong><p>端末を回転すると、コックピットが表示されます。</p></div>
 `;
 
 const scene = new THREE.Scene();
-const track = new Track(scene);
+let selectedTrack: TrackDefinition = TRACKS[0];
+let track = new Track(scene, selectedTrack);
 const car = new CarVisual();
 scene.add(car.group);
-const physics = new CarPhysics(track);
+let physics = new CarPhysics(track);
 car.setPose(physics.x, physics.z, physics.yaw);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -111,13 +147,7 @@ app.querySelector('#scene')!.appendChild(renderer.domElement);
 
 const controls = new Controls(app);
 const engineAudio = new EngineAudio();
-const readBest = (): number | null => {
-  try {
-    const value = Number(localStorage.getItem(STORAGE_KEY));
-    return Number.isFinite(value) && value > 0 ? value : null;
-  } catch { return null; }
-};
-const laps = new LapTracker(track.length, readBest());
+let laps = new LapTracker(track.length, readBestTime(selectedTrack.id));
 
 const speedElement = app.querySelector<HTMLElement>('#speed')!;
 const gearElement = app.querySelector<HTMLElement>('#gear')!;
@@ -129,12 +159,14 @@ const lapStateElement = app.querySelector<HTMLElement>('#lap-state')!;
 const toastElement = app.querySelector<HTMLElement>('#toast')!;
 const pauseOverlay = app.querySelector<HTMLElement>('#pause-overlay')!;
 const startOverlay = app.querySelector<HTMLElement>('#start-overlay')!;
+const currentTrackName = app.querySelector<HTMLElement>('#current-track-name')!;
 let active = false;
 let paused = false;
 let elapsed = 0;
 let lastFrame = 0;
 let accumulator = 0;
 let toastTimeout = 0;
+let lapProgressHint = 0;
 
 function resize(): void {
   const width = window.innerWidth;
@@ -167,14 +199,46 @@ function refreshHud(): void {
   speedTicks.forEach((tick, index) => tick.classList.toggle('active', index < tickCount));
 }
 
-function reset(): void {
+function refreshTrackChoices(): void {
+  app.querySelectorAll<HTMLButtonElement>('.track-option').forEach(button => {
+    const selected = button.dataset.trackId === selectedTrack.id;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+  for (const definition of TRACKS) {
+    app.querySelector<HTMLElement>(`[data-best-for="${definition.id}"]`)!.textContent =
+      formatTime(readBestTime(definition.id));
+  }
+}
+
+function selectTrack(id: TrackId): void {
+  if (active || selectedTrack.id === id) return;
+  const definition = TRACKS.find(item => item.id === id);
+  if (!definition) return;
+  track.dispose();
+  renderer.renderLists.dispose();
+  selectedTrack = definition;
+  track = new Track(scene, definition);
+  physics = new CarPhysics(track);
+  laps = new LapTracker(track.length, readBestTime(id));
+  lapProgressHint = 0;
+  currentTrackName.textContent = definition.name;
+  car.setPose(physics.x, physics.z, physics.yaw);
+  refreshTrackChoices();
+  refreshHud();
+  lastFrame = performance.now();
+}
+
+function reset(notify = true): void {
   controls.clear();
   physics.reset();
   engineAudio.update(0, 0);
   laps.reset(0);
+  lapProgressHint = 0;
+  accumulator = 0;
   car.setPose(physics.x, physics.z, physics.yaw);
   refreshHud();
-  toast('START LINE に戻りました');
+  if (notify) toast('START LINE に戻りました');
 }
 
 function setPaused(value: boolean): void {
@@ -195,11 +259,14 @@ function start(): void {
   startOverlay.hidden = true;
   pauseOverlay.hidden = true;
   app.classList.add('in-game');
-  reset();
+  reset(false);
   lastFrame = performance.now();
 }
 
 app.querySelector('#start-button')!.addEventListener('click', start);
+app.querySelectorAll<HTMLButtonElement>('.track-option').forEach(button => {
+  button.addEventListener('click', () => selectTrack(button.dataset.trackId as TrackId));
+});
 soundButton.addEventListener('click', () => {
   engineAudio.unlock();
   engineAudio.setMuted(!engineAudio.isMuted);
@@ -208,8 +275,19 @@ soundButton.addEventListener('click', () => {
 });
 app.querySelector('#pause-button')!.addEventListener('click', () => setPaused(!paused));
 app.querySelector('#resume-button')!.addEventListener('click', () => setPaused(false));
-app.querySelector('#reset-button')!.addEventListener('click', reset);
+app.querySelector('#reset-button')!.addEventListener('click', () => reset());
 app.querySelector('#restart-button')!.addEventListener('click', () => { reset(); setPaused(false); });
+app.querySelector('#menu-button')!.addEventListener('click', () => {
+  controls.clear();
+  engineAudio.setActive(false);
+  active = false;
+  paused = false;
+  pauseOverlay.hidden = true;
+  startOverlay.hidden = false;
+  app.classList.remove('in-game');
+  reset(false);
+  refreshTrackChoices();
+});
 window.addEventListener('keydown', event => {
   if (event.repeat) return;
   if (event.key === 'Escape') setPaused(!paused);
@@ -228,12 +306,14 @@ function frame(now: number): void {
     accumulator = Math.min(accumulator + dt, 0.1);
     while (accumulator >= 1 / 120) {
       physics.step(controls.value, 1 / 120);
-      const position = track.nearest(physics.x, physics.z);
+      const position = track.nearest(physics.x, physics.z, lapProgressHint);
+      lapProgressHint = position.progress;
       if (physics.collided) laps.invalidate('接触');
       const event = laps.update(position.progress, physics.allWheelsOffTrack, physics.speed, 1 / 120);
       if (event) {
         if (event.newBest) {
-          try { localStorage.setItem(STORAGE_KEY, String(event.time)); } catch { /* private mode */ }
+          saveBestTime(selectedTrack.id, event.time);
+          refreshTrackChoices();
           toast(`NEW PERSONAL BEST  ${formatTime(event.time)}`, 'best');
         } else if (event.valid) {
           toast(`LAP ${String(event.lapNumber).padStart(2, '0')}  ${formatTime(event.time)}`);
@@ -253,4 +333,5 @@ function frame(now: number): void {
 }
 
 refreshHud();
+refreshTrackChoices();
 renderer.setAnimationLoop(frame);

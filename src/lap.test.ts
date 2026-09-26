@@ -42,10 +42,18 @@ describe('lap timing', () => {
   it('invalidates a sustained reverse movement', () => {
     const lap = new LapTracker(1000);
     lap.update(0, false, 20, 0.1);
-    lap.update(0.04, false, 20, 0.1);
-    lap.update(0.03, false, 20, 0.1);
+    lap.update(0.005, false, 20, 0.1);
+    lap.update(0.995, false, 20, 0.1);
     expect(lap.valid).toBe(false);
     expect(lap.invalidReason).toBe('逆走');
+  });
+
+  it('rejects a jump to a nearby section with a distant lap position', () => {
+    const lap = new LapTracker(5891);
+    lap.update(0, false, 20, 1 / 120);
+    lap.update(0.3, false, 20, 1 / 120);
+    expect(lap.valid).toBe(false);
+    expect(lap.invalidReason).toBe('経路逸脱');
   });
 
   it('formats lap times', () => {

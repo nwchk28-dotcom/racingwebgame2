@@ -1,14 +1,6 @@
 import * as THREE from 'three';
-
-export interface TrackPosition {
-  progress: number;
-  distance: number;
-  centerX: number;
-  centerZ: number;
-  normalX: number;
-  normalZ: number;
-  signedDistance: number;
-}
+import type { TrackDefinition } from './trackData';
+import { TrackPath } from './trackPath';
 
 export interface ObstacleCollider {
   x: number;
@@ -16,24 +8,14 @@ export interface ObstacleCollider {
   radius: number;
 }
 
-const ROAD_HALF_WIDTH = 9.5;
-const CURB_OUTER_EDGE = ROAD_HALF_WIDTH + 1.2;
-const SAMPLE_COUNT = 1440;
 const CURB_STRIPE_LENGTH = 4;
 
-const nodes = [
-  [0, 0], [0, 95], [3, 210], [-46, 288], [-147, 303],
-  [-228, 253], [-243, 166], [-185, 109], [-171, 20],
-  [-234, -62], [-213, -142], [-132, -192], [-27, -183],
-  [65, -179], [116, -113], [83, -54], [0, -96],
-] as const;
-
-function texturedCanvas(kind: 'road' | 'grass'): THREE.CanvasTexture {
+function texturedCanvas(kind: 'road' | 'grass', grassColor: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
   canvas.height = 256;
   const context = canvas.getContext('2d')!;
-  context.fillStyle = kind === 'road' ? '#30383a' : '#56704b';
+  context.fillStyle = kind === 'road' ? '#30383a' : grassColor;
   context.fillRect(0, 0, 256, 256);
   let seed = kind === 'road' ? 7 : 13;
   const rand = () => {
@@ -67,7 +49,7 @@ function makeRibbon(
   const uvs: number[] = [];
   const indices: number[] = [];
   let vertex = 0;
-  for (let i = 0; i < SAMPLE_COUNT; i++) {
+  for (let i = 0; i < points.length - 1; i++) {
     for (const j of [i, i + 1]) {
       const p = points[j];
       const n = normals[j];
@@ -95,7 +77,7 @@ function makeStripedCurb(
   const indices: number[] = [];
   const stripeColors = [new THREE.Color('#be332d'), new THREE.Color('#efece3')];
   let vertex = 0;
-  for (let i = 0; i < SAMPLE_COUNT; i++) {
+  for (let i = 0; i < points.length - 1; i++) {
     const from = distances[i];
     const to = distances[i + 1];
     let cursor = from;
@@ -126,7 +108,7 @@ function makeStripedCurb(
 }
 
 function box(
-  scene: THREE.Scene,
+  parent: THREE.Object3D,
   size: [number, number, number],
   position: [number, number, number],
   color: number,
@@ -139,86 +121,38 @@ function box(
   object.position.set(...position);
   object.castShadow = true;
   object.receiveShadow = true;
-  scene.add(object);
+  parent.add(object);
   return object;
 }
 
-export class Track {
-  readonly roadHalfWidth = ROAD_HALF_WIDTH;
-  readonly curbOuterEdge = CURB_OUTER_EDGE;
+export class Track extends TrackPath {
+  readonly roadHalfWidth: number;
+  readonly curbOuterEdge: number;
   readonly outerFence: { centerX: number; centerZ: number; radius: number };
   readonly colliders: ObstacleCollider[] = [];
-  readonly samples: THREE.Vector3[] = [];
-  readonly normals: THREE.Vector3[] = [];
-  readonly distances: number[] = [0];
-  readonly length: number;
-  readonly start: THREE.Vector3;
-  readonly startYaw: number;
+  readonly group = new THREE.Group();
+  private readonly scene: THREE.Scene;
 
-  constructor(scene: THREE.Scene) {
-    const curve = new THREE.CatmullRomCurve3(
-      nodes.map(([x, z]) => new THREE.Vector3(x, 0, z)), true, 'catmullrom', 1,
-    );
-    for (let i = 0; i <= SAMPLE_COUNT; i++) {
-      const t = i / SAMPLE_COUNT;
-      const p = curve.getPointAt(t);
-      const tangent = curve.getTangentAt(t).normalize();
-      this.samples.push(p);
-      this.normals.push(new THREE.Vector3(tangent.z, 0, -tangent.x));
-      if (i > 0) this.distances.push(this.distances[i - 1] + p.distanceTo(this.samples[i - 1]));
-    }
-    this.length = this.distances[SAMPLE_COUNT];
-    this.start = this.samples[0].clone();
-    const tangent = curve.getTangentAt(0);
-    this.startYaw = Math.atan2(tangent.x, tangent.z);
+  constructor(scene: THREE.Scene, definition: TrackDefinition) {
+    super(definition);
+    this.scene = scene;
+    this.roadHalfWidth = definition.roadHalfWidth;
+    this.curbOuterEdge = definition.roadHalfWidth + definition.curbWidth;
     const xValues = this.samples.map(point => point.x);
     const zValues = this.samples.map(point => point.z);
     const centerX = (Math.min(...xValues) + Math.max(...xValues)) / 2;
     const centerZ = (Math.min(...zValues) + Math.max(...zValues)) / 2;
     const furthest = Math.max(...this.samples.map(point => Math.hypot(point.x - centerX, point.z - centerZ)));
-    this.outerFence = { centerX, centerZ, radius: furthest + 45 };
-
-    this.buildScene(scene);
+    this.outerFence = { centerX, centerZ, radius: furthest + 55 };
+    this.group.name = `track-${definition.id}`;
+    scene.add(this.group);
+    this.buildScene();
   }
 
-  nearest(x: number, z: number): TrackPosition {
-    let bestDistanceSquared = Infinity;
-    let bestProgress = 0;
-    let centerX = 0;
-    let centerZ = 0;
-    let normalX = 1;
-    let normalZ = 0;
-    let signedDistance = 0;
-    for (let i = 0; i < SAMPLE_COUNT; i++) {
-      const a = this.samples[i];
-      const b = this.samples[i + 1];
-      const dx = b.x - a.x;
-      const dz = b.z - a.z;
-      const segmentLengthSquared = dx * dx + dz * dz;
-      const t = THREE.MathUtils.clamp(((x - a.x) * dx + (z - a.z) * dz) / segmentLengthSquared, 0, 1);
-      const rx = x - (a.x + dx * t);
-      const rz = z - (a.z + dz * t);
-      const distanceSquared = rx * rx + rz * rz;
-      if (distanceSquared < bestDistanceSquared) {
-        bestDistanceSquared = distanceSquared;
-        bestProgress = (this.distances[i] + Math.sqrt(segmentLengthSquared) * t) / this.length;
-        centerX = a.x + dx * t;
-        centerZ = a.z + dz * t;
-        normalX = dz / Math.sqrt(segmentLengthSquared);
-        normalZ = -dx / Math.sqrt(segmentLengthSquared);
-        signedDistance = rx * normalX + rz * normalZ;
-      }
-    }
-    return {
-      progress: bestProgress % 1,
-      distance: Math.sqrt(bestDistanceSquared),
-      centerX, centerZ, normalX, normalZ, signedDistance,
-    };
-  }
-
-  private buildScene(scene: THREE.Scene): void {
-    scene.background = new THREE.Color('#a9c6cf');
-    scene.fog = new THREE.FogExp2('#a9c6cf', 0.0019);
+  private buildScene(): void {
+    const scene = this.group;
+    this.scene.background = new THREE.Color(this.definition.sky);
+    this.scene.fog = new THREE.FogExp2(this.definition.sky, 0.0019);
     scene.add(new THREE.HemisphereLight('#e8f7ff', '#566045', 2.1));
     const sun = new THREE.DirectionalLight('#fff0d7', 2.5);
     sun.position.set(-100, 180, 90);
@@ -232,19 +166,21 @@ export class Track {
     sun.target.position.set(-75, 0, 70);
     scene.add(sun, sun.target);
 
-    const grassTexture = texturedCanvas('grass');
+    const grassTexture = texturedCanvas('grass', this.definition.grass);
     const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(1800, 1800),
+      new THREE.PlaneGeometry((this.outerFence.radius + 80) * 2, (this.outerFence.radius + 80) * 2),
       new THREE.MeshStandardMaterial({ map: grassTexture, roughness: 1 }),
     );
     ground.rotation.x = -Math.PI / 2;
+    ground.position.x = this.outerFence.centerX;
+    ground.position.z = this.outerFence.centerZ;
     ground.position.y = -0.08;
     ground.receiveShadow = true;
     scene.add(ground);
 
-    const roadTexture = texturedCanvas('road');
+    const roadTexture = texturedCanvas('road', this.definition.grass);
     const road = new THREE.Mesh(
-      makeRibbon(this.samples, this.normals, -ROAD_HALF_WIDTH, ROAD_HALF_WIDTH, 0.018, 10),
+      makeRibbon(this.samples, this.normals, -this.roadHalfWidth, this.roadHalfWidth, 0.018, 10),
       new THREE.MeshStandardMaterial({ map: roadTexture, roughness: 0.94, side: THREE.DoubleSide }),
     );
     road.receiveShadow = true;
@@ -256,13 +192,13 @@ export class Track {
     const railMaterial = new THREE.MeshStandardMaterial({ color: '#d7dedc', roughness: 0.35, metalness: 0.7, side: THREE.DoubleSide });
 
     for (const side of [-1, 1]) {
-      const near = side * ROAD_HALF_WIDTH;
-      const far = side * (CURB_OUTER_EDGE + 1.05);
+      const near = side * this.roadHalfWidth;
+      const far = side * (this.curbOuterEdge + 1.05);
       scene.add(new THREE.Mesh(makeRibbon(this.samples, this.normals, near, far, 0.01), shoulderMaterial));
       scene.add(new THREE.Mesh(makeRibbon(this.samples, this.normals,
-        side * (ROAD_HALF_WIDTH - 0.33), side * (ROAD_HALF_WIDTH - 0.1), 0.04), lineMaterial));
+        side * (this.roadHalfWidth - 0.33), side * (this.roadHalfWidth - 0.1), 0.04), lineMaterial));
       scene.add(new THREE.Mesh(
-        makeStripedCurb(this.samples, this.normals, this.distances, side * ROAD_HALF_WIDTH, side * CURB_OUTER_EDGE),
+        makeStripedCurb(this.samples, this.normals, this.distances, side * this.roadHalfWidth, side * this.curbOuterEdge),
         curbMaterial,
       ));
     }
@@ -273,7 +209,7 @@ export class Track {
     this.addTrees(scene);
   }
 
-  private addOuterFence(scene: THREE.Scene, material: THREE.Material): void {
+  private addOuterFence(scene: THREE.Object3D, material: THREE.Material): void {
     const { centerX, centerZ, radius } = this.outerFence;
     const visibleRadius = radius + 0.15;
     for (const height of [0.65, 1.15, 1.65]) {
@@ -295,11 +231,11 @@ export class Track {
     scene.add(posts);
   }
 
-  private addStartLine(scene: THREE.Scene): void {
+  private addStartLine(scene: THREE.Object3D): void {
     const start = this.samples[0];
     const normal = this.normals[0];
     const paint = new THREE.MeshBasicMaterial({ color: '#f5f5f0', side: THREE.DoubleSide });
-    for (let i = -Math.floor(ROAD_HALF_WIDTH); i < Math.floor(ROAD_HALF_WIDTH); i++) {
+    for (let i = -Math.floor(this.roadHalfWidth); i < Math.floor(this.roadHalfWidth); i++) {
       if (i % 2 === 0) continue;
       const tile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1.5), paint);
       tile.rotation.x = -Math.PI / 2;
@@ -309,27 +245,69 @@ export class Track {
     }
   }
 
-  private addBuildings(scene: THREE.Scene): void {
-    // The first straight passes a compact pit complex.
-    for (let i = 0; i < 6; i++) {
-      const z = 30 + i * 30;
-      box(scene, [28, 8, 26], [37, 4, z], 0x344247);
-      box(scene, [29, 1, 27], [37, 8.5, z], 0x17262b);
-      const glass = box(scene, [1, 3.3, 22], [22.8, 5.3, z], 0x6c9097, 0.13);
-      glass.castShadow = false;
-      box(scene, [8, 0.2, 20], [22.5, 2.5, z], 0xe1e9e1);
+  private addTracksideBox(parent: THREE.Object3D, distance: number, offset: number,
+    size: [number, number, number], color: number): THREE.Mesh | null {
+    const index = Math.min(this.sampleCount - 1, Math.round(distance / this.length * this.sampleCount));
+    const point = this.samples[index];
+    const normal = this.normals[index].clone().normalize();
+    const next = this.samples[index + 1];
+    const radius = Math.hypot(size[0] / 2, size[2] / 2);
+    let x = 0;
+    let z = 0;
+    let clear = false;
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const distanceFromRoad = offset + Math.sign(offset) * attempt * 16;
+      x = point.x + normal.x * distanceFromRoad;
+      z = point.z + normal.z * distanceFromRoad;
+      if (this.nearest(x, z).distance > radius + this.curbOuterEdge + 8) {
+        clear = true;
+        break;
+      }
     }
-    box(scene, [18, 11, 58], [-42, 5.5, 110], 0x4c5759);
-    box(scene, [24, 1.5, 62], [-43, 11.5, 110], 0x202a2d);
-    for (let row = 0; row < 4; row++) {
-      box(scene, [17, 0.45, 54], [-42, 2.1 + row * 2.2, 110], row % 2 ? 0x536769 : 0x718183);
+    if (!clear) return null;
+    const building = box(parent, size,
+      [x, size[1] / 2, z], color);
+    building.rotation.y = Math.atan2(next.x - point.x, next.z - point.z);
+    this.colliders.push({ x, z, radius });
+    return building;
+  }
+
+  private addBuildings(scene: THREE.Object3D): void {
+    if (this.definition.scenery === 'nova') {
+      for (let i = 0; i < 6; i++) {
+        const z = 30 + i * 30;
+        box(scene, [28, 8, 26], [37, 4, z], 0x344247);
+        box(scene, [29, 1, 27], [37, 8.5, z], 0x17262b);
+        const glass = box(scene, [1, 3.3, 22], [22.8, 5.3, z], 0x6c9097, 0.13);
+        glass.castShadow = false;
+        box(scene, [8, 0.2, 20], [22.5, 2.5, z], 0xe1e9e1);
+      }
+      box(scene, [18, 11, 58], [-42, 5.5, 110], 0x4c5759);
+      box(scene, [24, 1.5, 62], [-43, 11.5, 110], 0x202a2d);
+      for (let row = 0; row < 4; row++) {
+        box(scene, [17, 0.45, 54], [-42, 2.1 + row * 2.2, 110], row % 2 ? 0x536769 : 0x718183);
+      }
+      return;
+    }
+    const airfield = this.definition.scenery === 'airfield';
+    const side = airfield ? -1 : 1;
+    for (let i = 0; i < 5; i++) {
+      const distance = 65 + i * 37;
+      const pit = this.addTracksideBox(scene, distance, side * 52, [28, airfield ? 7 : 9, 31],
+        airfield ? 0x515d62 : 0x40494b);
+      if (pit) box(pit, [29, 1.2, 33], [0, (airfield ? 7 : 9) / 2 + 0.6, 0], 0x1c282c);
+    }
+    for (const fraction of airfield ? [0.27, 0.68] : [0.35, 0.74]) {
+      this.addTracksideBox(scene, this.length * fraction, 58, [72, 12, 30],
+        airfield ? 0x657479 : 0x536363);
     }
   }
 
-  private addTrees(scene: THREE.Scene): void {
+  private addTrees(scene: THREE.Object3D): void {
     const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x5f5546, roughness: 1 });
     const crownMaterial = new THREE.MeshStandardMaterial({ color: 0x2e503b, roughness: 1 });
-    const count = 180;
+    const count = this.definition.scenery === 'airfield' ? 100 :
+      this.definition.scenery === 'park' ? 420 : 180;
     const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.55, 5, 5), trunkMaterial, count);
     const crowns = new THREE.InstancedMesh(new THREE.ConeGeometry(3.4, 9, 6), crownMaterial, count);
     let seed = 92345;
@@ -339,10 +317,12 @@ export class Track {
     };
     const matrix = new THREE.Matrix4();
     let added = 0;
-    while (added < count) {
-      const x = -350 + rand() * 650;
-      const z = -310 + rand() * 730;
-      if (this.nearest(x, z).distance < 33) continue;
+    const margin = this.outerFence.radius;
+    let attempts = 0;
+    while (added < count && attempts++ < count * 100) {
+      const x = this.outerFence.centerX + (rand() * 2 - 1) * margin;
+      const z = this.outerFence.centerZ + (rand() * 2 - 1) * margin;
+      if (this.nearest(x, z).distance < (this.definition.scenery === 'airfield' ? 65 : 38)) continue;
       if (Math.hypot(x - this.outerFence.centerX, z - this.outerFence.centerZ) > this.outerFence.radius - 8) continue;
       const scale = 0.6 + rand() * 0.9;
       matrix.compose(new THREE.Vector3(x, 2.5 * scale, z), new THREE.Quaternion(),
@@ -353,8 +333,30 @@ export class Track {
       crowns.setMatrixAt(added, matrix);
       added++;
     }
+    trunks.count = crowns.count = added;
     trunks.castShadow = true;
     crowns.castShadow = true;
     scene.add(trunks, crowns);
+  }
+
+  dispose(): void {
+    const geometries = new Set<THREE.BufferGeometry>();
+    const materials = new Set<THREE.Material>();
+    const textures = new Set<THREE.Texture>();
+    this.group.traverse(object => {
+      if (object instanceof THREE.Mesh) {
+        geometries.add(object.geometry);
+        for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+          materials.add(material);
+          if ('map' in material && material.map instanceof THREE.Texture) textures.add(material.map);
+        }
+      }
+      if (object instanceof THREE.DirectionalLight) object.shadow.dispose();
+    });
+    this.scene.remove(this.group);
+    this.group.clear();
+    for (const texture of textures) texture.dispose();
+    for (const material of materials) material.dispose();
+    for (const geometry of geometries) geometry.dispose();
   }
 }

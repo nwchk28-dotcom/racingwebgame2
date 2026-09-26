@@ -11,3 +11,44 @@ html,body,#app,#app *,#scene,canvas,.menu-overlay,.rotate-overlay,button{touch-a
 @media(pointer:coarse){.touch-controls{padding-right:max(44px,env(safe-area-inset-right))}}
 .gear-label{margin-left:12px;color:#e7f0e9;letter-spacing:.13em}.gear-label b{font-family:'Barlow Condensed',sans-serif;font-size:16px;color:#ef5949;vertical-align:-1px}
 @media(orientation:portrait) and (pointer:coarse){.rotate-overlay{display:flex}}
+
+#start-overlay{overflow-y:auto}
+#start-overlay .menu-card{max-width:940px}
+#start-overlay .menu-card h1{margin:17px 0 12px;font-size:clamp(74px,8vw,120px)}
+#start-overlay .menu-card p{margin:0 0 20px}
+.track-select-heading{display:flex;justify-content:space-between;gap:12px;max-width:810px;margin-bottom:8px;font-size:9px;font-weight:800;letter-spacing:.2em;color:#d8e5dd}
+.track-select-heading span:last-child{color:#96aca5}
+.track-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:810px;margin-bottom:16px}
+.track-option{min-width:0;min-height:145px;padding:10px 12px;border:1px solid #b9d1c966;border-radius:4px;background:linear-gradient(145deg,#132b31e6,#0a171bdc);color:#f2f8f3;text-align:left;touch-action:manipulation;transition:border-color .15s,background .15s,transform .15s}
+.track-option:hover{border-color:#e9f4ee;transform:translateY(-2px)}
+.track-option.selected{border-color:#f16b58;background:linear-gradient(145deg,#63312dd9,#182e31e8);box-shadow:inset 0 0 0 1px #e85a4d66,0 9px 32px #070f1780}
+.track-option-top,.track-option-bottom{display:flex;align-items:center;justify-content:space-between;gap:7px;font-size:9px;font-weight:700;letter-spacing:.1em;color:#abbfb9}
+.track-option-top b{color:#ed6c5b;font-size:13px}
+.track-option svg{display:block;width:100%;height:67px;margin:3px auto}
+.track-option svg polyline{fill:none;stroke:#d9e5dc;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.track-option strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Barlow Condensed',Impact,sans-serif;font-size:22px;letter-spacing:.08em}
+.track-option-bottom{margin-top:4px;font-size:8px;letter-spacing:.04em}
+.track-option-bottom b{color:#fff;font-variant-numeric:tabular-nums}
+#start-button{max-width:810px}
+
+@media(orientation:landscape) and (max-height:540px){
+  #start-overlay{padding:22px max(22px,env(safe-area-inset-right)) 16px max(22px,env(safe-area-inset-left))}
+  #start-overlay .menu-card{display:grid;grid-template-columns:minmax(165px,.62fr) minmax(0,1.65fr);grid-template-rows:auto auto auto 1fr;column-gap:18px;align-items:start;max-width:none}
+  #start-overlay .menu-kicker{grid-column:1;grid-row:1;font-size:8px;letter-spacing:.1em}
+  #start-overlay h1{grid-column:1;grid-row:2;font-size:clamp(52px,7vw,73px)!important;margin:19px 0 6px!important}
+  #start-overlay p{grid-column:1;grid-row:3;font-size:10px;margin:0!important}
+  #start-overlay .track-select-heading{grid-column:2;grid-row:1;margin:0 0 5px;font-size:8px}
+  #start-overlay .track-options{grid-column:2;grid-row:2 / span 2;gap:6px;margin:0}
+  #start-overlay .track-option{min-height:124px;padding:6px}
+  #start-overlay .track-option svg{height:52px;margin:1px auto}
+  #start-overlay .track-option strong{font-size:16px}
+  #start-overlay .track-option-top,.track-option-bottom{font-size:7px}
+  #start-overlay .primary-button{grid-column:2;grid-row:4;margin-top:9px;height:43px}
+  #start-overlay .menu-help,#start-overlay .menu-footer{display:none}
+}
+
+@media(max-width:650px) and (orientation:landscape){
+  #start-overlay .menu-card{grid-template-columns:145px minmax(0,1fr);column-gap:10px}
+  #start-overlay .track-option strong{font-size:14px}
+  #start-overlay .track-option-bottom{display:block}
+}

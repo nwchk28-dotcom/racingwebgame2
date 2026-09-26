@@ -50,6 +50,11 @@ export class LapTracker {
     if (delta > 0.5) delta -= 1;
     this.previousProgress = progress;
 
+    // A nearby but different section of road must not grant a shortcut lap.
+    if (Math.abs(delta) * this.trackLength > Math.max(15, speed * dt * 4 + 6)) {
+      this.invalidate('経路逸脱');
+    }
+
     if (delta < -0.0002 && speed > 2) {
       this.reverseDistance += -delta * this.trackLength;
       if (this.reverseDistance > 8) this.invalidate('逆走');
