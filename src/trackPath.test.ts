@@ -72,4 +72,24 @@ describe('three circuits', () => {
       }
     }
   });
+
+  it('places the Monza and Silverstone lap origin on their F1 timing lines', () => {
+    const expectedOldProgress = { monza: [0.93, 0.97], silverstone: [0.43, 0.46] } as const;
+    for (const definition of TRACKS.filter(item => item.timingLine)) {
+      const original = new TrackPath({ ...definition, timingLine: undefined });
+      const [x, z] = definition.timingLine!;
+      const oldLine = original.nearest(x, z);
+      const [minimum, maximum] = expectedOldProgress[definition.id as 'monza' | 'silverstone'];
+      expect(oldLine.distance).toBeLessThan(15);
+      expect(oldLine.progress).toBeGreaterThan(minimum);
+      expect(oldLine.progress).toBeLessThan(maximum);
+
+      const moved = new TrackPath(definition);
+      const oldIndex = Math.round(oldLine.progress * original.sampleCount) % original.sampleCount;
+      const oldForward = original.samples[oldIndex + 1].clone().sub(original.samples[oldIndex]).normalize();
+      const newForward = moved.samples[1].clone().sub(moved.samples[0]).normalize();
+      expect(oldForward.dot(newForward)).toBeGreaterThan(0.99);
+      expect(moved.nearest(moved.start.x, moved.start.z).progress).toBeCloseTo(0, 3);
+    }
+  });
 });

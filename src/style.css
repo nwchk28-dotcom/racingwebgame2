@@ -52,3 +52,16 @@ html,body,#app,#app *,#scene,canvas,.menu-overlay,.rotate-overlay,button{touch-a
   #start-overlay .track-option strong{font-size:14px}
   #start-overlay .track-option-bottom{display:block}
 }
+
+.course-map{position:absolute;top:81px;right:clamp(22px,3.4vw,62px);z-index:2;display:none;width:180px;padding:11px 10px 8px;border:1px solid #d6ece044;border-radius:5px;background:linear-gradient(155deg,#102328e8,#08161bcf);box-shadow:0 12px 35px #06101482;backdrop-filter:blur(12px);pointer-events:none}
+.in-game .course-map{display:block}
+.course-map-heading,.course-map-caption{display:flex;align-items:center;justify-content:space-between;font-size:8px;font-weight:800;letter-spacing:.15em;color:#dcebe3}
+.map-heading-mark{color:#ef6656;font-size:7px}
+.course-map svg{display:block;width:100%;height:auto;overflow:visible}
+.course-map-route{fill:none;stroke:#dceae1;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:.86}
+.course-map-start{fill:#eaf4ee;stroke:#102126;stroke-width:1.5}
+.course-map-position{fill:#f04438;stroke:#fff5ef;stroke-width:1.5;filter:drop-shadow(0 0 3px #f04438)}
+.course-map-caption{justify-content:flex-start;gap:6px;font-size:7px;color:#a9bfb6}
+.course-map-legend{width:6px;height:6px;border-radius:50%;background:#f04438;box-shadow:0 0 6px #f04438}
+@media(pointer:coarse){.course-map{top:62px;right:max(19px,env(safe-area-inset-right));width:138px;padding:7px 7px 5px}.course-map-heading{font-size:7px}.course-map-caption{font-size:6px}}
+@media(max-height:400px) and (pointer:coarse){.course-map{width:118px;top:58px}.course-map-heading{font-size:6px}.course-map-caption{font-size:5px}}

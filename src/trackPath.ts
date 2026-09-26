@@ -27,6 +27,7 @@ export class TrackPath {
     const source = definition.points.map(([x, z]) => new THREE.Vector3(x, 0, z));
     let getPoint: (fraction: number) => THREE.Vector3;
     let approximateLength: number;
+    let sourceScale = 1;
     if (definition.spline) {
       const curve = new THREE.CatmullRomCurve3(source, true, 'catmullrom', 1);
       approximateLength = curve.getLength();
@@ -38,6 +39,7 @@ export class TrackPath {
       }
       approximateLength = cumulative[source.length];
       const scale = (definition.targetLength ?? approximateLength) / approximateLength;
+      sourceScale = scale;
       getPoint = fraction => {
         const distance = fraction * approximateLength;
         let low = 0;
@@ -77,6 +79,16 @@ export class TrackPath {
       let smoothedLength = 0;
       for (let i = 0; i < this.sampleCount; i++) {
         smoothedLength += this.samples[i].distanceTo(this.samples[(i + 1) % this.sampleCount]);
+      }
+      if (definition.timingLine) {
+        const [x, z] = definition.timingLine;
+        const line = new THREE.Vector3(x * sourceScale, 0, z * sourceScale);
+        let closest = 0;
+        for (let i = 1; i < this.sampleCount; i++) {
+          if (this.samples[i].distanceToSquared(line) < this.samples[closest].distanceToSquared(line)) closest = i;
+        }
+        // Lap progress, the painted line, spawn and map marker now share this origin.
+        this.samples.push(...this.samples.splice(0, closest));
       }
       const origin = this.samples[0].clone();
       const scale = (definition.targetLength ?? smoothedLength) / smoothedLength;

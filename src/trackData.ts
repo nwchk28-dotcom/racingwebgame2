@@ -10,6 +10,8 @@ export interface TrackDefinition {
   roadHalfWidth: number;
   curbWidth: number;
   targetLength?: number;
+  /** Timing/control line in the source centerline's local coordinates. */
+  timingLine?: readonly [number, number];
   spline?: boolean;
   scenery: SceneryKind;
   sky: string;
@@ -86,9 +88,11 @@ export const TRACKS: readonly TrackDefinition[] = [
     roadHalfWidth: 9.5, curbWidth: 1.2, spline: true, scenery: 'nova',
     sky: '#a9c6cf', grass: '#56704b' },
   { id: 'monza', name: 'MONZA', location: 'ITALY', points: monza,
-    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5793, scenery: 'park',
+    // The F1 control (finish) line is about 309 m before the separate race start line.
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5793, timingLine: [-34, -310], scenery: 'park',
     sky: '#a9c7c7', grass: '#4b7048' },
   { id: 'silverstone', name: 'SILVERSTONE', location: 'GREAT BRITAIN', points: silverstone,
-    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5891, scenery: 'airfield',
+    // F1 control line is on Hamilton Straight, about 134 m before its separate start line.
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5891, timingLine: [-874, -1030], scenery: 'airfield',
     sky: '#aebec6', grass: '#63764e' },
 ];

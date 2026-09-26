@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CarVisual } from './car';
 import { readBestTime, saveBestTime } from './bestTimes';
 import { Controls } from './controls';
+import { createCourseMap, type CourseMap } from './courseMap';
 import { EngineAudio, gearAtSpeed } from './engineAudio';
 import { LapTracker, formatTime } from './lap';
 import { CarPhysics } from './physics';
@@ -56,6 +57,16 @@ app.innerHTML = `
       <button id="pause-button" class="icon-button" type="button" aria-label="一時停止" title="一時停止 (Esc)">Ⅱ</button>
     </div>
   </header>
+
+  <aside id="course-map" class="course-map" aria-label="現在地を示すコースマップ">
+    <div class="course-map-heading"><span>CIRCUIT MAP</span><span class="map-heading-mark">LIVE</span></div>
+    <svg id="course-map-svg" viewBox="0 0 180 128" role="img" aria-label="コースと現在地">
+      <polyline id="course-map-route" class="course-map-route" points="" />
+      <circle id="course-map-start" class="course-map-start" r="3" />
+      <circle id="course-map-position" class="course-map-position" r="5" />
+    </svg>
+    <div class="course-map-caption"><span class="course-map-legend"></span> CURRENT POSITION</div>
+  </aside>
 
   <main id="hud" class="hud" aria-live="off">
     <div class="timing-panel">
@@ -160,6 +171,10 @@ const toastElement = app.querySelector<HTMLElement>('#toast')!;
 const pauseOverlay = app.querySelector<HTMLElement>('#pause-overlay')!;
 const startOverlay = app.querySelector<HTMLElement>('#start-overlay')!;
 const currentTrackName = app.querySelector<HTMLElement>('#current-track-name')!;
+const mapRoute = app.querySelector<SVGPolylineElement>('#course-map-route')!;
+const mapStart = app.querySelector<SVGCircleElement>('#course-map-start')!;
+const mapPosition = app.querySelector<SVGCircleElement>('#course-map-position')!;
+let courseMap: CourseMap;
 let active = false;
 let paused = false;
 let elapsed = 0;
@@ -167,6 +182,20 @@ let lastFrame = 0;
 let accumulator = 0;
 let toastTimeout = 0;
 let lapProgressHint = 0;
+
+function refreshCourseMap(): void {
+  courseMap = createCourseMap(track);
+  mapRoute.setAttribute('points', courseMap.outline);
+  mapStart.setAttribute('cx', String(courseMap.start.x));
+  mapStart.setAttribute('cy', String(courseMap.start.y));
+  refreshMapPosition();
+}
+
+function refreshMapPosition(): void {
+  const point = courseMap.project(physics.x, physics.z);
+  mapPosition.setAttribute('cx', String(Math.max(6, Math.min(174, point.x))));
+  mapPosition.setAttribute('cy', String(Math.max(25, Math.min(122, point.y))));
+}
 
 function resize(): void {
   const width = window.innerWidth;
@@ -224,6 +253,7 @@ function selectTrack(id: TrackId): void {
   lapProgressHint = 0;
   currentTrackName.textContent = definition.name;
   car.setPose(physics.x, physics.z, physics.yaw);
+  refreshCourseMap();
   refreshTrackChoices();
   refreshHud();
   lastFrame = performance.now();
@@ -237,6 +267,7 @@ function reset(notify = true): void {
   lapProgressHint = 0;
   accumulator = 0;
   car.setPose(physics.x, physics.z, physics.yaw);
+  refreshMapPosition();
   refreshHud();
   if (notify) toast('START LINE に戻りました');
 }
@@ -327,11 +358,13 @@ function frame(now: number): void {
     car.setPose(physics.x, physics.z, physics.yaw);
     car.animate(controls.value.steer, physics.speed, elapsed);
     engineAudio.update(physics.speed * 3.6, controls.value.throttle);
+    refreshMapPosition();
     refreshHud();
   }
   renderer.render(scene, car.camera);
 }
 
+refreshCourseMap();
 refreshHud();
 refreshTrackChoices();
 renderer.setAnimationLoop(frame);
