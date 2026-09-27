@@ -37,7 +37,7 @@ const trackCards = TRACKS.map((definition, index) => {
   return `
   <button class="track-option${index === 0 ? ' selected' : ''}" type="button"
     data-track-id="${definition.id}" data-page="${Math.floor(index / 3)}" aria-pressed="${index === 0}">
-    <span class="track-option-top"><b>0${index + 1}</b><span>${definition.location}</span></span>
+    <span class="track-option-top"><b>${String(index + 1).padStart(2, '0')}</b><span>${definition.location}</span></span>
     ${preview.outline}
     <strong>${definition.name}</strong>
     <span class="track-option-bottom"><span>${(preview.length / 1000).toFixed(definition.targetLength ? 3 : 2)} KM</span>
@@ -58,7 +58,7 @@ app.innerHTML = `
 
   <header class="topbar">
     <div class="brand"><span class="brand-mark">A<span>1</span></span><span class="brand-name">APEX <strong>ONE</strong><small>TIME ATTACK</small></span></div>
-    <div class="track-name"><span class="live-dot"></span> <span id="current-track-name">NOVA CIRCUIT</span> <span class="track-meta">/ DRY / 23°C</span></div>
+    <div class="track-name"><span class="live-dot"></span> <span id="current-track-name">${TRACKS[0].name}</span> <span class="track-meta">/ DRY / 23°C</span></div>
     <div class="top-actions">
       <button id="sound-button" class="icon-button" type="button" aria-label="音を消す" title="エンジン音を切り替え">♪</button>
       <button id="reset-button" class="icon-button" type="button" aria-label="スタート地点に戻る" title="リセット (R)">↻</button>
@@ -104,7 +104,7 @@ app.innerHTML = `
       <p>オンボード視点で、自己ベストを塗り替えよう。</p>
       <div class="track-select-heading"><span>SELECT CIRCUIT</span><div class="track-pages" role="group" aria-label="コース一覧のページ">${trackPages}</div><span class="track-total">SOLO TIME ATTACK / ${String(TRACKS.length).padStart(2, '0')} TRACKS</span></div>
       <div class="track-options" role="group" aria-label="コースを選択">${trackCards}</div>
-      <div class="steering-select" role="group" aria-label="ステアリング方式"><span>STEERING</span><div class="steering-options"><button class="steering-option selected" data-steering-mode="slider" type="button" aria-pressed="true">SLIDER</button><button class="steering-option" data-steering-mode="buttons" type="button" aria-pressed="false">BUTTONS</button></div></div>
+      <div class="steering-select" role="group" aria-label="ステアリング方式"><span>STEERING</span><div class="steering-options"><button class="steering-option" data-steering-mode="slider" type="button" aria-pressed="false">SLIDER</button><button class="steering-option selected" data-steering-mode="buttons" type="button" aria-pressed="true">BUTTONS</button></div></div>
       <button id="start-button" class="primary-button" type="button">START ENGINE <span>↗</span></button>
       <div class="menu-help"><span class="desktop-help">W / ↑ 加速　S / ↓ ブレーキ　A D / ← → ハンドル</span><span class="mobile-help">左でハンドル、右のペダルで運転</span></div>
     </div>
@@ -120,6 +120,7 @@ app.innerHTML = `
 
   <div id="rotate-overlay" class="rotate-overlay"><div class="rotate-icon">↻</div><strong>横向きでプレイしてください</strong><p>端末を回転すると、コックピットが表示されます。</p></div>
 `;
+app.classList.add('button-steering');
 
 const scene = new THREE.Scene();
 let selectedTrack: TrackDefinition = TRACKS[0];

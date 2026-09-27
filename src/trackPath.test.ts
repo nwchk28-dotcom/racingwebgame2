@@ -74,16 +74,21 @@ describe('all circuits', () => {
     }
   });
 
-  it('places the Monza and Silverstone lap origin on their F1 timing lines', () => {
-    const expectedOldProgress = { monza: [0.93, 0.97], silverstone: [0.43, 0.46] } as const;
+  it('places each lap origin at its configured timing line', () => {
+    const expectedOldProgress: Partial<Record<(typeof TRACKS)[number]['id'], readonly [number, number]>> = {
+      monza: [0.93, 0.97], silverstone: [0.43, 0.46], monaco: [0.72, 0.74],
+      jeddah: [0, 0.02], baku: [0, 0.02], 'abu-dhabi': [0, 0.02], singapore: [0, 0.02],
+    };
     for (const definition of TRACKS.filter(item => item.timingLine)) {
       const original = new TrackPath({ ...definition, timingLine: undefined });
       const [x, z] = definition.timingLine!;
       const oldLine = original.nearest(-x, z);
-      const [minimum, maximum] = expectedOldProgress[definition.id as 'monza' | 'silverstone'];
+      const [minimum, maximum] = expectedOldProgress[definition.id]!;
       expect(oldLine.distance).toBeLessThan(15);
-      expect(oldLine.progress).toBeGreaterThan(minimum);
-      expect(oldLine.progress).toBeLessThan(maximum);
+      const unwrappedProgress = Math.min(oldLine.progress, 1 - oldLine.progress);
+      const checkedProgress = minimum === 0 ? unwrappedProgress : oldLine.progress;
+      expect(checkedProgress).toBeGreaterThanOrEqual(minimum);
+      expect(checkedProgress).toBeLessThan(maximum);
 
       const moved = new TrackPath(definition);
       const oldIndex = Math.round(oldLine.progress * original.sampleCount) % original.sampleCount;

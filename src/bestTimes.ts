@@ -1,9 +1,9 @@
 import type { TrackId } from './trackData';
 
-const LEGACY_NOVA_KEY = 'apex-one:best-lap:v1';
+const BEST_LAP_PREFIX = 'apex-one:best-lap:v1';
 
 export function bestTimeKey(trackId: TrackId): string {
-  return trackId === 'nova' ? LEGACY_NOVA_KEY : `${LEGACY_NOVA_KEY}:${trackId}`;
+  return `${BEST_LAP_PREFIX}:${trackId}`;
 }
 
 export function readBestTime(trackId: TrackId, storage?: Pick<Storage, 'getItem'>): number | null {

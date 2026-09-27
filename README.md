@@ -1,6 +1,6 @@
 # APEX ONE
 
-1台で走る、オンボード視点のフォーミュラ・タイムアタックです。NOVA CIRCUIT、Monza、Silverstone、Albert Park、Mexico City、Circuit Gilles-Villeneuve、Monaco、Spa-Francorchamps、São Pauloの9コースを選べます。車体と周辺施設は独自のデザインです。
+1台で走る、オンボード視点のフォーミュラ・タイムアタックです。Monza、Silverstone、Albert Park、Mexico City、Circuit Gilles-Villeneuve、Monaco、Spa-Francorchamps、São Paulo、Jeddah、Baku、Yas Marina、Singaporeの12コースを選べます。車体と周辺施設は独自のデザインです。
 
 ## ローカル実行
 
@@ -13,17 +13,17 @@ npm run dev
 
 ## 操作
 
-- スマホ: 横向きにして、左のスライダーで操舵、右のペダルで加速と制動
+- スマホ: 横向きにして、左の操舵ボタン、右のペダルで運転。スタート画面でスライダー式にも変更できます
 - PC: A/D または左右矢印で操舵、W/上矢印で加速、S/下矢印で制動
 - Esc: 一時停止、R: スタート地点にリセット
 - 右上の音符ボタン: エンジン音のオン・オフ
 - スタート画面でコースを選択。一時停止画面の「SELECT CIRCUIT」から戻れます
 
-縁石の外端まではコース内です。4輪すべてが外に出るか、逆走、外周の円形ガードレールへの接触があった周回はベストタイムに記録されません。コースアウトしてもグリップや加減速は変わりません。記録はコース別にそのブラウザの `localStorage` に保存され、従来のNOVA記録も引き継がれます。
+縁石の外端まではコース内です。4輪すべてが外に出るか、逆走、外周の円形ガードレールへの接触があった周回はベストタイムに記録されません。コースアウトしてもグリップや加減速は変わりません。記録はコース別にそのブラウザの `localStorage` に保存されます。NOVAは選択肢から削除しましたが、ブラウザに保存済みの旧記録は消去しません。
 
 ## コース形状
 
-実在8コースの中心線は [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) のMITライセンスのデータを加工したものです。出典とライセンス全文は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) に記載しています。Monza、Silverstone、Albert Park、Mexico City、Circuit Gilles-Villeneuve、Monaco、Spa-Francorchamps、São Pauloの全長は、それぞれ5.793 km、5.891 km、5.278 km、4.304 km、4.361 km、3.337 km、7.004 km、4.309 kmを目標としています。すべて現行の平面路面モデルで走行でき、高低差や正確な路面勾配、施設配置は再現していません。公式のコース図やロゴはゲーム内に収録していません。
+実在12コースの中心線は [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) のMITライセンスのデータを加工したものです。出典とライセンス全文は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) に記載しています。新しいJeddah、Baku、Yas Marina、Singaporeの全長は、それぞれ6.174 km、6.003 km、5.281 km、4.927 kmを目標としています。Monacoの計測線はBoulevard Albert 1erのスタート／フィニッシュ地点へ移しました。すべて現行の平面路面モデルで走行でき、高低差や正確な路面勾配、施設配置は再現していません。公式のコース図やロゴはゲーム内に収録していません。
 
 ## エンジン音
 

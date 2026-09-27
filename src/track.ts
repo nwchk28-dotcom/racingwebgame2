@@ -273,24 +273,8 @@ export class Track extends TrackPath {
   }
 
   private addBuildings(scene: THREE.Object3D): void {
-    if (this.definition.scenery === 'nova') {
-      for (let i = 0; i < 6; i++) {
-        const z = 30 + i * 30;
-        box(scene, [28, 8, 26], [37, 4, z], 0x344247);
-        box(scene, [29, 1, 27], [37, 8.5, z], 0x17262b);
-        const glass = box(scene, [1, 3.3, 22], [22.8, 5.3, z], 0x6c9097, 0.13);
-        glass.castShadow = false;
-        box(scene, [8, 0.2, 20], [22.5, 2.5, z], 0xe1e9e1);
-      }
-      box(scene, [18, 11, 58], [-42, 5.5, 110], 0x4c5759);
-      box(scene, [24, 1.5, 62], [-43, 11.5, 110], 0x202a2d);
-      for (let row = 0; row < 4; row++) {
-        box(scene, [17, 0.45, 54], [-42, 2.1 + row * 2.2, 110], row % 2 ? 0x536769 : 0x718183);
-      }
-      return;
-    }
     if (this.definition.scenery === 'urban') {
-      // Compact unbranded blocks make Monaco distinct without crowding the road.
+      // Unbranded blocks suggest each street circuit without crowding the road.
       for (let i = 0; i < 22; i++) {
         const fraction = (i + 0.35) / 22;
         const side = i % 2 ? -1 : 1;
@@ -298,6 +282,17 @@ export class Track extends TrackPath {
         const building = this.addTracksideBox(scene, this.length * fraction, side * 30,
           [18, height, 19], i % 3 ? 0xc2c7bd : 0x9eafa9);
         if (building) box(building, [19, 0.8, 20], [0, height / 2 + 0.4, 0], 0x64777b);
+      }
+      return;
+    }
+    if (this.definition.scenery === 'marina') {
+      for (let i = 0; i < 12; i++) {
+        const fraction = (i + 0.2) / 12;
+        const side = i % 2 ? -1 : 1;
+        const height = 8 + i % 4 * 4;
+        const building = this.addTracksideBox(scene, this.length * fraction, side * 64,
+          [30, height, 22], i % 3 ? 0x728d94 : 0xd1d3c8);
+        if (building) box(building, [31, 0.7, 23], [0, height / 2 + 0.35, 0], 0x304a52);
       }
       return;
     }
@@ -335,6 +330,7 @@ export class Track extends TrackPath {
     const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x5f5546, roughness: 1 });
     const crownMaterial = new THREE.MeshStandardMaterial({ color: 0x2e503b, roughness: 1 });
     const count = this.definition.scenery === 'urban' ? 16 :
+      this.definition.scenery === 'marina' ? 45 :
       this.definition.scenery === 'stadium' ? 65 :
       this.definition.scenery === 'airfield' ? 100 :
       this.definition.scenery === 'park' ? 420 : 180;

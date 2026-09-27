@@ -1,7 +1,7 @@
 import type { DriverInput } from './physics';
 
 export class Controls {
-  private steeringMode: 'slider' | 'buttons' = 'slider';
+  private steeringMode: 'slider' | 'buttons' = 'buttons';
   private keys = new Set<string>();
   private touchSteer = 0;
   private touchThrottle = false;

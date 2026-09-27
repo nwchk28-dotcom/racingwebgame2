@@ -2,10 +2,12 @@
 // See THIRD_PARTY_NOTICES.md. All scenery, meshes, and menu maps are original.
 import { albertParkPoints, mexicoCityPoints, gillesVilleneuvePoints } from './flatCircuitData';
 import { monacoPoints, spaPoints, saoPauloPoints } from './additionalCircuitData';
+import { jeddahPoints, bakuPoints, abuDhabiPoints, singaporePoints } from './streetCircuitData';
 
-export type TrackId = 'nova' | 'monza' | 'silverstone' | 'albert-park' | 'mexico-city'
-  | 'gilles-villeneuve' | 'monaco' | 'spa' | 'sao-paulo';
-export type SceneryKind = 'nova' | 'park' | 'airfield' | 'stadium' | 'urban';
+export type TrackId = 'monza' | 'silverstone' | 'albert-park' | 'mexico-city'
+  | 'gilles-villeneuve' | 'monaco' | 'spa' | 'sao-paulo'
+  | 'jeddah' | 'baku' | 'abu-dhabi' | 'singapore';
+export type SceneryKind = 'park' | 'airfield' | 'stadium' | 'urban' | 'marina';
 export interface TrackDefinition {
   id: TrackId;
   name: string;
@@ -21,13 +23,6 @@ export interface TrackDefinition {
   sky: string;
   grass: string;
 }
-
-const nova: readonly (readonly [number, number])[] = [
-  [0, 0], [0, 95], [3, 210], [-46, 288], [-147, 303],
-  [-228, 253], [-243, 166], [-185, 109], [-171, 20],
-  [-234, -62], [-213, -142], [-132, -192], [-27, -183],
-  [65, -179], [116, -113], [83, -54], [0, -96],
-];
 
 const monza: readonly (readonly [number, number])[] = [
   [0, 0], [36.5, 429.4], [53.1, 609.4], [54.9, 616.7], [60, 620.9],
@@ -88,9 +83,6 @@ const silverstone: readonly (readonly [number, number])[] = [
 ];
 
 export const TRACKS: readonly TrackDefinition[] = [
-  { id: 'nova', name: 'NOVA CIRCUIT', location: 'ORIGINAL', points: nova,
-    roadHalfWidth: 9.5, curbWidth: 1.2, spline: true, scenery: 'nova',
-    sky: '#a9c6cf', grass: '#56704b' },
   { id: 'monza', name: 'MONZA', location: 'ITALY', points: monza,
     // The F1 control (finish) line is about 309 m before the separate race start line.
     roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5793, timingLine: [-34, -310], scenery: 'park',
@@ -109,7 +101,9 @@ export const TRACKS: readonly TrackDefinition[] = [
     roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 4361, scenery: 'park',
     sky: '#a9c8cd', grass: '#557a58' },
   { id: 'monaco', name: 'MONACO', location: 'MONACO', points: monacoPoints,
-    roadHalfWidth: 4.2, curbWidth: 0.6, targetLength: 3337, scenery: 'urban',
+    // OSM's marked start/finish point projects to this spot on Boulevard Albert 1er.
+    roadHalfWidth: 4.2, curbWidth: 0.6, targetLength: 3337,
+    timingLine: [-476.7, -486.1], scenery: 'urban',
     sky: '#a9c5cf', grass: '#697c6b' },
   { id: 'spa', name: 'SPA-FRANCORCHAMPS', location: 'BELGIUM', points: spaPoints,
     roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 7004, scenery: 'park',
@@ -117,4 +111,16 @@ export const TRACKS: readonly TrackDefinition[] = [
   { id: 'sao-paulo', name: 'SÃO PAULO', location: 'BRAZIL', points: saoPauloPoints,
     roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 4309, scenery: 'stadium',
     sky: '#adc6c9', grass: '#537653' },
+  { id: 'jeddah', name: 'JEDDAH CORNICHE', location: 'SAUDI ARABIA', points: jeddahPoints,
+    roadHalfWidth: 7.5, curbWidth: 1, targetLength: 6174, timingLine: [0, 0], scenery: 'urban',
+    sky: '#9ebbc5', grass: '#a99476' },
+  { id: 'baku', name: 'BAKU CITY', location: 'AZERBAIJAN', points: bakuPoints,
+    roadHalfWidth: 6.2, curbWidth: 0.9, targetLength: 6003, timingLine: [0, 0], scenery: 'urban',
+    sky: '#a8c5d0', grass: '#798579' },
+  { id: 'abu-dhabi', name: 'YAS MARINA', location: 'ABU DHABI', points: abuDhabiPoints,
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5281, timingLine: [0, 0], scenery: 'marina',
+    sky: '#b1c9d1', grass: '#927f64' },
+  { id: 'singapore', name: 'MARINA BAY', location: 'SINGAPORE', points: singaporePoints,
+    roadHalfWidth: 7.5, curbWidth: 1, targetLength: 4927, timingLine: [0, 0], scenery: 'urban',
+    sky: '#a5bdc9', grass: '#637b6c' },
 ];

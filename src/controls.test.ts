@@ -43,6 +43,7 @@ describe('mobile controls', () => {
     vi.stubGlobal('document', fakeDocument);
     vi.stubGlobal('window', new EventTarget());
     const controls = new Controls({ querySelector } as unknown as HTMLElement);
+    controls.setSteeringMode('slider');
 
     elements.get('#steering-track')!.dispatchEvent(touchEvent('touchstart', 1, 90, 1));
     elements.get('#throttle')!.dispatchEvent(touchEvent('touchstart', 2, 50, 2));
@@ -75,7 +76,7 @@ describe('mobile controls', () => {
     vi.stubGlobal('document', fakeDocument);
     vi.stubGlobal('window', new EventTarget());
     const controls = new Controls({ querySelector } as unknown as HTMLElement);
-    controls.setSteeringMode('buttons');
+    expect(controls.value).toEqual({ steer: 0, throttle: 0, brake: 0 });
 
     elements.get('#steer-right')!.dispatchEvent(touchEvent('touchstart', 1, 50, 1));
     elements.get('#throttle')!.dispatchEvent(touchEvent('touchstart', 2, 50, 2));

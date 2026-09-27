@@ -18,9 +18,13 @@ html,body,#app,#app *,#scene,canvas,.menu-overlay,.rotate-overlay,button{touch-a
 #start-overlay .menu-card p{margin:0 0 20px}
 .track-select-heading{display:flex;justify-content:space-between;gap:12px;max-width:810px;margin-bottom:8px;font-size:9px;font-weight:800;letter-spacing:.2em;color:#d8e5dd}
 .track-select-heading span:last-child{color:#96aca5}
-.track-pages{display:none;align-items:center;gap:4px}
+.track-pages{display:flex;align-items:center;gap:4px}
 .track-page{height:22px;padding:0 7px;border:1px solid #b9d1c966;border-radius:3px;background:#11272cbb;color:#d8e5dd;font-size:8px;font-weight:800;letter-spacing:.06em;touch-action:manipulation}
 .track-page.selected{border-color:#f16b58;background:#67312ccc;color:#fff}
+#start-overlay[data-page="0"] .track-option:not([data-page="0"]),
+#start-overlay[data-page="1"] .track-option:not([data-page="1"]),
+#start-overlay[data-page="2"] .track-option:not([data-page="2"]),
+#start-overlay[data-page="3"] .track-option:not([data-page="3"]){display:none}
 .track-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:810px;margin-bottom:16px}
 .track-option{min-width:0;min-height:112px;padding:8px 10px;border:1px solid #b9d1c966;border-radius:4px;background:linear-gradient(145deg,#132b31e6,#0a171bdc);color:#f2f8f3;text-align:left;touch-action:manipulation;transition:border-color .15s,background .15s,transform .15s}
 .track-option:hover{border-color:#e9f4ee;transform:translateY(-2px)}
@@ -59,9 +63,6 @@ html,body,#app,#app *,#scene,canvas,.menu-overlay,.rotate-overlay,button{touch-a
   #start-overlay .track-select-heading{grid-column:2;grid-row:1;margin:0 0 5px;font-size:8px}
   #start-overlay .track-total{display:none}
   #start-overlay .track-pages{display:flex}
-  #start-overlay[data-page="0"] .track-option:not([data-page="0"]),
-  #start-overlay[data-page="1"] .track-option:not([data-page="1"]),
-  #start-overlay[data-page="2"] .track-option:not([data-page="2"]){display:none}
   #start-overlay .track-options{grid-column:2;grid-row:2 / span 2;gap:6px;margin:0}
   #start-overlay .track-option{min-height:85px;padding:4px 6px}
   #start-overlay .track-option svg{height:30px;margin:1px auto}
