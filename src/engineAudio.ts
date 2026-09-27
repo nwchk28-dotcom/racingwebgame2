@@ -1,4 +1,4 @@
-import { extractEngineHarmonics } from './engineWaveform';
+import { extractEngineLayers } from './engineWaveform';
 import { gearAtSpeed, TOP_SPEED_KMH } from './vehicleTuning';
 
 export { gearAtSpeed } from './vehicleTuning';
@@ -6,6 +6,11 @@ export { gearAtSpeed } from './vehicleTuning';
 export function pitchAtSpeed(kmh: number): number {
   const { gear, rev } = gearAtSpeed(kmh);
   return 130 + (gear - 1) * 26 + rev * 75;
+}
+
+export function engineLayerWeightsAt(speedKmh: number): [number, number, number] {
+  const position = gearAtSpeed(speedKmh).rev * 2;
+  return [Math.max(0, 1 - position), 1 - Math.abs(position - 1), Math.max(0, position - 1)];
 }
 
 export function engineToneAt(speedKmh: number, throttle: number) {
@@ -42,6 +47,8 @@ export function createEngineNoise(sampleRate: number): Float32Array<ArrayBuffer>
 export class EngineAudio {
   private context: AudioContext | null = null;
   private source: OscillatorNode | null = null;
+  private layerSources: OscillatorNode[] = [];
+  private layerGains: GainNode[] = [];
   private rumbleSource: OscillatorNode | null = null;
   private gain: GainNode | null = null;
   private bodyGain: GainNode | null = null;
@@ -54,6 +61,8 @@ export class EngineAudio {
   private muted = false;
   private speed = 0;
   private throttle = 0;
+  private lastGear = 1;
+  private lastUpshiftAt = -Infinity;
   private loading: Promise<void> | null = null;
 
   get isMuted(): boolean { return this.muted; }
@@ -75,8 +84,8 @@ export class EngineAudio {
       if (!response.ok) throw new Error(`Engine recording: HTTP ${response.status}`);
       const context = this.context!;
       const recording = await context.decodeAudioData(await response.arrayBuffer());
-      const harmonics = extractEngineHarmonics(recording.getChannelData(0), recording.sampleRate);
-      const wave = context.createPeriodicWave(harmonics.real, harmonics.imag);
+      const layers = extractEngineLayers(recording.getChannelData(0), recording.sampleRate);
+      const waves = layers.map(layer => context.createPeriodicWave(layer.real, layer.imag));
 
       const bodyFilter = context.createBiquadFilter();
       bodyFilter.type = 'lowpass';
@@ -98,9 +107,16 @@ export class EngineAudio {
       saturator.curve = curve;
       saturator.oversample = '2x';
 
-      const source = context.createOscillator();
-      source.setPeriodicWave(wave);
-      source.connect(saturator);
+      const layerSources = waves.map(wave => {
+        const oscillator = context.createOscillator();
+        const level = context.createGain();
+        oscillator.setPeriodicWave(wave);
+        level.gain.value = 0;
+        oscillator.connect(level);
+        level.connect(saturator);
+        this.layerGains.push(level);
+        return oscillator;
+      });
       saturator.connect(bodyFilter);
       saturator.connect(biteFilter);
       bodyFilter.connect(bodyGain);
@@ -109,7 +125,7 @@ export class EngineAudio {
       biteGain.connect(this.gain!);
 
       const rumbleSource = context.createOscillator();
-      rumbleSource.setPeriodicWave(wave);
+      rumbleSource.setPeriodicWave(waves[0]);
       const rumbleFilter = context.createBiquadFilter();
       rumbleFilter.type = 'lowpass';
       rumbleFilter.frequency.value = 580;
@@ -146,7 +162,8 @@ export class EngineAudio {
         pulse.start();
       }
 
-      this.source = source;
+      this.source = layerSources[0];
+      this.layerSources = layerSources;
       this.rumbleSource = rumbleSource;
       this.bodyFilter = bodyFilter;
       this.bodyGain = bodyGain;
@@ -154,9 +171,10 @@ export class EngineAudio {
       this.biteGain = biteGain;
       this.noiseFilter = noiseFilter;
       this.noiseGain = noiseGain;
-      source.start();
+      layerSources.forEach(source => source.start());
       rumbleSource.start();
       noiseSource.start();
+      this.lastGear = gearAtSpeed(this.speed).gear;
       this.update(this.speed, this.throttle);
     } catch (error) {
       console.warn('Engine audio could not load', error);
@@ -179,8 +197,20 @@ export class EngineAudio {
     if (!this.context || !this.gain) return;
     const now = this.context.currentTime;
     const pitch = pitchAtSpeed(speedKmh);
+    const gear = gearAtSpeed(speedKmh).gear;
+    if (this.active && this.layerSources.length > 0 && gear > this.lastGear && now - this.lastUpshiftAt > 0.18) {
+      this.lastUpshiftAt = now;
+    }
+    this.lastGear = gear;
     const tone = engineToneAt(speedKmh, throttle);
     this.source?.frequency.setTargetAtTime(pitch, now, 0.055);
+    for (let i = 1; i < this.layerSources.length; i++) {
+      this.layerSources[i].frequency.setTargetAtTime(pitch, now, 0.055);
+    }
+    const weights = engineLayerWeightsAt(speedKmh);
+    this.layerGains.forEach((level, index) => {
+      level.gain.setTargetAtTime(weights[index] ?? 0, now, 0.065);
+    });
     this.rumbleSource?.frequency.setTargetAtTime(pitch * 0.5, now, 0.055);
     this.bodyGain?.gain.setTargetAtTime(tone.bodyGain, now, 0.06);
     this.bodyFilter?.frequency.setTargetAtTime(tone.bodyCutoff, now, 0.07);
@@ -188,6 +218,8 @@ export class EngineAudio {
     this.biteGain?.gain.setTargetAtTime(tone.biteGain, now, 0.06);
     this.noiseGain?.gain.setTargetAtTime(tone.noiseGain, now, 0.08);
     this.noiseFilter?.frequency.setTargetAtTime(tone.noiseCutoff, now, 0.08);
-    this.gain.gain.setTargetAtTime(this.active && !this.muted && this.source ? 1 : 0, now, 0.045);
+    const sinceShift = now - this.lastUpshiftAt;
+    const shiftCut = sinceShift < 0.09 ? 0.28 + 0.72 * sinceShift / 0.09 : 1;
+    this.gain.gain.setTargetAtTime(this.active && !this.muted && this.source ? shiftCut : 0, now, 0.025);
   }
 }

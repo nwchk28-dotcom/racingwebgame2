@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEngineNoise, engineToneAt, EngineAudio, gearAtSpeed, pitchAtSpeed } from './engineAudio';
+import { createEngineNoise, engineLayerWeightsAt, engineToneAt, EngineAudio, gearAtSpeed, pitchAtSpeed } from './engineAudio';
 
 describe('engine gears', () => {
   it('raises revs within each gear and drops them on an upshift', () => {
@@ -55,6 +55,34 @@ describe('engine gears', () => {
     expect(accelerating.noiseGain).toBeGreaterThan(coasting.noiseGain);
     expect(accelerating.bodyCutoff).toBeGreaterThan(coasting.bodyCutoff);
     expect(engineToneAt(260, 1).noiseCutoff).toBeGreaterThan(accelerating.noiseCutoff);
+  });
+
+  it('crossfades recorded tones across the rev range of each gear', () => {
+    expect(engineLayerWeightsAt(0)).toEqual([1, 0, 0]);
+    expect(engineLayerWeightsAt(25)).toEqual([0, 1, 0]);
+    expect(engineLayerWeightsAt(50)).toEqual([1, 0, 0]);
+    expect(engineLayerWeightsAt(49)[2]).toBeGreaterThan(0.9);
+    for (const speed of [5, 30, 75, 140, 230, 300]) {
+      expect(engineLayerWeightsAt(speed).reduce((sum, weight) => sum + weight, 0)).toBeCloseTo(1);
+    }
+  });
+
+  it('briefly cuts power on an upshift, then returns to full volume', () => {
+    const levels: number[] = [];
+    const source = { frequency: { setTargetAtTime: () => undefined } };
+    const audio = new EngineAudio();
+    Object.assign(audio, {
+      context: { currentTime: 10 }, source, layerSources: [source],
+      gain: { gain: { setTargetAtTime: (value: number) => levels.push(value) } },
+    });
+    audio.setActive(true);
+    audio.update(49, 1);
+    Object.assign(audio, { context: { currentTime: 10.1 } });
+    audio.update(50, 1);
+    expect(levels.at(-1)).toBeLessThan(0.5);
+    Object.assign(audio, { context: { currentTime: 10.25 } });
+    audio.update(60, 1);
+    expect(levels.at(-1)).toBe(1);
   });
 
   it('makes a non-silent noise bed with a seamless loop boundary', () => {
