@@ -213,14 +213,32 @@ function refreshMapPosition(): void {
   mapPosition.setAttribute('cy', String(Math.max(25, Math.min(122, point.y))));
 }
 
+const sceneElement = app.querySelector<HTMLElement>('#scene')!;
+const chromeOnIOS = /CriOS\//.test(navigator.userAgent) && /iPhone|iPad|iPod/.test(navigator.userAgent);
+function fitChromeLandscapeGutters(): void {
+  if (!chromeOnIOS) return;
+  const missingWidth = Math.max(window.screen.width, window.screen.height) - app.getBoundingClientRect().width;
+  // Some iOS Chrome builds inset the page on both sides despite viewport-fit=cover.
+  // Only extend the scenery when the missing width matches a landscape safe area.
+  const overhang = window.matchMedia('(orientation: landscape)').matches
+    && missingWidth >= 30 && missingWidth <= 180 ? missingWidth / 2 : 0;
+  document.documentElement.classList.toggle('chrome-ios-gutters', overhang > 0);
+  sceneElement.style.setProperty('--scene-overhang', `${overhang}px`);
+}
 function resize(): void {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  renderer.setSize(width, height);
+  fitChromeLandscapeGutters();
+  // In mobile Chrome the window dimensions can lag behind the CSS viewport
+  // after rotating or changing browser chrome. Size WebGL to its actual host.
+  const { width, height } = sceneElement.getBoundingClientRect();
+  if (width <= 0 || height <= 0) return;
+  renderer.setSize(width, height, false);
   car.camera.aspect = width / height;
   car.camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', resize);
+window.visualViewport?.addEventListener('resize', resize);
+new ResizeObserver(resize).observe(sceneElement);
 resize();
 
 function toast(message: string, kind = ''): void {
