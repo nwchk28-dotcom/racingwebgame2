@@ -1,7 +1,9 @@
-// Monza and Silverstone centerlines are adapted from bacinger/f1-circuits (MIT).
+// Real circuit centerlines are adapted from bacinger/f1-circuits (MIT).
 // See THIRD_PARTY_NOTICES.md. All scenery, meshes, and menu maps are original.
-export type TrackId = 'nova' | 'monza' | 'silverstone';
-export type SceneryKind = 'nova' | 'park' | 'airfield';
+import { albertParkPoints, mexicoCityPoints, gillesVilleneuvePoints } from './flatCircuitData';
+
+export type TrackId = 'nova' | 'monza' | 'silverstone' | 'albert-park' | 'mexico-city' | 'gilles-villeneuve';
+export type SceneryKind = 'nova' | 'park' | 'airfield' | 'stadium';
 export interface TrackDefinition {
   id: TrackId;
   name: string;
@@ -95,4 +97,13 @@ export const TRACKS: readonly TrackDefinition[] = [
     // F1 control line is on Hamilton Straight, about 134 m before its separate start line.
     roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5891, timingLine: [-874, -1030], scenery: 'airfield',
     sky: '#aebec6', grass: '#63764e' },
+  { id: 'albert-park', name: 'ALBERT PARK', location: 'AUSTRALIA', points: albertParkPoints,
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5278, scenery: 'park',
+    sky: '#9fc9d2', grass: '#608150' },
+  { id: 'mexico-city', name: 'MEXICO CITY', location: 'MEXICO', points: mexicoCityPoints,
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 4304, scenery: 'stadium',
+    sky: '#b5c6c6', grass: '#668066' },
+  { id: 'gilles-villeneuve', name: 'GILLES-VILLENEUVE', location: 'CANADA', points: gillesVilleneuvePoints,
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 4361, scenery: 'park',
+    sky: '#a9c8cd', grass: '#557a58' },
 ];

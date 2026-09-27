@@ -2,10 +2,13 @@
 
 ## Circuit centerline data
 
-The Monza and Silverstone coordinates in `src/trackData.ts` are adapted from
-[bacinger/f1-circuits](https://github.com/bacinger/f1-circuits), specifically
-`circuits/it-1922.geojson` and `circuits/gb-1948.geojson`. They were projected
-to local metre coordinates, rounded, and rotated to the game's start line.
+The Monza and Silverstone coordinates in `src/trackData.ts`, and the Albert Park,
+Mexico City, and Circuit Gilles-Villeneuve coordinates in `src/flatCircuitData.ts`,
+are adapted from [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits),
+specifically `circuits/it-1922.geojson`, `circuits/gb-1948.geojson`,
+`circuits/au-1953.geojson`, `circuits/mx-1962.geojson`, and
+`circuits/ca-1978.geojson`. They were projected to local metre coordinates and
+rounded; Monza and Silverstone were additionally rotated to their timing lines.
 
 Copyright (c) 2019-2025 Tomislav Bacinger
 

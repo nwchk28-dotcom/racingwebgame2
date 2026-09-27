@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { TRACKS } from './trackData';
 import { TrackPath } from './trackPath';
 
-describe('three circuits', () => {
+describe('all circuits', () => {
   it('keeps the requested lap lengths and a dense, closed centerline', () => {
     for (const definition of TRACKS) {
       const path = new TrackPath(definition);

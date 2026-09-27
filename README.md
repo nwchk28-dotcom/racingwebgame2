@@ -1,6 +1,6 @@
 # APEX ONE
 
-1台で走る、オンボード視点のフォーミュラ・タイムアタックです。NOVA CIRCUIT、Monza、Silverstoneの3コースを選べます。車体と周辺施設は独自のデザインです。
+1台で走る、オンボード視点のフォーミュラ・タイムアタックです。NOVA CIRCUIT、Monza、Silverstone、Albert Park、Mexico City、Circuit Gilles-Villeneuveの6コースを選べます。車体と周辺施設は独自のデザインです。
 
 ## ローカル実行
 
@@ -23,7 +23,7 @@ npm run dev
 
 ## コース形状
 
-MonzaとSilverstoneの中心線は [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) のMITライセンスのデータを加工したものです。出典とライセンス全文は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) に記載しています。コース全長はそれぞれ5.793 kmと5.891 kmを目標とし、走行しやすい幅の路面・縁石・独自の周辺施設を生成しています。公式のコース図やロゴはゲーム内に収録していません。
+実在5コースの中心線は [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) のMITライセンスのデータを加工したものです。出典とライセンス全文は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) に記載しています。Monza、Silverstone、Albert Park、Mexico City、Circuit Gilles-Villeneuveの全長は、それぞれ5.793 km、5.891 km、5.278 km、4.304 km、4.361 kmを目標としています。新しい3コースはF1公表値で最高点と最低点の差が小さいため、現行の平面路面モデルで追加しました。高低差や正確な路面勾配、施設配置は再現していません。公式のコース図やロゴはゲーム内に収録していません。
 
 ## エンジン音
 

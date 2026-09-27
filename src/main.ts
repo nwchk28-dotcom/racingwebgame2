@@ -96,13 +96,13 @@ app.innerHTML = `
       <div class="menu-kicker"><span class="kicker-line"></span> ONE CAR. ONE CIRCUIT. ONE LAP.</div>
       <h1>FIND YOUR<br /><em>APEX.</em></h1>
       <p>オンボード視点で、自己ベストを塗り替えよう。</p>
-      <div class="track-select-heading"><span>SELECT CIRCUIT</span><span>SOLO TIME ATTACK / 03 TRACKS</span></div>
+      <div class="track-select-heading"><span>SELECT CIRCUIT</span><span>SOLO TIME ATTACK / ${String(TRACKS.length).padStart(2, '0')} TRACKS</span></div>
       <div class="track-options" role="group" aria-label="コースを選択">${trackCards}</div>
       <div class="steering-select" role="group" aria-label="ステアリング方式"><span>STEERING</span><div class="steering-options"><button class="steering-option selected" data-steering-mode="slider" type="button" aria-pressed="true">SLIDER</button><button class="steering-option" data-steering-mode="buttons" type="button" aria-pressed="false">BUTTONS</button></div></div>
       <button id="start-button" class="primary-button" type="button">START ENGINE <span>↗</span></button>
       <div class="menu-help"><span class="desktop-help">W / ↑ 加速　S / ↓ ブレーキ　A D / ← → ハンドル</span><span class="mobile-help">左でハンドル、右のペダルで運転</span></div>
     </div>
-    <div class="menu-footer"><span>APEX ONE / ORIGINAL RACING EXPERIENCE</span><span>01 — 03</span></div>
+    <div class="menu-footer"><span>APEX ONE / ORIGINAL RACING EXPERIENCE</span><span>01 — ${String(TRACKS.length).padStart(2, '0')}</span></div>
   </section>
 
   <section id="pause-overlay" class="menu-overlay paused" hidden>

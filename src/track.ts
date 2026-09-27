@@ -290,6 +290,7 @@ export class Track extends TrackPath {
       return;
     }
     const airfield = this.definition.scenery === 'airfield';
+    const stadium = this.definition.scenery === 'stadium';
     const side = airfield ? -1 : 1;
     for (let i = 0; i < 5; i++) {
       const distance = 65 + i * 37;
@@ -297,16 +298,32 @@ export class Track extends TrackPath {
         airfield ? 0x515d62 : 0x40494b);
       if (pit) box(pit, [29, 1.2, 33], [0, (airfield ? 7 : 9) / 2 + 0.6, 0], 0x1c282c);
     }
-    for (const fraction of airfield ? [0.27, 0.68] : [0.35, 0.74]) {
-      this.addTracksideBox(scene, this.length * fraction, 58, [72, 12, 30],
-        airfield ? 0x657479 : 0x536363);
+    if (stadium) {
+      // Simple unbranded stands give the Mexico City stadium section its own silhouette.
+      for (const [fraction, sideOfRoad] of [[0.67, -1], [0.7, 1], [0.76, -1], [0.79, 1]]) {
+        const stand = this.addTracksideBox(scene, this.length * fraction, sideOfRoad * 72,
+          [58, 13, 28], 0x687276);
+        if (stand) {
+          box(stand, [62, 1.5, 30], [0, 7.1, 0], 0x2f3b40);
+          for (let row = 0; row < 3; row++) {
+            box(stand, [54, 0.45, 23 - row * 4], [0, -4.2 + row * 2.3, 2],
+              row % 2 ? 0xb2b9b4 : 0x8d9b99);
+          }
+        }
+      }
+    } else {
+      for (const fraction of airfield ? [0.27, 0.68] : [0.35, 0.74]) {
+        this.addTracksideBox(scene, this.length * fraction, 58, [72, 12, 30],
+          airfield ? 0x657479 : 0x536363);
+      }
     }
   }
 
   private addTrees(scene: THREE.Object3D): void {
     const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x5f5546, roughness: 1 });
     const crownMaterial = new THREE.MeshStandardMaterial({ color: 0x2e503b, roughness: 1 });
-    const count = this.definition.scenery === 'airfield' ? 100 :
+    const count = this.definition.scenery === 'stadium' ? 65 :
+      this.definition.scenery === 'airfield' ? 100 :
       this.definition.scenery === 'park' ? 420 : 180;
     const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.55, 5, 5), trunkMaterial, count);
     const crowns = new THREE.InstancedMesh(new THREE.ConeGeometry(3.4, 9, 6), crownMaterial, count);
