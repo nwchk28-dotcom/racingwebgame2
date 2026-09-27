@@ -16,13 +16,19 @@ describe('per-circuit best laps', () => {
     saveBestTime('albert-park', 93.1, storage);
     saveBestTime('mexico-city', 85.2, storage);
     saveBestTime('gilles-villeneuve', 87.3, storage);
+    saveBestTime('monaco', 79.5, storage);
+    saveBestTime('spa', 125.7, storage);
+    saveBestTime('sao-paulo', 81.4, storage);
     expect(readBestTime('monza', storage)).toBe(112.3);
     expect(readBestTime('silverstone', storage)).toBe(118.2);
     expect(readBestTime('albert-park', storage)).toBe(93.1);
     expect(readBestTime('mexico-city', storage)).toBe(85.2);
     expect(readBestTime('gilles-villeneuve', storage)).toBe(87.3);
+    expect(readBestTime('monaco', storage)).toBe(79.5);
+    expect(readBestTime('spa', storage)).toBe(125.7);
+    expect(readBestTime('sao-paulo', storage)).toBe(81.4);
     expect(readBestTime('nova', storage)).toBe(83.456);
-    expect(values.size).toBe(6);
+    expect(values.size).toBe(9);
   });
 
   it('ignores invalid or unavailable storage values', () => {

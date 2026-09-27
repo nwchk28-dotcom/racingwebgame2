@@ -67,17 +67,23 @@ export class TrackPath {
     } else {
       // Smooth GPS point corners over roughly 30 m so a wide road and its curbs
       // do not fold through themselves at the tight chicanes.
-      const radius = 16;
-      const sigma = 6;
-      for (let i = 0; i < this.sampleCount; i++) {
-        const point = new THREE.Vector3();
-        let total = 0;
-        for (let j = -radius; j <= radius; j++) {
-          const weight = Math.exp(-0.5 * (j / sigma) ** 2);
-          point.addScaledVector(rawSamples[(i + j + this.sampleCount) % this.sampleCount], weight);
-          total += weight;
+      // Averaging the tight Monaco hairpin can shrink its radius enough for
+      // the inner curb to fold back. Keep its denser source path intact.
+      if (definition.id === 'monaco') {
+        this.samples.push(...rawSamples);
+      } else {
+        const radius = 16;
+        const sigma = 6;
+        for (let i = 0; i < this.sampleCount; i++) {
+          const point = new THREE.Vector3();
+          let total = 0;
+          for (let j = -radius; j <= radius; j++) {
+            const weight = Math.exp(-0.5 * (j / sigma) ** 2);
+            point.addScaledVector(rawSamples[(i + j + this.sampleCount) % this.sampleCount], weight);
+            total += weight;
+          }
+          this.samples.push(point.multiplyScalar(1 / total));
         }
-        this.samples.push(point.multiplyScalar(1 / total));
       }
       let smoothedLength = 0;
       for (let i = 0; i < this.sampleCount; i++) {
@@ -113,7 +119,8 @@ export class TrackPath {
       const before = current.clone().sub(previous).normalize();
       const after = next.clone().sub(current).normalize();
       const tangent = before.clone().add(after).normalize();
-      const miter = Math.min(1.35, 1 / Math.max(0.6, tangent.dot(after)));
+      const miter = Math.min(definition.id === 'monaco' ? 1.05 : 1.35,
+        1 / Math.max(0.6, tangent.dot(after)));
       this.normals.push(new THREE.Vector3(tangent.z * miter, 0, -tangent.x * miter));
 
       const minX = Math.floor(Math.min(current.x, next.x) / CELL_SIZE);

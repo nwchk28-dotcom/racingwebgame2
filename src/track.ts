@@ -289,6 +289,18 @@ export class Track extends TrackPath {
       }
       return;
     }
+    if (this.definition.scenery === 'urban') {
+      // Compact unbranded blocks make Monaco distinct without crowding the road.
+      for (let i = 0; i < 22; i++) {
+        const fraction = (i + 0.35) / 22;
+        const side = i % 2 ? -1 : 1;
+        const height = 13 + (i * 7 % 15);
+        const building = this.addTracksideBox(scene, this.length * fraction, side * 30,
+          [18, height, 19], i % 3 ? 0xc2c7bd : 0x9eafa9);
+        if (building) box(building, [19, 0.8, 20], [0, height / 2 + 0.4, 0], 0x64777b);
+      }
+      return;
+    }
     const airfield = this.definition.scenery === 'airfield';
     const stadium = this.definition.scenery === 'stadium';
     const side = airfield ? -1 : 1;
@@ -299,7 +311,7 @@ export class Track extends TrackPath {
       if (pit) box(pit, [29, 1.2, 33], [0, (airfield ? 7 : 9) / 2 + 0.6, 0], 0x1c282c);
     }
     if (stadium) {
-      // Simple unbranded stands give the Mexico City stadium section its own silhouette.
+      // Simple unbranded stands give stadium circuits a distinct silhouette.
       for (const [fraction, sideOfRoad] of [[0.67, -1], [0.7, 1], [0.76, -1], [0.79, 1]]) {
         const stand = this.addTracksideBox(scene, this.length * fraction, sideOfRoad * 72,
           [58, 13, 28], 0x687276);
@@ -322,7 +334,8 @@ export class Track extends TrackPath {
   private addTrees(scene: THREE.Object3D): void {
     const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x5f5546, roughness: 1 });
     const crownMaterial = new THREE.MeshStandardMaterial({ color: 0x2e503b, roughness: 1 });
-    const count = this.definition.scenery === 'stadium' ? 65 :
+    const count = this.definition.scenery === 'urban' ? 16 :
+      this.definition.scenery === 'stadium' ? 65 :
       this.definition.scenery === 'airfield' ? 100 :
       this.definition.scenery === 'park' ? 420 : 180;
     const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.55, 5, 5), trunkMaterial, count);

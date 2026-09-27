@@ -23,10 +23,11 @@ describe('all circuits', () => {
       const path = new TrackPath(definition);
       let previous = 0;
       for (let i = 0; i < 100; i++) {
-        const sample = path.samples[Math.floor(i * path.sampleCount / 100)];
+        const index = Math.floor(i * path.sampleCount / 100);
+        const sample = path.samples[index];
         const position = path.nearest(sample.x, sample.z, previous);
         expect(position.distance).toBeLessThan(0.1);
-        expect(position.progress).toBeCloseTo(i / 100, 2);
+        expect(position.progress).toBeCloseTo(path.distances[index] / path.length, 2);
         previous = position.progress;
       }
     }

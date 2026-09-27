@@ -1,9 +1,11 @@
 // Real circuit centerlines are adapted from bacinger/f1-circuits (MIT).
 // See THIRD_PARTY_NOTICES.md. All scenery, meshes, and menu maps are original.
 import { albertParkPoints, mexicoCityPoints, gillesVilleneuvePoints } from './flatCircuitData';
+import { monacoPoints, spaPoints, saoPauloPoints } from './additionalCircuitData';
 
-export type TrackId = 'nova' | 'monza' | 'silverstone' | 'albert-park' | 'mexico-city' | 'gilles-villeneuve';
-export type SceneryKind = 'nova' | 'park' | 'airfield' | 'stadium';
+export type TrackId = 'nova' | 'monza' | 'silverstone' | 'albert-park' | 'mexico-city'
+  | 'gilles-villeneuve' | 'monaco' | 'spa' | 'sao-paulo';
+export type SceneryKind = 'nova' | 'park' | 'airfield' | 'stadium' | 'urban';
 export interface TrackDefinition {
   id: TrackId;
   name: string;
@@ -106,4 +108,13 @@ export const TRACKS: readonly TrackDefinition[] = [
   { id: 'gilles-villeneuve', name: 'GILLES-VILLENEUVE', location: 'CANADA', points: gillesVilleneuvePoints,
     roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 4361, scenery: 'park',
     sky: '#a9c8cd', grass: '#557a58' },
+  { id: 'monaco', name: 'MONACO', location: 'MONACO', points: monacoPoints,
+    roadHalfWidth: 4.2, curbWidth: 0.6, targetLength: 3337, scenery: 'urban',
+    sky: '#a9c5cf', grass: '#697c6b' },
+  { id: 'spa', name: 'SPA-FRANCORCHAMPS', location: 'BELGIUM', points: spaPoints,
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 7004, scenery: 'park',
+    sky: '#a7c0c8', grass: '#47714b' },
+  { id: 'sao-paulo', name: 'SÃO PAULO', location: 'BRAZIL', points: saoPauloPoints,
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 4309, scenery: 'stadium',
+    sky: '#adc6c9', grass: '#537653' },
 ];

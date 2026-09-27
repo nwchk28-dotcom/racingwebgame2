@@ -36,13 +36,19 @@ const trackCards = TRACKS.map((definition, index) => {
   const preview = coursePreview(definition);
   return `
   <button class="track-option${index === 0 ? ' selected' : ''}" type="button"
-    data-track-id="${definition.id}" aria-pressed="${index === 0}">
+    data-track-id="${definition.id}" data-page="${Math.floor(index / 3)}" aria-pressed="${index === 0}">
     <span class="track-option-top"><b>0${index + 1}</b><span>${definition.location}</span></span>
     ${preview.outline}
     <strong>${definition.name}</strong>
     <span class="track-option-bottom"><span>${(preview.length / 1000).toFixed(definition.targetLength ? 3 : 2)} KM</span>
       <span>BEST <b data-best-for="${definition.id}">--:--.---</b></span></span>
   </button>`;
+}).join('');
+const trackPages = Array.from({ length: Math.ceil(TRACKS.length / 3) }, (_, page) => {
+  const from = page * 3 + 1;
+  const to = Math.min((page + 1) * 3, TRACKS.length);
+  return `<button class="track-page${page === 0 ? ' selected' : ''}" type="button"
+    data-track-page="${page}" aria-label="コース ${from} から ${to}" aria-pressed="${page === 0}">${String(from).padStart(2, '0')}–${String(to).padStart(2, '0')}</button>`;
 }).join('');
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -91,12 +97,12 @@ app.innerHTML = `
 
   <div id="toast" class="toast" role="status"></div>
 
-  <section id="start-overlay" class="menu-overlay">
+  <section id="start-overlay" class="menu-overlay" data-page="0">
     <div class="menu-card">
       <div class="menu-kicker"><span class="kicker-line"></span> ONE CAR. ONE CIRCUIT. ONE LAP.</div>
       <h1>FIND YOUR<br /><em>APEX.</em></h1>
       <p>オンボード視点で、自己ベストを塗り替えよう。</p>
-      <div class="track-select-heading"><span>SELECT CIRCUIT</span><span>SOLO TIME ATTACK / ${String(TRACKS.length).padStart(2, '0')} TRACKS</span></div>
+      <div class="track-select-heading"><span>SELECT CIRCUIT</span><div class="track-pages" role="group" aria-label="コース一覧のページ">${trackPages}</div><span class="track-total">SOLO TIME ATTACK / ${String(TRACKS.length).padStart(2, '0')} TRACKS</span></div>
       <div class="track-options" role="group" aria-label="コースを選択">${trackCards}</div>
       <div class="steering-select" role="group" aria-label="ステアリング方式"><span>STEERING</span><div class="steering-options"><button class="steering-option selected" data-steering-mode="slider" type="button" aria-pressed="true">SLIDER</button><button class="steering-option" data-steering-mode="buttons" type="button" aria-pressed="false">BUTTONS</button></div></div>
       <button id="start-button" class="primary-button" type="button">START ENGINE <span>↗</span></button>
@@ -249,6 +255,15 @@ function refreshTrackChoices(): void {
   }
 }
 
+function setTrackPage(page: number): void {
+  startOverlay.dataset.page = String(page);
+  app.querySelectorAll<HTMLButtonElement>('.track-page').forEach(button => {
+    const selected = Number(button.dataset.trackPage) === page;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+}
+
 function selectTrack(id: TrackId): void {
   if (active || selectedTrack.id === id) return;
   const definition = TRACKS.find(item => item.id === id);
@@ -256,6 +271,7 @@ function selectTrack(id: TrackId): void {
   track.dispose();
   renderer.renderLists.dispose();
   selectedTrack = definition;
+  setTrackPage(Math.floor(TRACKS.indexOf(definition) / 3));
   track = new Track(scene, definition);
   physics = new CarPhysics(track);
   laps = new LapTracker(track.length, readBestTime(id));
@@ -306,6 +322,9 @@ function start(): void {
 app.querySelector('#start-button')!.addEventListener('click', start);
 app.querySelectorAll<HTMLButtonElement>('.track-option').forEach(button => {
   button.addEventListener('click', () => selectTrack(button.dataset.trackId as TrackId));
+});
+app.querySelectorAll<HTMLButtonElement>('.track-page').forEach(button => {
+  button.addEventListener('click', () => setTrackPage(Number(button.dataset.trackPage)));
 });
 app.querySelectorAll<HTMLButtonElement>('.steering-option').forEach(button => {
   button.addEventListener('click', () => {
