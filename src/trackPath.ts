@@ -118,9 +118,14 @@ export class TrackPath {
       const next = this.samples[i + 1];
       const before = current.clone().sub(previous).normalize();
       const after = next.clone().sub(current).normalize();
-      const tangent = before.clone().add(after).normalize();
-      const miter = Math.min(definition.id === 'monaco' ? 1.05 : 1.35,
-        1 / Math.max(0.6, tangent.dot(after)));
+      // Monaco's source polyline has a few abrupt GPS corners. A wider road
+      // needs a more gradual edge normal there, without moving the centerline.
+      const tangent = definition.id === 'monaco'
+        ? this.samples[(i + 3) % this.sampleCount].clone()
+          .sub(this.samples[(i - 3 + this.sampleCount) % this.sampleCount]).normalize()
+        : before.clone().add(after).normalize();
+      const miter = definition.id === 'monaco' ? 1 :
+        Math.min(1.35, 1 / Math.max(0.6, tangent.dot(after)));
       this.normals.push(new THREE.Vector3(tangent.z * miter, 0, -tangent.x * miter));
 
       const minX = Math.floor(Math.min(current.x, next.x) / CELL_SIZE);

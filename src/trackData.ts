@@ -102,7 +102,7 @@ export const TRACKS: readonly TrackDefinition[] = [
     sky: '#a9c8cd', grass: '#557a58' },
   { id: 'monaco', name: 'MONACO', location: 'MONACO', points: monacoPoints,
     // OSM's marked start/finish point projects to this spot on Boulevard Albert 1er.
-    roadHalfWidth: 4.2, curbWidth: 0.6, targetLength: 3337,
+    roadHalfWidth: 6, curbWidth: 0.8, targetLength: 3337,
     timingLine: [-476.7, -486.1], scenery: 'urban',
     sky: '#a9c5cf', grass: '#697c6b' },
   { id: 'spa', name: 'SPA-FRANCORCHAMPS', location: 'BELGIUM', points: spaPoints,
