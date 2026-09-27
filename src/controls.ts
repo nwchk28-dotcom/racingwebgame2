@@ -1,6 +1,7 @@
 import type { DriverInput } from './physics';
 
 export class Controls {
+  private steeringMode: 'slider' | 'buttons' = 'slider';
   private keys = new Set<string>();
   private touchSteer = 0;
   private touchThrottle = false;
@@ -11,15 +12,25 @@ export class Controls {
   private steeringTouch: number | null = null;
   private throttleTouch: number | null = null;
   private brakeTouch: number | null = null;
+  private leftPointer: number | null = null;
+  private rightPointer: number | null = null;
+  private leftTouch: number | null = null;
+  private rightTouch: number | null = null;
   private steeringTrack: HTMLElement;
   private steeringThumb: HTMLElement;
+  private leftButton: HTMLElement;
+  private rightButton: HTMLElement;
 
   constructor(root: HTMLElement) {
     this.steeringTrack = root.querySelector<HTMLElement>('#steering-track')!;
     this.steeringThumb = root.querySelector<HTMLElement>('#steering-thumb')!;
+    this.leftButton = root.querySelector<HTMLElement>('#steer-left')!;
+    this.rightButton = root.querySelector<HTMLElement>('#steer-right')!;
     const throttle = root.querySelector<HTMLElement>('#throttle')!;
     const brake = root.querySelector<HTMLElement>('#brake')!;
     this.bindSteering();
+    this.bindSteeringButton(this.leftButton, 'left');
+    this.bindSteeringButton(this.rightButton, 'right');
     this.bindPedal(throttle, 'throttle');
     this.bindPedal(brake, 'brake');
     this.bindTouchControls(throttle, brake);
@@ -34,12 +45,22 @@ export class Controls {
   get value(): DriverInput {
     const left = this.keys.has('a') || this.keys.has('arrowleft');
     const right = this.keys.has('d') || this.keys.has('arrowright');
+    const buttonLeft = this.leftPointer !== null || this.leftTouch !== null;
+    const buttonRight = this.rightPointer !== null || this.rightTouch !== null;
+    const buttonActive = buttonLeft || buttonRight;
     return {
-      steer: this.steeringPointer !== null || this.steeringTouch !== null
-        ? this.touchSteer : Number(right) - Number(left),
+      steer: this.steeringMode === 'buttons'
+        ? buttonActive ? Number(buttonRight) - Number(buttonLeft) : Number(right) - Number(left)
+        : this.steeringPointer !== null || this.steeringTouch !== null
+          ? this.touchSteer : Number(right) - Number(left),
       throttle: Number(this.touchThrottle || this.keys.has('w') || this.keys.has('arrowup')),
       brake: Number(this.touchBrake || this.keys.has('s') || this.keys.has('arrowdown')),
     };
+  }
+
+  setSteeringMode(mode: 'slider' | 'buttons'): void {
+    this.clear();
+    this.steeringMode = mode;
   }
 
   clear(): void {
@@ -48,9 +69,36 @@ export class Controls {
     this.touchThrottle = this.touchBrake = false;
     this.steeringPointer = this.throttlePointer = this.brakePointer = null;
     this.steeringTouch = this.throttleTouch = this.brakeTouch = null;
+    this.leftPointer = this.rightPointer = this.leftTouch = this.rightTouch = null;
     this.steeringThumb.style.left = '50%';
+    this.steeringTrack.setAttribute('aria-valuenow', '0');
+    this.leftButton.classList.remove('pressed');
+    this.rightButton.classList.remove('pressed');
     document.querySelector('#throttle')?.classList.remove('pressed');
     document.querySelector('#brake')?.classList.remove('pressed');
+  }
+
+  private bindSteeringButton(element: HTMLElement, direction: 'left' | 'right'): void {
+    element.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'touch') return;
+      const pointer = direction === 'left' ? this.leftPointer : this.rightPointer;
+      if (pointer !== null) return;
+      event.preventDefault();
+      element.setPointerCapture(event.pointerId);
+      if (direction === 'left') this.leftPointer = event.pointerId;
+      else this.rightPointer = event.pointerId;
+      element.classList.add('pressed');
+    });
+    const release = (event: PointerEvent) => {
+      const pointer = direction === 'left' ? this.leftPointer : this.rightPointer;
+      if (event.pointerId !== pointer) return;
+      if (direction === 'left') this.leftPointer = null;
+      else this.rightPointer = null;
+      element.classList.remove('pressed');
+    };
+    element.addEventListener('pointerup', release);
+    element.addEventListener('pointercancel', release);
+    element.addEventListener('lostpointercapture', release);
   }
 
   private bindSteering(): void {
@@ -132,6 +180,22 @@ export class Controls {
       if (event.cancelable) event.preventDefault();
     }, { passive: false });
 
+    for (const [element, direction] of [[this.leftButton, 'left'], [this.rightButton, 'right']] as const) {
+      element.addEventListener('touchstart', event => {
+        const touch = event.changedTouches[0];
+        if (!touch) return;
+        if (direction === 'left') {
+          if (this.leftTouch !== null) return;
+          this.leftTouch = touch.identifier;
+        } else {
+          if (this.rightTouch !== null) return;
+          this.rightTouch = touch.identifier;
+        }
+        element.classList.add('pressed');
+        if (event.cancelable) event.preventDefault();
+      }, { passive: false });
+    }
+
     const bindTouchPedal = (element: HTMLElement, kind: 'throttle' | 'brake') => {
       element.addEventListener('touchstart', event => {
         const touch = event.changedTouches[0];
@@ -167,6 +231,14 @@ export class Controls {
           this.touchSteer = 0;
           this.steeringThumb.style.left = '50%';
           this.steeringTrack.setAttribute('aria-valuenow', '0');
+        }
+        if (touch.identifier === this.leftTouch) {
+          this.leftTouch = null;
+          this.leftButton.classList.remove('pressed');
+        }
+        if (touch.identifier === this.rightTouch) {
+          this.rightTouch = null;
+          this.rightButton.classList.remove('pressed');
         }
         if (touch.identifier === this.throttleTouch) {
           this.throttleTouch = null;

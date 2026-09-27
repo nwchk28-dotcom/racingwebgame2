@@ -32,6 +32,8 @@ describe('mobile controls', () => {
     const elements = new Map([
       ['#steering-track', new FakeElement()],
       ['#steering-thumb', new FakeElement()],
+      ['#steer-left', new FakeElement()],
+      ['#steer-right', new FakeElement()],
       ['#throttle', new FakeElement()],
       ['#brake', new FakeElement()],
     ]);
@@ -56,5 +58,33 @@ describe('mobile controls', () => {
     expect(controls.value.throttle).toBe(1);
     fakeDocument.dispatchEvent(touchEvent('touchend', 2, 50, 0));
     expect(controls.value.throttle).toBe(0);
+  });
+
+  it('supports button steering with independent steering and pedal fingers', () => {
+    const elements = new Map([
+      ['#steering-track', new FakeElement()],
+      ['#steering-thumb', new FakeElement()],
+      ['#steer-left', new FakeElement()],
+      ['#steer-right', new FakeElement()],
+      ['#throttle', new FakeElement()],
+      ['#brake', new FakeElement()],
+    ]);
+    const fakeDocument = new EventTarget();
+    const querySelector = (selector: string) => elements.get(selector) ?? null;
+    Object.assign(fakeDocument, { querySelector });
+    vi.stubGlobal('document', fakeDocument);
+    vi.stubGlobal('window', new EventTarget());
+    const controls = new Controls({ querySelector } as unknown as HTMLElement);
+    controls.setSteeringMode('buttons');
+
+    elements.get('#steer-right')!.dispatchEvent(touchEvent('touchstart', 1, 50, 1));
+    elements.get('#throttle')!.dispatchEvent(touchEvent('touchstart', 2, 50, 2));
+    expect(controls.value).toEqual({ steer: 1, throttle: 1, brake: 0 });
+    elements.get('#steer-left')!.dispatchEvent(touchEvent('touchstart', 3, 50, 3));
+    expect(controls.value.steer).toBe(0);
+    fakeDocument.dispatchEvent(touchEvent('touchend', 1, 50, 2));
+    expect(controls.value).toEqual({ steer: -1, throttle: 1, brake: 0 });
+    controls.setSteeringMode('slider');
+    expect(controls.value).toEqual({ steer: 0, throttle: 0, brake: 0 });
   });
 });

@@ -77,3 +77,28 @@ html,body,#app,#app *,#scene,canvas,.menu-overlay,.rotate-overlay,button{touch-a
   #pause-overlay .pause-actions .primary-button,#pause-overlay .pause-actions .secondary-button{width:100%;height:clamp(38px,10vh,48px);margin:0 0 8px;font-size:clamp(15px,2.3vw,21px)}
   #pause-overlay .pause-actions .secondary-button:last-child{margin-bottom:0}
 }
+
+.steering-input{width:min(39vw,320px);padding-bottom:20px;pointer-events:auto}
+.steering-input .steer-control{width:100%;padding-bottom:0}
+.button-steer-control{display:none}
+.button-steering .steering-input .steer-control{display:none}
+.button-steering .button-steer-control{display:block}
+.steer-buttons{display:flex;gap:8px}
+.steer-button{display:flex;flex:1;min-width:0;height:76px;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:1px solid #d9e7df85;border-radius:5px;background:linear-gradient(160deg,#304348e6,#122329e6);color:#f5f8f5;box-shadow:0 8px 25px #0910158a;touch-action:none;user-select:none}
+.steer-button span{font-size:29px;line-height:1}
+.steer-button strong{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:.14em}
+.steer-button.pressed{background:linear-gradient(145deg,#e65b49,#9e211c);border-color:#ff9a8a;transform:translateY(3px)}
+.touch-controls{padding-bottom:max(40px,calc(env(safe-area-inset-bottom) + 32px))}
+.steering-select{display:flex;align-items:center;gap:13px;max-width:810px;margin:0 0 14px}
+.steering-select>span{font-size:9px;font-weight:800;letter-spacing:.2em;color:#d8e5dd}
+.steering-options{display:flex;gap:6px}
+.steering-option{min-width:94px;height:32px;padding:0 12px;border:1px solid #b9d1c966;border-radius:3px;background:#10272ccc;color:#d7e7df;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.12em;touch-action:manipulation}
+.steering-option.selected{border-color:#f16b58;background:#67312ccc;color:#fff}
+@media(max-height:500px) and (pointer:coarse){.steering-input{width:min(35vw,280px)}.steer-button{height:70px}.touch-controls{padding-bottom:max(31px,calc(env(safe-area-inset-bottom) + 22px))}}
+@media(max-width:700px) and (pointer:coarse){.steering-input{width:36vw}.steer-button{height:62px}.steer-button span{font-size:23px}.steer-button strong{font-size:11px}}
+@media(orientation:landscape) and (max-height:540px){
+  #start-overlay .steering-select{grid-column:1;grid-row:4;display:block;align-self:center;margin:0}
+  #start-overlay .steering-select>span{display:block;margin-bottom:4px;font-size:7px}
+  #start-overlay .steering-options{gap:4px}
+  #start-overlay .steering-option{flex:1;min-width:0;height:24px;padding:0 2px;font-size:10px}
+}

@@ -82,7 +82,10 @@ app.innerHTML = `
   </main>
 
   <div id="touch-controls" class="touch-controls">
-    <div class="steer-control"><div class="control-label"><span>STEER</span><span>LEFT <i>—</i> RIGHT</span></div><div id="steering-track" class="steering-track" role="slider" aria-label="ハンドル" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0"><span class="steer-center"></span><span id="steering-thumb" class="steering-thumb"><span>≡</span></span></div></div>
+    <div class="steering-input">
+      <div class="steer-control"><div class="control-label"><span>STEER</span><span>LEFT <i>—</i> RIGHT</span></div><div id="steering-track" class="steering-track" role="slider" aria-label="ハンドル" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0"><span class="steer-center"></span><span id="steering-thumb" class="steering-thumb"><span>≡</span></span></div></div>
+      <div class="button-steer-control"><div class="control-label"><span>STEER</span><span>BUTTON CONTROL</span></div><div class="steer-buttons"><button id="steer-left" class="steer-button" type="button" aria-label="左に曲がる"><span>←</span><strong>LEFT</strong></button><button id="steer-right" class="steer-button" type="button" aria-label="右に曲がる"><span>→</span><strong>RIGHT</strong></button></div></div>
+    </div>
     <div class="pedals"><button id="brake" class="pedal brake" type="button"><span class="pedal-bars">///</span><strong>BRAKE</strong></button><button id="throttle" class="pedal throttle" type="button"><span class="pedal-bars">///</span><strong>THROTTLE</strong></button></div>
   </div>
 
@@ -95,8 +98,9 @@ app.innerHTML = `
       <p>オンボード視点で、自己ベストを塗り替えよう。</p>
       <div class="track-select-heading"><span>SELECT CIRCUIT</span><span>SOLO TIME ATTACK / 03 TRACKS</span></div>
       <div class="track-options" role="group" aria-label="コースを選択">${trackCards}</div>
+      <div class="steering-select" role="group" aria-label="ステアリング方式"><span>STEERING</span><div class="steering-options"><button class="steering-option selected" data-steering-mode="slider" type="button" aria-pressed="true">SLIDER</button><button class="steering-option" data-steering-mode="buttons" type="button" aria-pressed="false">BUTTONS</button></div></div>
       <button id="start-button" class="primary-button" type="button">START ENGINE <span>↗</span></button>
-      <div class="menu-help"><span class="desktop-help">W / ↑ 加速　S / ↓ ブレーキ　A D / ← → ハンドル</span><span class="mobile-help">左のスライダーでハンドル、右のペダルで運転</span></div>
+      <div class="menu-help"><span class="desktop-help">W / ↑ 加速　S / ↓ ブレーキ　A D / ← → ハンドル</span><span class="mobile-help">左でハンドル、右のペダルで運転</span></div>
     </div>
     <div class="menu-footer"><span>APEX ONE / ORIGINAL RACING EXPERIENCE</span><span>01 — 03</span></div>
   </section>
@@ -302,6 +306,19 @@ function start(): void {
 app.querySelector('#start-button')!.addEventListener('click', start);
 app.querySelectorAll<HTMLButtonElement>('.track-option').forEach(button => {
   button.addEventListener('click', () => selectTrack(button.dataset.trackId as TrackId));
+});
+app.querySelectorAll<HTMLButtonElement>('.steering-option').forEach(button => {
+  button.addEventListener('click', () => {
+    if (active) return;
+    const mode = button.dataset.steeringMode === 'buttons' ? 'buttons' : 'slider';
+    controls.setSteeringMode(mode);
+    app.classList.toggle('button-steering', mode === 'buttons');
+    app.querySelectorAll<HTMLButtonElement>('.steering-option').forEach(option => {
+      const selected = option === button;
+      option.classList.toggle('selected', selected);
+      option.setAttribute('aria-pressed', String(selected));
+    });
+  });
 });
 soundButton.addEventListener('click', () => {
   engineAudio.unlock();
