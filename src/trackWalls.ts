@@ -6,6 +6,7 @@ export interface WallZone { from: number; to: number; side: WallSide }
 export interface WallSegment {
   ax: number; az: number; bx: number; bz: number;
   inwardX: number; inwardZ: number;
+  twoSided?: boolean;
 }
 export interface WallContact { depth: number; normalX: number; normalZ: number }
 
@@ -76,6 +77,90 @@ export const WALL_ZONES: Record<TrackId, readonly WallZone[]> = {
 const CELL_SIZE = 24;
 const key = (x: number, z: number) => `${x},${z}`;
 
+interface SharedEdgePoint { x: number; z: number; otherIndex: number }
+
+function hasWall(zones: readonly WallZone[], progress: number, side: -1 | 1): boolean {
+  const name = side === 1 ? 'left' : 'right';
+  return zones.some(zone => progress >= zone.from && progress < zone.to &&
+    (zone.side === 'both' || zone.side === name));
+}
+
+function sharedTrackEdges(path: TrackPath, zones: readonly WallZone[], offset: number): Map<string, SharedEdgePoint> {
+  const shared = new Map<string, SharedEdgePoint>();
+  const limitSquared = (offset * 2 + 3.5) ** 2;
+  const sampleCellSize = 32;
+  const pointCells = new Map<string, number[]>();
+  for (let i = 0; i < path.sampleCount; i++) {
+    const point = path.samples[i];
+    const cell = key(Math.floor(point.x / sampleCellSize), Math.floor(point.z / sampleCellSize));
+    const list = pointCells.get(cell) ?? [];
+    list.push(i);
+    pointCells.set(cell, list);
+  }
+  for (let i = 0; i < path.sampleCount; i++) {
+    const point = path.samples[i];
+    const normal = path.normals[i];
+    for (const side of [-1, 1] as const) {
+      if (!hasWall(zones, path.distances[i] / path.length, side)) continue;
+      let closest = -1;
+      let closestSquared = limitSquared;
+      const cellX = Math.floor(point.x / sampleCellSize);
+      const cellZ = Math.floor(point.z / sampleCellSize);
+      for (let cx = cellX - 1; cx <= cellX + 1; cx++) {
+        for (let cz = cellZ - 1; cz <= cellZ + 1; cz++) {
+          for (const j of pointCells.get(key(cx, cz)) ?? []) {
+            const separation = Math.abs(path.distances[i] - path.distances[j]);
+            if (Math.min(separation, path.length - separation) < 35) continue;
+            const alignment = normal.dot(path.normals[j]);
+            if (Math.abs(alignment) < .72) continue;
+            const otherSide = (alignment < 0 ? side : -side) as -1 | 1;
+            if (!hasWall(zones, path.distances[j] / path.length, otherSide)) continue;
+            const dx = path.samples[j].x - point.x;
+            const dz = path.samples[j].z - point.z;
+            const squared = dx * dx + dz * dz;
+            if (squared >= closestSquared) continue;
+            if ((dx * normal.x + dz * normal.z) * side < Math.sqrt(squared) * .78) continue;
+            closest = j;
+            closestSquared = squared;
+          }
+        }
+      }
+      if (closest >= 0) {
+        const other = path.samples[closest];
+        shared.set(key(i, side), {
+          x: (point.x + other.x) / 2,
+          z: (point.z + other.z) / 2,
+          otherIndex: closest,
+        });
+      }
+    }
+  }
+  return shared;
+}
+
+function foldedWallSegments(path: TrackPath, offset: number): Set<string> {
+  const folded = new Set<string>();
+  for (let i = 0; i < path.sampleCount; i++) {
+    const a = path.samples[i];
+    const b = path.samples[i + 1];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const distanceSquared = dx * dx + dz * dz;
+    for (const side of [-1, 1] as const) {
+      const edgeX = dx + (path.normals[i + 1].x - path.normals[i].x) * side * offset;
+      const edgeZ = dz + (path.normals[i + 1].z - path.normals[i].z) * side * offset;
+      if ((edgeX * dx + edgeZ * dz) / distanceSquared >= .4) continue;
+      // A constant-width offset can fold back at a hairpin with a radius
+      // smaller than the wall setback. Leave a short opening rather than
+      // creating an inward-facing collision pocket at the fold.
+      for (let neighbor = -4; neighbor <= 4; neighbor++) {
+        folded.add(key((i + neighbor + path.sampleCount) % path.sampleCount, side));
+      }
+    }
+  }
+  return folded;
+}
+
 export class TrackWalls {
   readonly segments: WallSegment[] = [];
   private readonly cells = new Map<string, number[]>();
@@ -83,25 +168,36 @@ export class TrackWalls {
   constructor(path: TrackPath, curbOuterEdge: number) {
     const offset = curbOuterEdge + 1.45;
     const zones = WALL_ZONES[path.definition.id];
+    const sharedEdges = sharedTrackEdges(path, zones, offset);
+    const foldedEdges = foldedWallSegments(path, offset);
     for (let i = 0; i < path.sampleCount; i++) {
       const progress = (path.distances[i] + path.distances[i + 1]) / (2 * path.length);
       const a = path.samples[i];
       const b = path.samples[i + 1];
       for (const side of [-1, 1] as const) {
-        const name = side === 1 ? 'left' : 'right';
-        if (!zones.some(zone => progress >= zone.from && progress < zone.to &&
-          (zone.side === 'both' || zone.side === name))) continue;
+        if (!hasWall(zones, progress, side)) continue;
+        const startShared = sharedEdges.get(key(i, side));
+        const endShared = sharedEdges.get(key((i + 1) % path.sampleCount, side));
+        const shared = startShared ?? endShared;
+        // The earlier arm owns the shared barrier. The later arm must not
+        // build a second row on its side of the same narrow strip of land.
+        if (shared && i > shared.otherIndex) continue;
+        if (!shared && foldedEdges.has(key(i, side))) continue;
         const an = path.normals[i];
         const bn = path.normals[i + 1];
-        const ax = a.x + an.x * side * offset;
-        const az = a.z + an.z * side * offset;
-        const bx = b.x + bn.x * side * offset;
-        const bz = b.z + bn.z * side * offset;
+        const ax = startShared?.x ?? a.x + an.x * side * offset;
+        const az = startShared?.z ?? a.z + an.z * side * offset;
+        const bx = endShared?.x ?? b.x + bn.x * side * offset;
+        const bz = endShared?.z ?? b.z + bn.z * side * offset;
         const length = Math.hypot(bx - ax, bz - az);
         if (length < 0.001) continue;
+        const roadX = b.x - a.x;
+        const roadZ = b.z - a.z;
+        if ((bx - ax) * roadX + (bz - az) * roadZ <= 0) continue;
         const inwardX = side * (az - bz) / length;
         const inwardZ = side * (bx - ax) / length;
-        const index = this.segments.push({ ax, az, bx, bz, inwardX, inwardZ }) - 1;
+        const index = this.segments.push({ ax, az, bx, bz, inwardX, inwardZ,
+          twoSided: Boolean(shared) }) - 1;
         for (let cx = Math.floor((Math.min(ax, bx) - 1) / CELL_SIZE);
           cx <= Math.floor((Math.max(ax, bx) + 1) / CELL_SIZE); cx++) {
           for (let cz = Math.floor((Math.min(az, bz) - 1) / CELL_SIZE);
@@ -127,9 +223,10 @@ export class TrackWalls {
       const t = ((x - wall.ax) * dx + (z - wall.az) * dz) / (dx * dx + dz * dz);
       if (t < -.12 || t > 1.12) continue;
       const inwardDistance = (x - wall.ax) * wall.inwardX + (z - wall.az) * wall.inwardZ;
-      const depth = radius - inwardDistance;
+      const depth = radius - (wall.twoSided ? Math.abs(inwardDistance) : inwardDistance);
       if (depth <= 0 || depth > 5 || (best && depth <= best.depth)) continue;
-      best = { depth, normalX: wall.inwardX, normalZ: wall.inwardZ };
+      const direction = wall.twoSided && inwardDistance < 0 ? -1 : 1;
+      best = { depth, normalX: wall.inwardX * direction, normalZ: wall.inwardZ * direction };
     }
     return best;
   }

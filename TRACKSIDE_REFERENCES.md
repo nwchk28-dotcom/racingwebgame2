@@ -30,3 +30,10 @@ selected corners and permit a wall on only one side.
 The Monaco tunnel runs from about 43.5% to 60.5% of the game's lap, after
 Portier and before the Nouvelle Chicane. Its 8.8 m roof, bright emissive walls,
 and light strips intentionally keep the driving view brighter than the real tunnel.
+Where separate arms of the simplified centerline pass close together, their
+facing barriers are merged into one two-sided wall midway between the arms.
+This applies to Monaco's Fairmont hairpin and the close parallel streets in
+Baku. Tight inside offsets can also fold backwards at a hairpin; those short
+wall stretches are left open rather than forming a collision pocket, including
+Spa's La Source. The low barriers use a light body and a red top band so they
+remain visible against both asphalt and grass.
