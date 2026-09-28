@@ -21,6 +21,8 @@ describe('track scenes', () => {
       expect(scene.children).toContain(track.group);
       const tunnel = track.group.getObjectByName('monaco-tunnel');
       expect(Boolean(tunnel)).toBe(definition.id === 'monaco');
+      expect(Boolean(track.group.getObjectByName('baku-turn-16-runoff')))
+        .toBe(definition.id === 'baku');
       if (tunnel) {
         expect(tunnel.children).toHaveLength(4);
         const roof = tunnel.children[0] as Mesh;

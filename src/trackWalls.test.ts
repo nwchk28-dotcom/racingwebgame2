@@ -42,6 +42,17 @@ describe('trackside walls', () => {
     expect(monzaWalls.contact(openX, openZ, .35)).toBeNull();
   });
 
+  it('leaves the outside of Baku Turn 16 open while retaining its inside wall', () => {
+    const definition = TRACKS.find(track => track.id === 'baku')!;
+    const path = new TrackPath(definition);
+    const walls = new TrackWalls(path, definition.roadHalfWidth + definition.curbWidth);
+    const offset = definition.roadHalfWidth + definition.curbWidth + 1.4;
+    const [outsideX, outsideZ] = pointAt(path, .615, -1, offset);
+    const [insideX, insideZ] = pointAt(path, .615, 1, offset);
+    expect(walls.contact(outsideX, outsideZ, .35)).toBeNull();
+    expect(walls.contact(insideX, insideZ, .35)?.depth).toBeGreaterThan(0);
+  });
+
   it('does not intrude onto the sampled racing centerlines', () => {
     for (const definition of TRACKS) {
       const path = new TrackPath(definition);

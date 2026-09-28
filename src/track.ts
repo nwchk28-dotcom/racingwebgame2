@@ -229,12 +229,46 @@ export class Track extends TrackPath {
       ));
     }
 
+    if (this.definition.id === 'baku') this.addBakuTurn16Runoff(scene);
     this.addOuterFence(scene, railMaterial);
     this.addTracksideWalls(scene);
     if (this.definition.id === 'monaco') this.addMonacoTunnel(scene);
     this.addStartLine(scene);
     this.addBuildings(scene);
     this.addTrees(scene);
+  }
+
+  private addBakuTurn16Runoff(scene: THREE.Object3D): void {
+    // The outside of the left-hand Turn 16 is an asphalt escape area, with
+    // its retaining wall well behind the kerb. Taper the patch into the verge
+    // so it does not end as a rectangular slab at either end of the corner.
+    const start = this.distances.findIndex(distance => distance / this.length >= .585);
+    const end = this.distances.findIndex(distance => distance / this.length >= .645);
+    const inner = this.curbOuterEdge + 1.05;
+    const positions: number[] = [];
+    const indices: number[] = [];
+    for (let i = start; i <= end; i++) {
+      const fraction = (i - start) / (end - start);
+      const width = 24 * Math.sin(Math.PI * fraction) ** 0.8;
+      const point = this.samples[i];
+      const normal = this.normals[i].clone().normalize();
+      for (const offset of [-inner, -inner - width]) {
+        positions.push(point.x + normal.x * offset, 0.012, point.z + normal.z * offset);
+      }
+      if (i < end) {
+        const vertex = (i - start) * 2;
+        indices.push(vertex, vertex + 2, vertex + 1, vertex + 1, vertex + 2, vertex + 3);
+      }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    const runoff = new THREE.Mesh(geometry,
+      new THREE.MeshStandardMaterial({ color: '#697375', roughness: 0.98, side: THREE.DoubleSide }));
+    runoff.name = 'baku-turn-16-runoff';
+    runoff.receiveShadow = true;
+    scene.add(runoff);
   }
 
   private addTracksideWalls(scene: THREE.Object3D): void {

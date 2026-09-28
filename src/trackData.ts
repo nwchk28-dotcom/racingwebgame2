@@ -131,10 +131,11 @@ export const TRACKS: readonly TrackDefinition[] = [
     roadHalfWidth: 7.5, curbWidth: 1, targetLength: 4927, timingLine: [0, 0], scenery: 'urban',
     sky: '#a5bdc9', grass: '#637b6c' },
   { id: 'shanghai', name: 'SHANGHAI', location: 'CHINA', points: shanghaiPoints,
-    // The source begins on the back straight before Turn 14. The control line
-    // lies on the separate pit straight between Turns 16 and 1.
+    // The source begins on the back straight before Turn 14. The F1 chequered
+    // control line sits near the middle of the pit straight (T16 -> T1),
+    // before the old point 44 that put the spawn too close to Turn 1.
     roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5451,
-    timingLine: shanghaiPoints[44], scenery: 'stadium', sky: '#abc7c8', grass: '#5e7952' },
+    timingLine: [-222.3, 330.8], scenery: 'stadium', sky: '#abc7c8', grass: '#5e7952' },
   { id: 'bahrain', name: 'BAHRAIN', location: 'BAHRAIN', points: bahrainPoints,
     roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5412, smoothingSigma: 10,
     timingLine: [0, 0], scenery: 'airfield', sky: '#c5c5b6', grass: '#aa9876' },

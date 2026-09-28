@@ -88,7 +88,7 @@ describe('all circuits', () => {
     const expectedOldProgress: Partial<Record<(typeof TRACKS)[number]['id'], readonly [number, number]>> = {
       monza: [0.93, 0.97], silverstone: [0.43, 0.46], monaco: [0.72, 0.74],
       jeddah: [0, 0.02], baku: [0, 0.02], 'abu-dhabi': [0, 0.02], singapore: [0, 0.02],
-      shanghai: [.16, .19], bahrain: [0, .02], miami: [0, .02], imola: [0, .02],
+      shanghai: [.16, .17], bahrain: [0, .02], miami: [0, .02], imola: [0, .02],
       barcelona: [0, .02], austria: [0, .02], hungary: [0, .02], zandvoort: [0, .02],
       austin: [0, .02], 'las-vegas': [0, .02], lusail: [0, .02],
     };
@@ -109,6 +109,28 @@ describe('all circuits', () => {
       const newForward = moved.samples[1].clone().sub(moved.samples[0]).normalize();
       expect(oldForward.dot(newForward)).toBeGreaterThan(0.99);
       expect(moved.nearest(moved.start.x, moved.start.z).progress).toBeCloseTo(0, 3);
+    }
+  });
+
+  it('places the Shanghai checker between Turn 16 and Turn 1 on the pit straight', () => {
+    const definition = TRACKS.find(track => track.id === 'shanghai')!;
+    const sourceOrder = new TrackPath({ ...definition, timingLine: undefined });
+    const [x, z] = definition.timingLine!;
+    const line = sourceOrder.nearest(-x, z);
+    // The 2025 F1/FIA maps place the checker near the middle of this straight;
+    // point 44 in the source data was noticeably nearer Turn 1.
+    expect(line.progress).toBeGreaterThan(.164);
+    expect(line.progress).toBeLessThan(.169);
+  });
+
+  it('keeps every circuit start on a straight section', () => {
+    for (const definition of TRACKS) {
+      const path = new TrackPath(definition);
+      const before = path.samples[path.sampleCount - 12].clone().sub(path.samples[0]);
+      const after = path.samples[12].clone().sub(path.samples[0]);
+      // At the control line, the incoming and outgoing road headings should
+      // agree even on circuits whose source vertices are unevenly spaced.
+      expect(before.normalize().dot(after.normalize()), definition.id).toBeLessThan(-0.98);
     }
   });
 });

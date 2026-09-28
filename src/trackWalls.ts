@@ -58,7 +58,11 @@ export const WALL_ZONES: Record<TrackId, readonly WallZone[]> = {
   baku: [
     { from: 0, to: .14, side: 'both' }, { from: .14, to: .21, side: 'left' },
     { from: .21, to: .54, side: 'both' }, { from: .54, to: .59, side: 'right' },
-    { from: .59, to: .84, side: 'both' }, { from: .84, to: .90, side: 'left' },
+    // Turn 16 is a left-hander at about 60.6% of the lap. Its outside (right)
+    // has an escape/run-off road; the distant wall at the end of it is not a
+    // curbside barrier. Keep the inside wall, then resume both sides after it.
+    { from: .59, to: .64, side: 'left' },
+    { from: .64, to: .84, side: 'both' }, { from: .84, to: .90, side: 'left' },
     { from: .90, to: 1, side: 'both' },
   ],
   'abu-dhabi': [
