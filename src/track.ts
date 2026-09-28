@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { TrackDefinition } from './trackData';
 import { TrackPath } from './trackPath';
+import { TrackWalls, type WallSegment } from './trackWalls';
 
 export interface ObstacleCollider {
   x: number;
@@ -125,11 +126,35 @@ function box(
   return object;
 }
 
+function wallGeometry(segments: readonly WallSegment[], height: number, thickness = 0.38): THREE.BufferGeometry {
+  const positions: number[] = [];
+  const indices: number[] = [];
+  for (const wall of segments) {
+    const half = thickness / 2;
+    const start = positions.length / 3;
+    for (const [x, z] of [[wall.ax, wall.az], [wall.bx, wall.bz]]) {
+      for (const side of [-1, 1]) {
+        positions.push(x + wall.inwardX * side * half, 0, z + wall.inwardZ * side * half);
+        positions.push(x + wall.inwardX * side * half, height, z + wall.inwardZ * side * half);
+      }
+    }
+    for (const [a, b, c, d] of [[0, 4, 5, 1], [2, 3, 7, 6], [1, 5, 7, 3]]) {
+      indices.push(start + a, start + b, start + c, start + a, start + c, start + d);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 export class Track extends TrackPath {
   readonly roadHalfWidth: number;
   readonly curbOuterEdge: number;
   readonly outerFence: { centerX: number; centerZ: number; radius: number };
   readonly colliders: ObstacleCollider[] = [];
+  readonly walls: TrackWalls;
   readonly group = new THREE.Group();
   private readonly scene: THREE.Scene;
 
@@ -138,6 +163,7 @@ export class Track extends TrackPath {
     this.scene = scene;
     this.roadHalfWidth = definition.roadHalfWidth;
     this.curbOuterEdge = definition.roadHalfWidth + definition.curbWidth;
+    this.walls = new TrackWalls(this, this.curbOuterEdge);
     const xValues = this.samples.map(point => point.x);
     const zValues = this.samples.map(point => point.z);
     const centerX = (Math.min(...xValues) + Math.max(...xValues)) / 2;
@@ -204,9 +230,60 @@ export class Track extends TrackPath {
     }
 
     this.addOuterFence(scene, railMaterial);
+    this.addTracksideWalls(scene);
+    if (this.definition.id === 'monaco') this.addMonacoTunnel(scene);
     this.addStartLine(scene);
     this.addBuildings(scene);
     this.addTrees(scene);
+  }
+
+  private addTracksideWalls(scene: THREE.Object3D): void {
+    const barrier = new THREE.Mesh(wallGeometry(this.walls.segments, 1.55),
+      new THREE.MeshStandardMaterial({ color: '#b7bcb7', roughness: 0.89, side: THREE.DoubleSide }));
+    barrier.receiveShadow = true;
+    scene.add(barrier);
+  }
+
+  private addMonacoTunnel(scene: THREE.Object3D): void {
+    // Portier to just before Nouvelle Chicane. Keep the roof high and its
+    // material emissive so the onboard view stays readable on mobile screens.
+    const start = this.distances.findIndex(distance => distance / this.length >= .435);
+    const end = this.distances.findIndex(distance => distance / this.length >= .605);
+    const points = this.samples.slice(start, end + 1);
+    const normals = this.normals.slice(start, end + 1);
+    const halfWidth = this.curbOuterEdge + 1.6;
+    const tunnel = new THREE.Group();
+    tunnel.name = 'monaco-tunnel';
+    scene.add(tunnel);
+    const roof = new THREE.Mesh(makeRibbon(points, normals, -halfWidth, halfWidth, 8.8),
+      new THREE.MeshStandardMaterial({ color: '#b7c3c1', emissive: '#9eaca8',
+        emissiveIntensity: 0.72, roughness: 0.9, side: THREE.DoubleSide }));
+    tunnel.add(roof);
+    const sideSegments: WallSegment[] = [];
+    for (let i = start; i < end; i++) {
+      const a = this.samples[i];
+      const b = this.samples[i + 1];
+      const an = this.normals[i];
+      const bn = this.normals[i + 1];
+      for (const side of [-1, 1]) {
+        const ax = a.x + an.x * side * halfWidth;
+        const az = a.z + an.z * side * halfWidth;
+        const bx = b.x + bn.x * side * halfWidth;
+        const bz = b.z + bn.z * side * halfWidth;
+        const length = Math.hypot(bx - ax, bz - az);
+        if (length < .001) continue;
+        sideSegments.push({ ax, az, bx, bz,
+          inwardX: side * (az - bz) / length, inwardZ: side * (bx - ax) / length });
+      }
+    }
+    tunnel.add(new THREE.Mesh(wallGeometry(sideSegments, 8.8),
+      new THREE.MeshStandardMaterial({ color: '#aeb9b5', emissive: '#536664',
+        emissiveIntensity: 0.48, roughness: 0.92, side: THREE.DoubleSide })));
+    const light = new THREE.MeshBasicMaterial({ color: '#eef7ed', side: THREE.DoubleSide });
+    for (const side of [-1, 1]) {
+      tunnel.add(new THREE.Mesh(makeRibbon(points, normals,
+        side * (halfWidth - 1.15), side * (halfWidth - .65), 8.77), light));
+    }
   }
 
   private addOuterFence(scene: THREE.Object3D, material: THREE.Material): void {

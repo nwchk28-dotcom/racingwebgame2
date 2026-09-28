@@ -60,9 +60,9 @@ app.innerHTML = `
     <div class="brand"><span class="brand-mark">A<span>1</span></span><span class="brand-name">APEX <strong>ONE</strong><small>TIME ATTACK</small></span></div>
     <div class="track-name"><span class="live-dot"></span> <span id="current-track-name">${TRACKS[0].name}</span> <span class="track-meta">/ DRY / 23°C</span></div>
     <div class="top-actions">
-      <button id="sound-button" class="icon-button" type="button" aria-label="音を消す" title="エンジン音を切り替え">♪</button>
-      <button id="reset-button" class="icon-button" type="button" aria-label="スタート地点に戻る" title="リセット (R)">↻</button>
-      <button id="pause-button" class="icon-button" type="button" aria-label="一時停止" title="一時停止 (Esc)">Ⅱ</button>
+      <button id="sound-button" class="icon-button" type="button" aria-label="音を消す">♪</button>
+      <button id="reset-button" class="icon-button" type="button" aria-label="スタート地点に戻る">↻</button>
+      <button id="pause-button" class="icon-button" type="button" aria-label="一時停止">Ⅱ</button>
     </div>
   </header>
 
@@ -89,10 +89,10 @@ app.innerHTML = `
 
   <div id="touch-controls" class="touch-controls">
     <div class="steering-input">
-      <div class="steer-control"><div class="control-label"><span>STEER</span><span>LEFT <i>—</i> RIGHT</span></div><div id="steering-track" class="steering-track" role="slider" aria-label="ハンドル" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0"><span class="steer-center"></span><span id="steering-thumb" class="steering-thumb"><span>≡</span></span></div></div>
-      <div class="button-steer-control"><div class="control-label"><span>STEER</span><span>BUTTON CONTROL</span></div><div class="steer-buttons"><button id="steer-left" class="steer-button" type="button" aria-label="左に曲がる"><span>←</span><strong>LEFT</strong></button><button id="steer-right" class="steer-button" type="button" aria-label="右に曲がる"><span>→</span><strong>RIGHT</strong></button></div></div>
+      <div class="steer-control"><div id="steering-track" class="steering-track" role="slider" aria-label="ハンドル" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0"><span class="steer-center"></span><span id="steering-thumb" class="steering-thumb"><span>≡</span></span></div></div>
+      <div class="button-steer-control"><div class="steer-buttons"><button id="steer-left" class="steer-button" type="button" aria-label="左に曲がる"><span aria-hidden="true">←</span></button><button id="steer-right" class="steer-button" type="button" aria-label="右に曲がる"><span aria-hidden="true">→</span></button></div></div>
     </div>
-    <div class="pedals"><button id="brake" class="pedal brake" type="button"><span class="pedal-bars">///</span><strong>BRAKE</strong></button><button id="throttle" class="pedal throttle" type="button"><span class="pedal-bars">///</span><strong>THROTTLE</strong></button></div>
+    <div class="pedals"><button id="brake" class="pedal brake" type="button" aria-label="ブレーキ"><span class="pedal-bars" aria-hidden="true">▮▮</span></button><button id="throttle" class="pedal throttle" type="button" aria-label="アクセル"><span class="pedal-bars" aria-hidden="true">///</span></button></div>
   </div>
 
   <div id="toast" class="toast" role="status"></div>
@@ -106,7 +106,6 @@ app.innerHTML = `
       <div class="track-options" role="group" aria-label="コースを選択">${trackCards}</div>
       <div class="steering-select" role="group" aria-label="ステアリング方式"><span>STEERING</span><div class="steering-options"><button class="steering-option" data-steering-mode="slider" type="button" aria-pressed="false">SLIDER</button><button class="steering-option selected" data-steering-mode="buttons" type="button" aria-pressed="true">BUTTONS</button></div></div>
       <button id="start-button" class="primary-button" type="button">START ENGINE <span>↗</span></button>
-      <div class="menu-help"><span class="desktop-help">W / ↑ 加速　S / ↓ ブレーキ　A D / ← → ハンドル</span><span class="mobile-help">左でハンドル、右のペダルで運転</span></div>
     </div>
     <div class="menu-footer"><span>APEX ONE / ORIGINAL RACING EXPERIENCE</span><span>01 — ${String(TRACKS.length).padStart(2, '0')}</span></div>
   </section>

@@ -19,6 +19,14 @@ describe('track scenes', () => {
     for (const definition of TRACKS) {
       const track = new Track(scene, definition);
       expect(scene.children).toContain(track.group);
+      const tunnel = track.group.getObjectByName('monaco-tunnel');
+      expect(Boolean(tunnel)).toBe(definition.id === 'monaco');
+      if (tunnel) {
+        expect(tunnel.children).toHaveLength(4);
+        const roof = tunnel.children[0] as Mesh;
+        const heights = roof.geometry.getAttribute('position');
+        for (let i = 0; i < heights.count; i++) expect(heights.getY(i)).toBeGreaterThan(8);
+      }
       for (const collider of track.colliders) {
         expect(track.nearest(collider.x, collider.z).distance)
           .toBeGreaterThan(collider.radius + track.curbOuterEdge);

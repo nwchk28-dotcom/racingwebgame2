@@ -10,11 +10,13 @@ const straightTrack = {
   curbOuterEdge: 10.7,
   outerFence: { centerX: 0, centerZ: 0, radius: 500 },
   colliders: [],
+  walls: { contact: () => null },
   nearest: (x: number, z: number) => ({
     progress: z / 1000, distance: Math.abs(x),
     centerX: 0, centerZ: z, normalX: 1, normalZ: 0, signedDistance: x,
   }),
-} satisfies Pick<Track, 'start' | 'startYaw' | 'curbOuterEdge' | 'outerFence' | 'colliders' | 'nearest'>;
+} satisfies Pick<Track, 'start' | 'startYaw' | 'curbOuterEdge' | 'outerFence' | 'colliders' | 'nearest'> &
+  { walls: Pick<Track['walls'], 'contact'> };
 
 describe('car physics', () => {
   it('accelerates, steers and brakes', () => {
@@ -108,6 +110,21 @@ describe('car physics', () => {
     expect(car.collided).toBe(true);
     expect(car.z).toBeLessThanOrEqual(9.9);
     expect(car.vz).toBeLessThan(0);
+  });
+
+  it('keeps the wing inside a close wall and cancels outward speed', () => {
+    const car = new CarPhysics({ ...straightTrack,
+      walls: { contact: (x: number, z: number, radius: number) =>
+        z > -5 && z < 10 && x > 11 - radius
+          ? { depth: x + radius - 11, normalX: -1, normalZ: 0 }
+          : null },
+    });
+    car.x = 9.25;
+    car.vx = 30;
+    car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
+    expect(car.collided).toBe(true);
+    expect(car.x + 1.6 + .28).toBeLessThanOrEqual(11.001);
+    expect(car.vx).toBeLessThan(0);
   });
 
   it('approaches 300 km/h in eighth gear on a long straight', () => {

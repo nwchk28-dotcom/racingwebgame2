@@ -25,6 +25,11 @@ export interface DriverInput {
   brake: number;
 }
 
+type PhysicsTrack = Pick<Track,
+  'start' | 'startYaw' | 'curbOuterEdge' | 'outerFence' | 'colliders' | 'nearest'> & {
+    walls: Pick<Track['walls'], 'contact'>;
+  };
+
 export class CarPhysics {
   x = 0;
   z = 0;
@@ -36,8 +41,7 @@ export class CarPhysics {
   allWheelsOffTrack = false;
   collided = false;
 
-  constructor(private readonly track: Pick<Track,
-    'start' | 'startYaw' | 'curbOuterEdge' | 'outerFence' | 'colliders' | 'nearest'>) {
+  constructor(private readonly track: PhysicsTrack) {
     this.reset();
   }
 
@@ -139,6 +143,27 @@ export class CarPhysics {
       this.x -= collisionNormalX * deepest;
       this.z -= collisionNormalZ * deepest;
       this.cancelImpact(collisionNormalX, collisionNormalZ);
+    }
+
+    // Check the wing and wheel contact points against each nearby wall. The
+    // same segments render the barrier and drive its collision response.
+    for (let pass = 0; pass < 3; pass++) {
+      let deepest = 0;
+      let inwardX = 0;
+      let inwardZ = 0;
+      for (const [localX, localZ] of BODY_CONTACTS) {
+        const pointX = this.x + localX * cos + localZ * sin;
+        const pointZ = this.z - localX * sin + localZ * cos;
+        const contact = this.track.walls.contact(pointX, pointZ, 0.28);
+        if (!contact || contact.depth <= deepest) continue;
+        deepest = contact.depth;
+        inwardX = contact.normalX;
+        inwardZ = contact.normalZ;
+      }
+      if (deepest <= 0) break;
+      this.x += inwardX * deepest;
+      this.z += inwardZ * deepest;
+      this.cancelImpact(-inwardX, -inwardZ);
     }
 
     for (const obstacle of this.track.colliders) {
