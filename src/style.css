@@ -24,10 +24,7 @@ html.chrome-ios-gutters #scene{left:calc(0px - var(--scene-overhang));right:calc
 .track-pages{display:flex;align-items:center;gap:4px}
 .track-page{height:22px;padding:0 7px;border:1px solid #b9d1c966;border-radius:3px;background:#11272cbb;color:#d8e5dd;font-size:8px;font-weight:800;letter-spacing:.06em;touch-action:manipulation}
 .track-page.selected{border-color:#f16b58;background:#67312ccc;color:#fff}
-#start-overlay[data-page="0"] .track-option:not([data-page="0"]),
-#start-overlay[data-page="1"] .track-option:not([data-page="1"]),
-#start-overlay[data-page="2"] .track-option:not([data-page="2"]),
-#start-overlay[data-page="3"] .track-option:not([data-page="3"]){display:none}
+.track-option[hidden]{display:none}
 .track-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:810px;margin-bottom:16px}
 .track-option{min-width:0;min-height:112px;padding:8px 10px;border:1px solid #b9d1c966;border-radius:4px;background:linear-gradient(145deg,#132b31e6,#0a171bdc);color:#f2f8f3;text-align:left;touch-action:manipulation;transition:border-color .15s,background .15s,transform .15s}
 .track-option:hover{border-color:#e9f4ee;transform:translateY(-2px)}
@@ -87,6 +84,9 @@ html.chrome-ios-gutters #scene{left:calc(0px - var(--scene-overhang));right:calc
 
 @media(max-width:700px) and (orientation:landscape){
   #start-overlay .track-option strong{font-size:11px;letter-spacing:.025em}
+  #start-overlay .track-select-heading>span:first-child{display:none}
+  #start-overlay .track-pages{gap:3px;flex-wrap:wrap;justify-content:flex-end}
+  #start-overlay .track-page{padding:0 5px;font-size:7px}
 }
 
 .course-map{position:absolute;top:81px;right:clamp(22px,3.4vw,62px);z-index:2;display:none;width:180px;padding:11px 10px 8px;border:1px solid #d6ece044;border-radius:5px;background:linear-gradient(155deg,#102328e8,#08161bcf);box-shadow:0 12px 35px #06101482;backdrop-filter:blur(12px);pointer-events:none}

@@ -3,6 +3,16 @@ import { TRACKS } from './trackData';
 import { TrackPath } from './trackPath';
 
 describe('all circuits', () => {
+  it('covers every 2025 venue except the Suzuka overpass', () => {
+    expect(TRACKS).toHaveLength(23);
+    expect(new Set(TRACKS.map(track => track.id)).size).toBe(23);
+    expect(TRACKS.map(track => track.id as string)).not.toContain('suzuka');
+    for (const id of ['shanghai', 'bahrain', 'miami', 'imola', 'barcelona',
+      'austria', 'hungary', 'zandvoort', 'austin', 'las-vegas', 'lusail']) {
+      expect(TRACKS.some(track => track.id === id), id).toBe(true);
+    }
+  });
+
   it('keeps the requested lap lengths and a dense, closed centerline', () => {
     for (const definition of TRACKS) {
       const path = new TrackPath(definition);
@@ -78,6 +88,9 @@ describe('all circuits', () => {
     const expectedOldProgress: Partial<Record<(typeof TRACKS)[number]['id'], readonly [number, number]>> = {
       monza: [0.93, 0.97], silverstone: [0.43, 0.46], monaco: [0.72, 0.74],
       jeddah: [0, 0.02], baku: [0, 0.02], 'abu-dhabi': [0, 0.02], singapore: [0, 0.02],
+      shanghai: [.16, .19], bahrain: [0, .02], miami: [0, .02], imola: [0, .02],
+      barcelona: [0, .02], austria: [0, .02], hungary: [0, .02], zandvoort: [0, .02],
+      austin: [0, .02], 'las-vegas': [0, .02], lusail: [0, .02],
     };
     for (const definition of TRACKS.filter(item => item.timingLine)) {
       const original = new TrackPath({ ...definition, timingLine: undefined });

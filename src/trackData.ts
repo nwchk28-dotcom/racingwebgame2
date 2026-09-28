@@ -3,10 +3,15 @@
 import { albertParkPoints, mexicoCityPoints, gillesVilleneuvePoints } from './flatCircuitData';
 import { monacoPoints, spaPoints, saoPauloPoints } from './additionalCircuitData';
 import { jeddahPoints, bakuPoints, abuDhabiPoints, singaporePoints } from './streetCircuitData';
+import { austriaPoints, bahrainPoints, shanghaiPoints, barcelonaPoints,
+  hungaryPoints, imolaPoints, zandvoortPoints, lusailPoints, austinPoints,
+  miamiPoints, lasVegasPoints } from './calendar2025CircuitData';
 
 export type TrackId = 'monza' | 'silverstone' | 'albert-park' | 'mexico-city'
   | 'gilles-villeneuve' | 'monaco' | 'spa' | 'sao-paulo'
-  | 'jeddah' | 'baku' | 'abu-dhabi' | 'singapore';
+  | 'jeddah' | 'baku' | 'abu-dhabi' | 'singapore'
+  | 'shanghai' | 'bahrain' | 'miami' | 'imola' | 'barcelona'
+  | 'austria' | 'hungary' | 'zandvoort' | 'austin' | 'las-vegas' | 'lusail';
 export type SceneryKind = 'park' | 'airfield' | 'stadium' | 'urban' | 'marina';
 export interface TrackDefinition {
   id: TrackId;
@@ -18,6 +23,8 @@ export interface TrackDefinition {
   targetLength?: number;
   /** Timing/control line in the source centerline's local coordinates. */
   timingLine?: readonly [number, number];
+  /** GPS centerline smoothing in metres of sample spacing; tighter data needs more. */
+  smoothingSigma?: number;
   spline?: boolean;
   scenery: SceneryKind;
   sky: string;
@@ -123,4 +130,39 @@ export const TRACKS: readonly TrackDefinition[] = [
   { id: 'singapore', name: 'MARINA BAY', location: 'SINGAPORE', points: singaporePoints,
     roadHalfWidth: 7.5, curbWidth: 1, targetLength: 4927, timingLine: [0, 0], scenery: 'urban',
     sky: '#a5bdc9', grass: '#637b6c' },
+  { id: 'shanghai', name: 'SHANGHAI', location: 'CHINA', points: shanghaiPoints,
+    // The source begins on the back straight before Turn 14. The control line
+    // lies on the separate pit straight between Turns 16 and 1.
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5451,
+    timingLine: shanghaiPoints[44], scenery: 'stadium', sky: '#abc7c8', grass: '#5e7952' },
+  { id: 'bahrain', name: 'BAHRAIN', location: 'BAHRAIN', points: bahrainPoints,
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5412, smoothingSigma: 10,
+    timingLine: [0, 0], scenery: 'airfield', sky: '#c5c5b6', grass: '#aa9876' },
+  { id: 'miami', name: 'MIAMI', location: 'UNITED STATES', points: miamiPoints,
+    roadHalfWidth: 8.5, curbWidth: 1.1, targetLength: 5412,
+    timingLine: [0, 0], scenery: 'stadium', sky: '#a9d2d7', grass: '#729479' },
+  { id: 'imola', name: 'IMOLA', location: 'ITALY', points: imolaPoints,
+    roadHalfWidth: 8.5, curbWidth: 1, targetLength: 4909,
+    timingLine: [0, 0], scenery: 'park', sky: '#b5c9c7', grass: '#527752' },
+  { id: 'barcelona', name: 'BARCELONA', location: 'SPAIN', points: barcelonaPoints,
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 4657,
+    timingLine: [0, 0], scenery: 'park', sky: '#adccd2', grass: '#708451' },
+  { id: 'austria', name: 'RED BULL RING', location: 'AUSTRIA', points: austriaPoints,
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 4318, smoothingSigma: 8,
+    timingLine: [0, 0], scenery: 'park', sky: '#a7c6d0', grass: '#5d8352' },
+  { id: 'hungary', name: 'HUNGARORING', location: 'HUNGARY', points: hungaryPoints,
+    roadHalfWidth: 9, curbWidth: 1.1, targetLength: 4381,
+    timingLine: [0, 0], scenery: 'park', sky: '#b4cbd0', grass: '#668053' },
+  { id: 'zandvoort', name: 'ZANDVOORT', location: 'NETHERLANDS', points: zandvoortPoints,
+    roadHalfWidth: 8.5, curbWidth: 1.1, targetLength: 4259,
+    timingLine: [0, 0], scenery: 'park', sky: '#aec7ce', grass: '#66865b' },
+  { id: 'austin', name: 'CIRCUIT OF THE AMERICAS', location: 'UNITED STATES', points: austinPoints,
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5513, smoothingSigma: 10,
+    timingLine: [0, 0], scenery: 'stadium', sky: '#b0cacf', grass: '#6d8457' },
+  { id: 'las-vegas', name: 'LAS VEGAS', location: 'UNITED STATES', points: lasVegasPoints,
+    roadHalfWidth: 8, curbWidth: 1, targetLength: 6201,
+    timingLine: [0, 0], scenery: 'urban', sky: '#95aebc', grass: '#888471' },
+  { id: 'lusail', name: 'LUSAIL', location: 'QATAR', points: lusailPoints,
+    roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5419,
+    timingLine: [0, 0], scenery: 'airfield', sky: '#b3c9c9', grass: '#a39271' },
 ];

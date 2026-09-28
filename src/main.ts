@@ -36,7 +36,7 @@ const trackCards = TRACKS.map((definition, index) => {
   const preview = coursePreview(definition);
   return `
   <button class="track-option${index === 0 ? ' selected' : ''}" type="button"
-    data-track-id="${definition.id}" data-page="${Math.floor(index / 3)}" aria-pressed="${index === 0}">
+    data-track-id="${definition.id}" data-page="${Math.floor(index / 3)}" aria-pressed="${index === 0}"${index >= 3 ? ' hidden' : ''}>
     <span class="track-option-top"><b>${String(index + 1).padStart(2, '0')}</b><span>${definition.location}</span></span>
     ${preview.outline}
     <strong>${definition.name}</strong>
@@ -275,6 +275,9 @@ function refreshTrackChoices(): void {
 
 function setTrackPage(page: number): void {
   startOverlay.dataset.page = String(page);
+  app.querySelectorAll<HTMLButtonElement>('.track-option').forEach(button => {
+    button.hidden = Number(button.dataset.page) !== page;
+  });
   app.querySelectorAll<HTMLButtonElement>('.track-page').forEach(button => {
     const selected = Number(button.dataset.trackPage) === page;
     button.classList.toggle('selected', selected);

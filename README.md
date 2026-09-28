@@ -1,6 +1,6 @@
 # APEX ONE
 
-1台で走る、オンボード視点のフォーミュラ・タイムアタックです。Monza、Silverstone、Albert Park、Mexico City、Circuit Gilles-Villeneuve、Monaco、Spa-Francorchamps、São Paulo、Jeddah、Baku、Yas Marina、Singaporeの12コースを選べます。車体と周辺施設は独自のデザインです。
+1台で走る、オンボード視点のフォーミュラ・タイムアタックです。2025年のF1カレンダーから立体交差のある鈴鹿を除いた23コースを選べます。車体と周辺施設は独自のデザインです。
 
 ## ローカル実行
 
@@ -23,7 +23,7 @@ npm run dev
 
 ## コース形状
 
-実在12コースの中心線は [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) のMITライセンスのデータを加工したものです。出典とライセンス全文は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) に記載しています。新しいJeddah、Baku、Yas Marina、Singaporeの全長は、それぞれ6.174 km、6.003 km、5.281 km、4.927 kmを目標としています。Monacoの計測線はBoulevard Albert 1erのスタート／フィニッシュ地点へ移しました。すべて現行の平面路面モデルで走行でき、高低差や正確な路面勾配、施設配置は再現していません。公式のコース図やロゴはゲーム内に収録していません。
+実在23コースの中心線は [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) のMITライセンスのデータを加工したものです。出典とライセンス全文は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) に記載しています。距離は2025年の公式値に合わせ、元データの座標が計時線と異なる上海などは周回原点を補正しました。スタート位置と壁の範囲は公開コース図を参照した近似です。すべて現行の平面路面モデルで走行でき、高低差や正確な路面勾配、施設配置は再現していません。公式のコース図やロゴはゲーム内に収録していません。
 
 ## エンジン音
 

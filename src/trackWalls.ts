@@ -72,6 +72,56 @@ export const WALL_ZONES: Record<TrackId, readonly WallZone[]> = {
     { from: .48, to: .74, side: 'both' }, { from: .74, to: .78, side: 'right' },
     { from: .78, to: 1, side: 'both' },
   ],
+  shanghai: [
+    { from: 0, to: .09, side: 'right' }, { from: .42, to: .49, side: 'left' },
+    { from: .80, to: .87, side: 'right' }, { from: .94, to: 1, side: 'right' },
+  ],
+  bahrain: [
+    { from: 0, to: .09, side: 'right' }, { from: .31, to: .38, side: 'left' },
+    { from: .53, to: .62, side: 'right' }, { from: .91, to: 1, side: 'right' },
+  ],
+  miami: [
+    { from: 0, to: .11, side: 'both' }, { from: .11, to: .17, side: 'right' },
+    { from: .17, to: .40, side: 'both' }, { from: .40, to: .47, side: 'left' },
+    { from: .47, to: .72, side: 'both' }, { from: .72, to: .79, side: 'right' },
+    { from: .79, to: 1, side: 'both' },
+  ],
+  imola: [
+    { from: 0, to: .12, side: 'right' }, { from: .19, to: .29, side: 'left' },
+    { from: .38, to: .46, side: 'right' }, { from: .60, to: .68, side: 'left' },
+    { from: .82, to: 1, side: 'right' },
+  ],
+  barcelona: [
+    { from: 0, to: .13, side: 'right' }, { from: .45, to: .54, side: 'left' },
+    { from: .87, to: 1, side: 'right' },
+  ],
+  austria: [
+    { from: 0, to: .12, side: 'right' }, { from: .23, to: .31, side: 'left' },
+    { from: .65, to: .73, side: 'right' }, { from: .89, to: 1, side: 'right' },
+  ],
+  hungary: [
+    { from: 0, to: .11, side: 'right' }, { from: .26, to: .34, side: 'left' },
+    { from: .53, to: .61, side: 'right' }, { from: .88, to: 1, side: 'right' },
+  ],
+  zandvoort: [
+    { from: 0, to: .13, side: 'right' }, { from: .16, to: .30, side: 'left' },
+    { from: .34, to: .48, side: 'right' }, { from: .53, to: .62, side: 'left' },
+    { from: .68, to: .82, side: 'right' }, { from: .88, to: 1, side: 'right' },
+  ],
+  austin: [
+    { from: 0, to: .10, side: 'right' }, { from: .40, to: .49, side: 'left' },
+    { from: .90, to: 1, side: 'right' },
+  ],
+  'las-vegas': [
+    { from: 0, to: .12, side: 'both' }, { from: .12, to: .19, side: 'left' },
+    { from: .19, to: .52, side: 'both' }, { from: .52, to: .58, side: 'right' },
+    { from: .58, to: .90, side: 'both' }, { from: .90, to: .95, side: 'left' },
+    { from: .95, to: 1, side: 'both' },
+  ],
+  lusail: [
+    { from: 0, to: .10, side: 'right' }, { from: .29, to: .37, side: 'left' },
+    { from: .64, to: .71, side: 'right' }, { from: .91, to: 1, side: 'right' },
+  ],
 };
 
 const CELL_SIZE = 24;

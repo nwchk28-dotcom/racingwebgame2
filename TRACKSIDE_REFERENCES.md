@@ -26,6 +26,17 @@ selected corners and permit a wall on only one side.
 | Baku | Close city walls, especially the Old Town, with one-sided escape sections | [F1 on the Old Town's left and right boundaries](https://www.formula1.com/en/latest/article/why-we-love-the-azerbaijan-grand-prix.3QbWtTpFoebriMk1Kyu0j8.3QbWtTpFoebriMk1Kyu0j8), [F1 circuit guide](https://www.formula1.com/en/latest/article/circuit-guide-everything-you-need-to-know-about-the-baku-city-circuit.320UGBNQu2ALdgAtax1gRn.320UGBNQu2ALdgAtax1gRn) |
 | Yas Marina | Pit-side and marina-sector walls, open runoff at braking corners | [F1 on Turn 14 wall](https://www.formula1.com/en/latest/article/watch-raikkonen-ends-his-final-friday-practice-session-in-f1-in-the-wall-at.5mj44bpEkQcfofL7Zm90d5), [F1 on chicane runoff](https://www.formula1.com/en/latest/article/watch-enjoy-the-race-start-at-yas-marina-as-verstappen-surges-into-the.3AlvlhComEKFrC1JiHiWFM) |
 | Marina Bay | Mostly close street walls with one-sided escape sections | [F1 on the street-circuit wall/runoff contrast](https://www.formula1.com/en/latest/article/win-a-replica-race-suit-in-the-street-showdown-f1-fantasys-new-oracle-red.BQROLTGyvpFYn97nyTEgc), [F1 Singapore driver preview](https://www.formula1.com/en/latest/article/singapore-preview-quotes.7Glwb0jsNumsGiGttYTHiF.7Glwb0jsNumsGiGttYTHiF) |
+| Shanghai | Pit-side barrier and isolated outer boundaries; open runoff at the large hairpins | [F1 2025 Chinese GP circuit](https://www.formula1.com/en/racing/2025/china) |
+| Bahrain | Pit-side barrier and selected infield boundaries; open desert corner runoff | [F1 2025 Bahrain GP circuit](https://www.formula1.com/en/racing/2025/bahrain) |
+| Miami | Temporary street-side barriers on most straights, with one-sided escape sections at braking corners | [F1 2025 Miami GP circuit](https://www.formula1.com/en/racing/2025/miami) |
+| Imola | Pit-side and selected close outer barriers; open runoff at the main chicanes | [F1 2025 Emilia-Romagna GP circuit](https://www.formula1.com/en/racing/2025/emilia-romagna) |
+| Barcelona-Catalunya | Pit-side wall; mostly open corner runoff | [F1 2025 Spanish GP circuit](https://www.formula1.com/en/racing/2025/spain) |
+| Red Bull Ring | Pit-side and selected outer barriers; open uphill braking runoff | [F1 2025 Austrian GP circuit](https://www.formula1.com/en/racing/2025/austria) |
+| Hungaroring | Pit-side and isolated outer barriers; open runoff at the slow corners | [F1 2025 Hungarian GP circuit](https://www.formula1.com/en/racing/2025/hungary) |
+| Zandvoort | Alternating close dune-side barriers and open escape areas | [F1 2025 Dutch GP circuit](https://www.formula1.com/en/racing/2025/netherlands) |
+| Circuit of the Americas | Pit-side and selected outer barriers; wide open corner runoff | [F1 2025 United States GP circuit](https://www.formula1.com/en/racing/2025/united-states) |
+| Las Vegas | Close temporary street walls with one-sided openings at selected corners | [F1 2025 Las Vegas GP circuit](https://www.formula1.com/en/racing/2025/las-vegas) |
+| Lusail | Pit-side and isolated outer barriers; open runoff around the fast bends | [F1 2025 Qatar GP circuit](https://www.formula1.com/en/racing/2025/qatar) |
 
 The Monaco tunnel runs from about 43.5% to 60.5% of the game's lap, after
 Portier and before the Nouvelle Chicane. Its 8.8 m roof, bright emissive walls,

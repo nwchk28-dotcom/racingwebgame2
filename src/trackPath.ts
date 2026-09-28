@@ -72,8 +72,8 @@ export class TrackPath {
       if (definition.id === 'monaco') {
         this.samples.push(...rawSamples);
       } else {
-        const radius = 16;
-        const sigma = 6;
+        const sigma = definition.smoothingSigma ?? 6;
+        const radius = Math.ceil(sigma * 2.7);
         for (let i = 0; i < this.sampleCount; i++) {
           const point = new THREE.Vector3();
           let total = 0;
