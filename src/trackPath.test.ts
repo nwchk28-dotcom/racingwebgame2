@@ -117,10 +117,20 @@ describe('all circuits', () => {
     const sourceOrder = new TrackPath({ ...definition, timingLine: undefined });
     const [x, z] = definition.timingLine!;
     const line = sourceOrder.nearest(-x, z);
-    // The 2025 F1/FIA maps place the checker near the middle of this straight;
-    // point 44 in the source data was noticeably nearer Turn 1.
+    const finalTurn = definition.points[35];
+    const firstTurn = definition.points[49];
+    const finalTurnProgress = sourceOrder.nearest(-finalTurn[0], finalTurn[1]).progress;
+    const firstTurnProgress = sourceOrder.nearest(-firstTurn[0], firstTurn[1]).progress;
+    // Source point zero is on the long back straight before the T14 hairpin.
+    // The route then passes T16, this control line, and T1 in that order.
+    expect(finalTurnProgress).toBeGreaterThan(.10);
+    expect(finalTurnProgress).toBeLessThan(line.progress);
     expect(line.progress).toBeGreaterThan(.164);
     expect(line.progress).toBeLessThan(.169);
+    expect(line.progress).toBeLessThan(firstTurnProgress);
+    expect(firstTurnProgress).toBeLessThan(.23);
+    expect((line.progress - finalTurnProgress) * sourceOrder.length).toBeGreaterThan(200);
+    expect((firstTurnProgress - line.progress) * sourceOrder.length).toBeGreaterThan(200);
   });
 
   it('keeps every circuit start on a straight section', () => {
