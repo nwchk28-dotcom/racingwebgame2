@@ -42,7 +42,7 @@ export const bahrainPoints: readonly (readonly [number, number])[] = [
   [-26.1, -544.1], [-25.5, -500.6], [-17.8, -261.8],
 ];
 
-export const shanghaiPoints: readonly (readonly [number, number])[] = [
+const shanghaiSurveyPoints: readonly (readonly [number, number])[] = [
   [0, 0], [-92.3, -23.2], [-109.2, -24.7], [-129.4, -24.7], [-147.5, -18.9],
   [-159.8, -13.7], [-176.2, -3.2], [-188, 7.3], [-197, 19.4], [-203.8, 33.5],
   [-209.4, 47.8], [-209.9, 62.9], [-209.4, 80.3], [-207.1, 93.4], [-203.2, 106],
@@ -72,6 +72,13 @@ export const shanghaiPoints: readonly (readonly [number, number])[] = [
   [900.4, -105], [893.1, -112.3], [881.3, -111.3], [857.1, -99.7], [843, -89.7],
   [827.3, -78.3], [662.4, 146.9], [655.1, 151.1], [641.6, 152.2], [435, 103.3],
 ];
+
+// The survey is oriented about a quarter turn from the published Shanghai
+// circuit diagram. Rotate the whole centerline, preserving its turn order and
+// distances, so the long back straight and pit straight face the same way in
+// the game map as in the reference diagram.
+export const shanghaiPoints: readonly (readonly [number, number])[] =
+  shanghaiSurveyPoints.map(([x, z]) => [z, -x] as const);
 
 export const barcelonaPoints: readonly (readonly [number, number])[] = [
   [0, 0], [-124.4, -197.6], [-193.2, -308.4], [-264.8, -421.3], [-339.6, -541.7],

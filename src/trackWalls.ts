@@ -77,8 +77,11 @@ export const WALL_ZONES: Record<TrackId, readonly WallZone[]> = {
     { from: .78, to: 1, side: 'both' },
   ],
   shanghai: [
-    { from: 0, to: .09, side: 'right' }, { from: .42, to: .49, side: 'left' },
-    { from: .80, to: .87, side: 'right' }, { from: .94, to: 1, side: 'right' },
+    // Keep the physical wall locations after moving the lap origin from the
+    // post-T1 section to the pit straight (about +0.25 lap in new progress).
+    { from: .048, to: .118, side: 'right' },
+    { from: .188, to: .338, side: 'right' },
+    { from: .668, to: .738, side: 'left' },
   ],
   bahrain: [
     { from: 0, to: .09, side: 'right' }, { from: .31, to: .38, side: 'left' },

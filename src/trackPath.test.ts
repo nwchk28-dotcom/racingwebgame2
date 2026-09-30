@@ -99,7 +99,7 @@ describe('all circuits', () => {
     const expectedOldProgress: Partial<Record<(typeof TRACKS)[number]['id'], readonly [number, number]>> = {
       monza: [0.93, 0.97], silverstone: [0.43, 0.46], monaco: [0.72, 0.74],
       jeddah: [0, 0.02], baku: [0, 0.02], 'abu-dhabi': [0, 0.02], singapore: [0, 0.02],
-      shanghai: [.16, .17], bahrain: [0, .02], miami: [0, .02], imola: [0, .02],
+      shanghai: [.91, .93], bahrain: [0, .02], miami: [0, .02], imola: [0, .02],
       barcelona: [0, .02], austria: [0, .02], hungary: [0, .02], zandvoort: [0, .02],
       austin: [0, .02], 'las-vegas': [0, .02], lusail: [0, .02],
     };
@@ -123,25 +123,30 @@ describe('all circuits', () => {
     }
   });
 
-  it('places the Shanghai checker between Turn 16 and Turn 1 on the pit straight', () => {
+  it('orients Shanghai like the FIA map and starts on the pit straight', () => {
     const definition = TRACKS.find(track => track.id === 'shanghai')!;
     const sourceOrder = new TrackPath({ ...definition, timingLine: undefined });
     const [x, z] = definition.timingLine!;
     const line = sourceOrder.nearest(-x, z);
-    const finalTurn = definition.points[35];
-    const firstTurn = definition.points[49];
-    const finalTurnProgress = sourceOrder.nearest(-finalTurn[0], finalTurn[1]).progress;
+    const beforeLine = definition.points[138];
+    const firstTurn = definition.points[10];
+    const beforeProgress = sourceOrder.nearest(-beforeLine[0], beforeLine[1]).progress;
     const firstTurnProgress = sourceOrder.nearest(-firstTurn[0], firstTurn[1]).progress;
-    // Source point zero is on the long back straight before the T14 hairpin.
-    // The route then passes T16, this control line, and T1 in that order.
-    expect(finalTurnProgress).toBeGreaterThan(.10);
-    expect(finalTurnProgress).toBeLessThan(line.progress);
-    expect(line.progress).toBeGreaterThan(.164);
-    expect(line.progress).toBeLessThan(.169);
-    expect(line.progress).toBeLessThan(firstTurnProgress);
-    expect(firstTurnProgress).toBeLessThan(.23);
-    expect((line.progress - finalTurnProgress) * sourceOrder.length).toBeGreaterThan(200);
-    expect((firstTurnProgress - line.progress) * sourceOrder.length).toBeGreaterThan(200);
+    expect(line.progress).toBeGreaterThan(.91);
+    expect(line.progress).toBeLessThan(.93);
+    expect(beforeProgress).toBeLessThan(line.progress);
+    expect((line.progress - beforeProgress) * sourceOrder.length).toBeGreaterThan(150);
+    expect((firstTurnProgress + 1 - line.progress) * sourceOrder.length).toBeGreaterThan(550);
+
+    // In the published orientation, the pit straight rises at the left edge
+    // and the long back straight runs mostly across the bottom of the map.
+    const pitExit = definition.points[0];
+    expect(Math.abs(pitExit[1] - z)).toBeGreaterThan(3 * Math.abs(pitExit[0] - x));
+    const backStart = definition.points[120];
+    const backEnd = definition.points[135];
+    expect(Math.abs(backEnd[0] - backStart[0])).toBeGreaterThan(
+      1.5 * Math.abs(backEnd[1] - backStart[1]),
+    );
   });
 
   it('keeps every circuit start on a straight section', () => {
