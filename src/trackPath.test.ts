@@ -84,6 +84,17 @@ describe('all circuits', () => {
     }
   });
 
+  it('rounds Monaco survey joints without leaving a sharp road seam', () => {
+    const path = new TrackPath(TRACKS.find(track => track.id === 'monaco')!);
+    expect(path.length / path.sampleCount).toBeLessThan(1.7);
+    for (let i = 0; i < path.sampleCount; i++) {
+      const before = path.samples[i].clone().sub(path.samples[(i - 1 + path.sampleCount) % path.sampleCount]).normalize();
+      const after = path.samples[i + 1].clone().sub(path.samples[i]).normalize();
+      const angle = Math.acos(Math.max(-1, Math.min(1, before.dot(after))));
+      expect(angle, `Monaco joint ${i}`).toBeLessThan(12 * Math.PI / 180);
+    }
+  });
+
   it('places each lap origin at its configured timing line', () => {
     const expectedOldProgress: Partial<Record<(typeof TRACKS)[number]['id'], readonly [number, number]>> = {
       monza: [0.93, 0.97], silverstone: [0.43, 0.46], monaco: [0.72, 0.74],

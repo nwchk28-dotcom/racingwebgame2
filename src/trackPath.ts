@@ -31,7 +31,15 @@ export class TrackPath {
     let getPoint: (fraction: number) => THREE.Vector3;
     let approximateLength: number;
     let sourceScale = 1;
-    if (definition.spline) {
+    if (definition.id === 'monaco') {
+      // Monaco's dense but uneven survey points contain visible straight-line
+      // joints. Interpolate through them without averaging the Fairmont
+      // hairpin inward, which would narrow its already tight driving lane.
+      const curve = new THREE.CatmullRomCurve3(source, true, 'centripetal');
+      curve.arcLengthDivisions = 4096;
+      approximateLength = curve.getLength();
+      getPoint = fraction => curve.getPointAt(fraction);
+    } else if (definition.spline) {
       const curve = new THREE.CatmullRomCurve3(source, true, 'catmullrom', 1);
       approximateLength = curve.getLength();
       getPoint = fraction => curve.getPointAt(fraction);
@@ -59,7 +67,8 @@ export class TrackPath {
     }
 
     this.sampleCount = Math.max(definition.spline ? 1440 : 0, Math.ceil(
-      (definition.targetLength ?? approximateLength) / (definition.spline ? 2 : 2.5),
+      (definition.targetLength ?? approximateLength) /
+      (definition.id === 'monaco' ? 1.6 : definition.spline ? 2 : 2.5),
     ));
     const rawSamples = Array.from({ length: this.sampleCount }, (_, i) => getPoint(i / this.sampleCount));
     if (definition.spline) {
@@ -67,23 +76,20 @@ export class TrackPath {
     } else {
       // Smooth GPS point corners over roughly 30 m so a wide road and its curbs
       // do not fold through themselves at the tight chicanes.
-      // Averaging the tight Monaco hairpin can shrink its radius enough for
-      // the inner curb to fold back. Keep its denser source path intact.
-      if (definition.id === 'monaco') {
-        this.samples.push(...rawSamples);
-      } else {
-        const sigma = definition.smoothingSigma ?? 6;
-        const radius = Math.ceil(sigma * 2.7);
-        for (let i = 0; i < this.sampleCount; i++) {
-          const point = new THREE.Vector3();
-          let total = 0;
-          for (let j = -radius; j <= radius; j++) {
-            const weight = Math.exp(-0.5 * (j / sigma) ** 2);
-            point.addScaledVector(rawSamples[(i + j + this.sampleCount) % this.sampleCount], weight);
-            total += weight;
-          }
-          this.samples.push(point.multiplyScalar(1 / total));
+      // Interpolate Monaco through the survey points, then apply only a small
+      // local filter to remove GPS jitter. The broader filter used elsewhere
+      // would pull the tight Fairmont hairpin inward.
+      const sigma = definition.id === 'monaco' ? 2.5 : definition.smoothingSigma ?? 6;
+      const radius = Math.ceil(sigma * 2.7);
+      for (let i = 0; i < this.sampleCount; i++) {
+        const point = new THREE.Vector3();
+        let total = 0;
+        for (let j = -radius; j <= radius; j++) {
+          const weight = Math.exp(-0.5 * (j / sigma) ** 2);
+          point.addScaledVector(rawSamples[(i + j + this.sampleCount) % this.sampleCount], weight);
+          total += weight;
         }
+        this.samples.push(point.multiplyScalar(1 / total));
       }
       let smoothedLength = 0;
       for (let i = 0; i < this.sampleCount; i++) {
