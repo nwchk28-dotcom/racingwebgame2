@@ -1,0 +1,15 @@
+{
+  "name": "APEX ONE — Time Attack",
+  "short_name": "APEX ONE",
+  "description": "オンボード視点で最速ラップを狙うフォーミュラ・タイムアタック",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#10171a",
+  "theme_color": "#10171a",
+  "icons": [
+    { "src": "./app-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./app-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

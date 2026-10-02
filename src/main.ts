@@ -92,7 +92,7 @@ app.innerHTML = `
       <div class="steer-control"><div id="steering-track" class="steering-track" role="slider" aria-label="ハンドル" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0"><span class="steer-center"></span><span id="steering-thumb" class="steering-thumb"><span>≡</span></span></div></div>
       <div class="button-steer-control"><div class="steer-buttons"><button id="steer-left" class="steer-button" type="button" aria-label="左に曲がる"><span aria-hidden="true">←</span></button><button id="steer-right" class="steer-button" type="button" aria-label="右に曲がる"><span aria-hidden="true">→</span></button></div></div>
     </div>
-    <div class="pedals"><button id="brake" class="pedal brake" type="button" aria-label="ブレーキ"><span class="pedal-bars" aria-hidden="true">▮▮</span></button><button id="throttle" class="pedal throttle" type="button" aria-label="アクセル"><span class="pedal-bars" aria-hidden="true">///</span></button></div>
+    <div class="pedals"><button id="brake" class="pedal brake" type="button" aria-label="ブレーキ"><span class="pedal-bars" aria-hidden="true">▮▮</span><strong>BRAKE</strong></button><button id="throttle" class="pedal throttle" type="button" aria-label="アクセル"><span class="pedal-bars" aria-hidden="true">///</span><strong>GAS</strong></button></div>
   </div>
 
   <div id="toast" class="toast" role="status"></div>
@@ -101,7 +101,14 @@ app.innerHTML = `
     <div class="menu-card">
       <div class="menu-kicker"><span class="kicker-line"></span> ONE CAR. ONE CIRCUIT. ONE LAP.</div>
       <h1>FIND YOUR<br /><em>APEX.</em></h1>
-      <p>オンボード視点で、自己ベストを塗り替えよう。</p>
+      <div class="menu-intro">
+        <p>オンボード視点で、自己ベストを塗り替えよう。</p>
+        <aside id="install-tip" class="install-tip" aria-label="ホーム画面から起動する方法">
+          <strong>ホーム画面からの起動がおすすめ</strong>
+          <span>ブラウザのバーが隠れ、画面を広く使えます。</span>
+          <small id="install-tip-steps"></small>
+        </aside>
+      </div>
       <div class="track-select-heading"><span>SELECT CIRCUIT</span><div class="track-pages" role="group" aria-label="コース一覧のページ">${trackPages}</div><span class="track-total">SOLO TIME ATTACK / ${String(TRACKS.length).padStart(2, '0')} TRACKS</span></div>
       <div class="track-options" role="group" aria-label="コースを選択">${trackCards}</div>
       <div class="steering-select" role="group" aria-label="ステアリング方式"><span>STEERING</span><div class="steering-options"><button class="steering-option" data-steering-mode="slider" type="button" aria-pressed="false">SLIDER</button><button class="steering-option selected" data-steering-mode="buttons" type="button" aria-pressed="true">BUTTONS</button></div></div>
@@ -131,6 +138,17 @@ car.setPose(physics.x, physics.z, physics.yaw);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 const mobile = window.matchMedia('(pointer: coarse)').matches;
+const standalone = window.matchMedia('(display-mode: standalone)').matches ||
+  (navigator as Navigator & { standalone?: boolean }).standalone === true;
+if (mobile && !standalone) {
+  app.classList.add('show-install-tip');
+  const steps = app.querySelector<HTMLElement>('#install-tip-steps')!;
+  steps.textContent = /iPhone|iPad|iPod/.test(navigator.userAgent)
+    ? 'Safariの共有 →「ホーム画面に追加」'
+    : /Android/.test(navigator.userAgent)
+      ? 'Chromeの︙ →「アプリをインストール」'
+      : 'ブラウザのメニュー →「ホーム画面に追加」';
+}
 if (mobile) {
   // Safari can treat simultaneous steering and pedal touches as a page pinch.
   // Cancel the native gesture while leaving Pointer Events for both controls intact.
