@@ -415,17 +415,24 @@ export class Track extends TrackPath {
     }
     const airfield = this.definition.scenery === 'airfield';
     const stadium = this.definition.scenery === 'stadium';
-    const side = airfield ? -1 : 1;
+    const side = airfield || this.definition.id === 'sepang' ? -1 : 1;
     for (let i = 0; i < 5; i++) {
       const distance = 65 + i * 37;
       const pit = this.addTracksideBox(scene, distance, side * 52, [28, airfield ? 7 : 9, 31],
         airfield ? 0x515d62 : 0x40494b);
-      if (pit) box(pit, [29, 1.2, 33], [0, (airfield ? 7 : 9) / 2 + 0.6, 0], 0x1c282c);
+      if (pit) {
+        pit.name = 'pit-building';
+        box(pit, [29, 1.2, 33], [0, (airfield ? 7 : 9) / 2 + 0.6, 0], 0x1c282c);
+      }
     }
     if (stadium) {
       // Simple unbranded stands give stadium circuits a distinct silhouette.
-      for (const [fraction, sideOfRoad] of [[0.67, -1], [0.7, 1], [0.76, -1], [0.79, 1]]) {
-        const stand = this.addTracksideBox(scene, this.length * fraction, sideOfRoad * 72,
+      // Sepang's central grandstand is between its opposing long straights.
+      const stands = this.definition.id === 'sepang'
+        ? [[0, 1], [.014, 1], [.028, 1], [.042, 1]]
+        : [[0.67, -1], [0.7, 1], [0.76, -1], [0.79, 1]];
+      for (const [fraction, sideOfRoad] of stands) {
+        const stand = this.addTracksideBox(scene, this.length * fraction, sideOfRoad * (this.definition.id === 'sepang' ? 48 : 72),
           [58, 13, 28], 0x687276);
         if (stand) {
           box(stand, [62, 1.5, 30], [0, 7.1, 0], 0x2f3b40);

@@ -9,7 +9,8 @@ and the Monaco, Spa-Francorchamps, and São Paulo coordinates in
 coordinates in `src/streetCircuitData.ts`,
 and the Shanghai, Bahrain, Miami, Imola, Barcelona-Catalunya, Red Bull Ring,
 Hungaroring, Zandvoort, Circuit of the Americas, Las Vegas, and Lusail
-coordinates in `src/calendar2025CircuitData.ts`,
+coordinates in `src/calendar2025CircuitData.ts`, and the Sepang coordinates
+in `src/sepangCircuitData.ts`,
 are adapted from [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits),
 specifically `circuits/it-1922.geojson`, `circuits/gb-1948.geojson`,
 `circuits/au-1953.geojson`, `circuits/mx-1962.geojson`, and
@@ -20,9 +21,10 @@ The added 2025 circuits use `circuits/cn-2004.geojson`, `circuits/bh-2002.geojso
 `circuits/us-2022.geojson`, `circuits/it-1953.geojson`, `circuits/es-1991.geojson`,
 `circuits/at-1969.geojson`, `circuits/hu-1986.geojson`, `circuits/nl-1948.geojson`,
 `circuits/us-2012.geojson`, `circuits/us-2023.geojson`, and `circuits/qa-2004.geojson`.
+Sepang uses `circuits/my-1999.geojson`.
 They were projected to local metre coordinates and
 rounded; Monza, Silverstone, Monaco, Jeddah, Baku, Yas Marina, Singapore, and
-Shanghai were additionally rotated to their timing lines.
+Shanghai and Sepang were additionally rotated to their timing lines.
 
 Copyright (c) 2019-2025 Tomislav Bacinger
 

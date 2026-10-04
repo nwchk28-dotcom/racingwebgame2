@@ -15,6 +15,11 @@ export interface WallContact { depth: number; normalX: number; normalZ: number }
 // Side is from the driver's view, not from the source map's east/west axes.
 // See TRACKSIDE_REFERENCES.md for the circuit evidence and fidelity limits.
 export const WALL_ZONES: Record<TrackId, readonly WallZone[]> = {
+  sepang: [
+    // Pit building is on the right when driving toward T1. End the wall
+    // before the braking/runoff area; T15's outside remains open as well.
+    { from: 0, to: .10, side: 'right' }, { from: .965, to: 1, side: 'right' },
+  ],
   monza: [
     { from: 0, to: .055, side: 'right' }, { from: .925, to: 1, side: 'right' },
   ],

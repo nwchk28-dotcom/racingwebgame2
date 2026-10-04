@@ -1,5 +1,6 @@
 // Real circuit centerlines are adapted from bacinger/f1-circuits (MIT).
 // See THIRD_PARTY_NOTICES.md. All scenery, meshes, and menu maps are original.
+import { sepangPoints } from './sepangCircuitData';
 import { albertParkPoints, mexicoCityPoints, gillesVilleneuvePoints } from './flatCircuitData';
 import { monacoPoints, spaPoints, saoPauloPoints } from './additionalCircuitData';
 import { jeddahPoints, bakuPoints, abuDhabiPoints, singaporePoints } from './streetCircuitData';
@@ -11,7 +12,7 @@ export type TrackId = 'monza' | 'silverstone' | 'albert-park' | 'mexico-city'
   | 'gilles-villeneuve' | 'monaco' | 'spa' | 'sao-paulo'
   | 'jeddah' | 'baku' | 'abu-dhabi' | 'singapore'
   | 'shanghai' | 'bahrain' | 'miami' | 'imola' | 'barcelona'
-  | 'austria' | 'hungary' | 'zandvoort' | 'austin' | 'las-vegas' | 'lusail';
+  | 'austria' | 'hungary' | 'zandvoort' | 'austin' | 'las-vegas' | 'lusail' | 'sepang';
 export type SceneryKind = 'park' | 'airfield' | 'stadium' | 'urban' | 'marina';
 export interface TrackDefinition {
   id: TrackId;
@@ -165,4 +166,9 @@ export const TRACKS: readonly TrackDefinition[] = [
   { id: 'lusail', name: 'LUSAIL', location: 'QATAR', points: lusailPoints,
     roadHalfWidth: 9.5, curbWidth: 1.2, targetLength: 5419,
     timingLine: [0, 0], scenery: 'airfield', sky: '#b3c9c9', grass: '#a39271' },
+  { id: 'sepang', name: 'SEPANG', location: 'MALAYSIA', points: sepangPoints,
+    // Start and finish coincide; ~680 m before T1, after the final left hairpin.
+    // Constant 18 m road approximates the official 16–22 m width range.
+    roadHalfWidth: 9, curbWidth: 1.2, targetLength: 5543,
+    timingLine: [365, 28], scenery: 'stadium', sky: '#b0cdd0', grass: '#4d784d' },
 ];

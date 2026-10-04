@@ -22,6 +22,7 @@ describe('per-circuit best laps', () => {
     saveBestTime('baku', 119.2, storage);
     saveBestTime('abu-dhabi', 105.4, storage);
     saveBestTime('singapore', 109.7, storage);
+    saveBestTime('sepang', 101.2, storage);
     expect(readBestTime('monza', storage)).toBe(112.3);
     expect(readBestTime('silverstone', storage)).toBe(118.2);
     expect(readBestTime('albert-park', storage)).toBe(93.1);
@@ -35,7 +36,8 @@ describe('per-circuit best laps', () => {
     expect(readBestTime('abu-dhabi', storage)).toBe(105.4);
     expect(readBestTime('singapore', storage)).toBe(109.7);
     expect(values.get('apex-one:best-lap:v1')).toBe('83.456');
-    expect(values.size).toBe(13);
+    expect(readBestTime('sepang', storage)).toBe(101.2);
+    expect(values.size).toBe(14);
   });
 
   it('ignores invalid or unavailable storage values', () => {

@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { TRACKS } from './trackData';
 import { TrackPath } from './trackPath';
+import { LapTracker } from './lap';
 
 describe('all circuits', () => {
-  it('covers every 2025 venue except the Suzuka overpass', () => {
-    expect(TRACKS).toHaveLength(23);
-    expect(new Set(TRACKS.map(track => track.id)).size).toBe(23);
+  it('covers every 2025 venue except the Suzuka overpass, plus Sepang', () => {
+    expect(TRACKS).toHaveLength(24);
+    expect(new Set(TRACKS.map(track => track.id)).size).toBe(24);
     expect(TRACKS.map(track => track.id as string)).not.toContain('suzuka');
     for (const id of ['shanghai', 'bahrain', 'miami', 'imola', 'barcelona',
-      'austria', 'hungary', 'zandvoort', 'austin', 'las-vegas', 'lusail']) {
+      'austria', 'hungary', 'zandvoort', 'austin', 'las-vegas', 'lusail', 'sepang']) {
       expect(TRACKS.some(track => track.id === id), id).toBe(true);
     }
   });
@@ -97,7 +98,7 @@ describe('all circuits', () => {
 
   it('places each lap origin at its configured timing line', () => {
     const expectedOldProgress: Partial<Record<(typeof TRACKS)[number]['id'], readonly [number, number]>> = {
-      monza: [0.93, 0.97], silverstone: [0.43, 0.46], monaco: [0.72, 0.74],
+      sepang: [.92, .95], monza: [0.93, 0.97], silverstone: [0.43, 0.46], monaco: [0.72, 0.74],
       jeddah: [0, 0.02], baku: [0, 0.02], 'abu-dhabi': [0, 0.02], singapore: [0, 0.02],
       shanghai: [.91, .93], bahrain: [0, .02], miami: [0, .02], imola: [0, .02],
       barcelona: [0, .02], austria: [0, .02], hungary: [0, .02], zandvoort: [0, .02],
@@ -159,4 +160,51 @@ describe('all circuits', () => {
       expect(before.normalize().dot(after.normalize()), definition.id).toBeLessThan(-0.98);
     }
   });
+  it('starts Sepang on the home straight before its right-hand T1, not the back straight', () => {
+    const definition = TRACKS.find(track => track.id === 'sepang')!;
+    const original = new TrackPath({ ...definition, timingLine: undefined });
+    const line = original.nearest(-365, 28);
+    const t1Entry = original.nearest(-definition.points[2][0], definition.points[2][1]);
+    const distanceToT1 = ((t1Entry.progress - line.progress + 1) % 1) * original.length;
+    expect(distanceToT1).toBeGreaterThan(650);
+    expect(distanceToT1).toBeLessThan(710);
+    const path = new TrackPath(definition);
+    const forward = path.samples[1].clone().sub(path.samples[0]).normalize();
+    expect(forward.x).toBeGreaterThan(.99); // Mirrored world eastings: driving west.
+    expect(forward.z).toBeLessThan(0);
+    expect(definition.roadHalfWidth * 2).toBe(18);
+    // T1's rightward change in heading must survive world-axis conversion.
+    const entry = original.samples[t1Entry.progress * original.sampleCount | 0];
+    // Test the first half of the >180-degree T1 arc; the full exit
+    // heading alone cannot distinguish the turn direction.
+    const t1Exit = original.nearest(-definition.points[6][0], definition.points[6][1]);
+    const exitIndex = Math.floor(t1Exit.progress * original.sampleCount);
+    const exitForward = original.samples[exitIndex + 1].clone().sub(original.samples[exitIndex]).normalize();
+    expect(forward.x * exitForward.z - forward.z * exitForward.x).toBeGreaterThan(0);
+    expect(entry.distanceTo(original.start)).toBeGreaterThan(250);
+
+    // Both nearby straights must keep their own lap progress when reacquired.
+    for (const vertex of [0, 96, 97]) {
+      const [x, z] = definition.points[vertex];
+      const nearest = original.nearest(-x, z);
+      expect(nearest.distance).toBeLessThan(15);
+      if (vertex === 97) expect(nearest.progress).toBeLessThan(line.progress);
+    }
+  });
+
+  it('times a complete Sepang lap through the ordered gates', () => {
+    const path = new TrackPath(TRACKS.find(track => track.id === 'sepang')!);
+    const tracker = new LapTracker(path.length);
+    let previous = 0;
+    let completed = null;
+    for (let i = 1; i <= path.sampleCount; i++) {
+      const point = path.samples[i];
+      const position = path.nearest(point.x, point.z, previous);
+      completed = tracker.update(position.progress, false, 40, .1) ?? completed;
+      previous = position.progress;
+    }
+    expect(completed?.valid).toBe(true);
+    expect(completed?.newBest).toBe(true);
+  });
+
 });

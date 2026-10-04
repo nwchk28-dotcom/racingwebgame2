@@ -170,4 +170,21 @@ describe('trackside walls', () => {
       if (trackId === 'baku') expect(walls.segments.some(segment => segment.twoSided)).toBe(true);
     }
   });
+  it('keeps Sepang pit walls on the right and opens the outside of T1 and T15', () => {
+    const definition = TRACKS.find(track => track.id === 'sepang')!;
+    const path = new TrackPath(definition);
+    const walls = new TrackWalls(path, definition.roadHalfWidth + definition.curbWidth);
+    const offset = definition.roadHalfWidth + definition.curbWidth + 1.4;
+    for (const fraction of [.02, .98]) {
+      const right = pointAt(path, fraction, -1, offset);
+      const left = pointAt(path, fraction, 1, offset);
+      expect(walls.contact(...right, .35)?.depth).toBeGreaterThan(0);
+      expect(walls.contact(...left, .35)).toBeNull();
+    }
+    for (const [fraction, side] of [[.13, 1], [.945, -1]]) {
+      const outside = pointAt(path, fraction, side, offset);
+      expect(walls.contact(...outside, .35)).toBeNull();
+    }
+  });
+
 });

@@ -48,3 +48,27 @@ Baku. Tight inside offsets can also fold backwards at a hairpin; those short
 wall stretches are left open rather than forming a collision pocket, including
 Spa's La Source. The low barriers use a light body and a red top band so they
 remain visible against both asphalt and grass.
+
+## Sepang
+
+- [Circuit operator architecture](https://www.sepangcircuit.com/architecture):
+  5.543 km, 15 corners, width 16–22 m. The game approximates this with a constant
+  18 m asphalt width plus 1.2 m curbs; it does not reproduce surveyed width changes.
+- [Official safety briefing and facility map](https://www.sepangcircuit.com/media/wysiwyg/pdf/Daily_Safety_Briefing.pdf),
+  circuit-layout page: home straight travels from T15 toward T1 beside the pit
+  building; the parallel back straight travels the opposite way, with the central
+  grandstand between them. The near pit wall is on the driver's right. Extensive
+  outer corner runoff is retained; distant barriers are represented by the existing
+  circular boundary rather than invented curbside walls.
+- [Honda circuit guide](https://global.honda/en/F1/circuit/sepang-international-circuit/):
+  approximately 680 m from the start to T1. The source GeoJSON origin is only about
+  315 m from T1; the game's timing line is moved upstream on the same home straight
+  to source-local `[365, 28]`, leaving approximately 680 m to T1.
+- [FIA 2017 Malaysian GP preview](https://www.fia.com/sites/default/files/2017_malaysian_preview_1.pdf):
+  the race start/finish offset is 0 m, so the lap origin and race start coincide.
+  [FIA 2016 preview](https://www.fia.com/sites/default/files/preview_5.pdf) records
+  the T15 driver-right guardrail being moved farther away; no close outside wall
+  is placed around that final left-hand hairpin.
+
+As with the other courses, elevations, pit-lane driving, gravel/asphalt runoff
+textures and exact barrier setbacks are not surveyed reproductions.

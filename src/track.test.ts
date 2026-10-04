@@ -29,6 +29,13 @@ describe('track scenes', () => {
         const heights = roof.geometry.getAttribute('position');
         for (let i = 0; i < heights.count; i++) expect(heights.getY(i)).toBeGreaterThan(8);
       }
+      if (definition.id === 'sepang') {
+        const pits = track.group.children.filter(child => child.name === 'pit-building');
+        expect(pits).toHaveLength(5);
+        for (const pit of pits) {
+          expect(track.nearest(pit.position.x, pit.position.z).signedDistance).toBeLessThan(0);
+        }
+      }
       for (const collider of track.colliders) {
         expect(track.nearest(collider.x, collider.z).distance)
           .toBeGreaterThan(collider.radius + track.curbOuterEdge);
