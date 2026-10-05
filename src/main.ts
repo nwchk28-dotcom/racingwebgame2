@@ -1,450 +1,74 @@
-import * as THREE from 'three';
-import { CarVisual } from './car';
-import { readBestTime, saveBestTime } from './bestTimes';
-import { Controls } from './controls';
-import { createCourseMap, type CourseMap } from './courseMap';
-import { EngineAudio, gearAtSpeed } from './engineAudio';
-import { LapTracker, formatTime } from './lap';
-import { CarPhysics } from './physics';
-import { Track } from './track';
-import { TRACKS, type TrackDefinition, type TrackId } from './trackData';
-import { TrackPath } from './trackPath';
-import { TOP_SPEED_KMH } from './vehicleTuning';
+import { isWebApp } from './appMode';
 import './style.css';
 
-function coursePreview(definition: TrackDefinition): { outline: string; length: number } {
-  const path = new TrackPath(definition);
-  const xs = path.samples.map(point => point.x);
-  const zs = path.samples.map(point => point.z);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minZ = Math.min(...zs);
-  const scale = Math.min(138 / (maxX - minX), 68 / (Math.max(...zs) - minZ));
-  const step = Math.max(1, Math.floor(path.sampleCount / 100));
-  const points: string[] = [];
-  for (let i = 0; i < path.sampleCount; i += step) {
-    const point = path.samples[i];
-    points.push(`${(11 + (maxX - point.x) * scale).toFixed(1)},${(76 - (point.z - minZ) * scale).toFixed(1)}`);
-  }
-  return {
-    outline: `<svg viewBox="0 0 160 86" aria-hidden="true"><polyline points="${points.join(' ')}" /></svg>`,
-    length: path.length,
-  };
+interface InstallPrompt extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const trackCards = TRACKS.map((definition, index) => {
-  const preview = coursePreview(definition);
-  return `
-  <button class="track-option${index === 0 ? ' selected' : ''}" type="button"
-    data-track-id="${definition.id}" data-page="${Math.floor(index / 3)}" aria-pressed="${index === 0}"${index >= 3 ? ' hidden' : ''}>
-    <span class="track-option-top"><b>${String(index + 1).padStart(2, '0')}</b><span>${definition.location}</span></span>
-    ${preview.outline}
-    <strong>${definition.name}</strong>
-    <span class="track-option-bottom"><span>${(preview.length / 1000).toFixed(definition.targetLength ? 3 : 2)} KM</span>
-      <span>BEST <b data-best-for="${definition.id}">--:--.---</b></span></span>
-  </button>`;
-}).join('');
-const trackPages = Array.from({ length: Math.ceil(TRACKS.length / 3) }, (_, page) => {
-  const from = page * 3 + 1;
-  const to = Math.min((page + 1) * 3, TRACKS.length);
-  return `<button class="track-page${page === 0 ? ' selected' : ''}" type="button"
-    data-track-page="${page}" aria-label="コース ${from} から ${to}" aria-pressed="${page === 0}">${String(from).padStart(2, '0')}–${String(to).padStart(2, '0')}</button>`;
-}).join('');
-
-const app = document.querySelector<HTMLDivElement>('#app')!;
-app.innerHTML = `
-  <div id="scene" aria-hidden="true"></div>
-  <div class="cinema-vignette" aria-hidden="true"></div>
-
-  <header class="topbar">
-    <div class="brand"><span class="brand-mark">A<span>1</span></span><span class="brand-name">APEX <strong>ONE</strong><small>TIME ATTACK</small></span></div>
-    <div class="track-name"><span class="live-dot"></span> <span id="current-track-name">${TRACKS[0].name}</span> <span class="track-meta">/ DRY / 23°C</span></div>
-    <div class="top-actions">
-      <button id="sound-button" class="icon-button" type="button" aria-label="音を消す">♪</button>
-      <button id="reset-button" class="icon-button" type="button" aria-label="スタート地点に戻る">↻</button>
-      <button id="pause-button" class="icon-button" type="button" aria-label="一時停止">Ⅱ</button>
-    </div>
-  </header>
-
-  <aside id="course-map" class="course-map" aria-label="現在地を示すコースマップ">
-    <div class="course-map-heading"><span>CIRCUIT MAP</span><span class="map-heading-mark">LIVE</span></div>
-    <svg id="course-map-svg" viewBox="0 0 180 128" role="img" aria-label="コースと現在地">
-      <polyline id="course-map-route" class="course-map-route" points="" />
-      <circle id="course-map-start" class="course-map-start" r="3" />
-      <circle id="course-map-position" class="course-map-position" r="5" />
-    </svg>
-    <div class="course-map-caption"><span class="course-map-legend"></span> CURRENT POSITION</div>
-  </aside>
-
-  <main id="hud" class="hud" aria-live="off">
-    <div class="timing-panel">
-      <div class="panel-eyebrow">SESSION 01 <span>•</span> SOLO TIME ATTACK</div>
-      <div class="lap-row"><span>LAP <b id="lap-number">01</b></span><span id="lap-state" class="lap-state">VALID LAP</span></div>
-      <div id="current-time" class="current-time">00:00.000</div>
-      <div class="best-row"><span>PERSONAL BEST</span><strong id="best-time">--:--.---</strong></div>
-    </div>
-    <div class="speed-panel"><div class="speed-caption">SPEED <span class="gear-label">GEAR <b id="gear">1</b></span></div><div class="speed-main"><strong id="speed">000</strong><span>KM/H</span></div><div class="speed-line"><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span><span class="speed-tick"></span></div></div>
-    <div class="drive-hint"><span class="hint-label">DRIVE MODE</span><strong>ONBOARD</strong><small>CHASE THE NEXT LAP</small></div>
-  </main>
-
-  <div id="touch-controls" class="touch-controls">
-    <div class="steering-input">
-      <div class="steer-control"><div id="steering-track" class="steering-track" role="slider" aria-label="ハンドル" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0"><span class="steer-center"></span><span id="steering-thumb" class="steering-thumb"><span>≡</span></span></div></div>
-      <div class="button-steer-control"><div class="steer-buttons"><button id="steer-left" class="steer-button" type="button" aria-label="左に曲がる"><span aria-hidden="true">←</span></button><button id="steer-right" class="steer-button" type="button" aria-label="右に曲がる"><span aria-hidden="true">→</span></button></div></div>
-    </div>
-    <div class="pedals"><button id="brake" class="pedal brake" type="button" aria-label="ブレーキ"><span class="pedal-bars" aria-hidden="true">▮▮</span><strong>BRAKE</strong></button><button id="throttle" class="pedal throttle" type="button" aria-label="アクセル"><span class="pedal-bars" aria-hidden="true">///</span><strong>GAS</strong></button></div>
-  </div>
-
-  <div id="toast" class="toast" role="status"></div>
-
-  <section id="start-overlay" class="menu-overlay" data-page="0">
-    <div class="menu-card">
-      <div class="menu-kicker"><span class="kicker-line"></span> ONE CAR. ONE CIRCUIT. ONE LAP.</div>
-      <h1>FIND YOUR<br /><em>APEX.</em></h1>
-      <div class="menu-intro">
-        <p>オンボード視点で、自己ベストを塗り替えよう。</p>
-        <aside id="install-tip" class="install-tip" aria-label="ホーム画面から起動する方法">
-          <strong>ホーム画面からの起動がおすすめ</strong>
-          <span>ブラウザのバーが隠れ、画面を広く使えます。</span>
-          <small id="install-tip-steps"></small>
-        </aside>
+async function launch(): Promise<void> {
+  if (isWebApp()) {
+    await import('./game');
+    return;
+  }
+  const app = document.querySelector<HTMLDivElement>('#app')!;
+  app.innerHTML = `
+    <main class="install-gate">
+      <div class="install-card">
+        <div class="brand"><span class="brand-mark">A<span>1</span></span><span class="brand-name">APEX <strong>ONE</strong><small>TIME ATTACK</small></span></div>
+        <p class="install-eyebrow">HOME SCREEN EDITION</p>
+        <h1>ホーム画面から、<br><em>コースへ。</em></h1>
+        <p class="install-lead">APEX ONEはWebアプリ専用です。ホーム画面に追加して、アプリのアイコンから起動してください。</p>
+        <p class="install-benefit">ブラウザのバーが隠れ、横画面いっぱいで運転できます。</p>
+        <div class="install-instructions">
+          <section><h2>iPhone / iPad</h2><p>Safariでこのページを開く → 共有 →「ホーム画面に追加」→「追加」。<br>「Webアプリとして開く」が表示されたらオンにします。</p></section>
+          <section><h2>Android</h2><p>Chromeの︙メニュー →「ホーム画面に追加」→「インストール」。</p></section>
+          <section><h2>PC / Mac</h2><p>Chrome / Edgeのアドレスバーのインストールアイコンから追加。MacのSafariは「ファイル」→「Dockに追加」。</p></section>
+        </div>
+        <button id="install-app" class="primary-button" type="button" hidden>WEBアプリをインストール <span>↗</span></button>
+        <p id="install-status" role="status">追加後は、このブラウザタブではなくアプリのアイコンを開いてください。</p>
       </div>
-      <div class="track-select-heading"><span>SELECT CIRCUIT</span><div class="track-pages" role="group" aria-label="コース一覧のページ">${trackPages}</div><span class="track-total">SOLO TIME ATTACK / ${String(TRACKS.length).padStart(2, '0')} TRACKS</span></div>
-      <div class="track-options" role="group" aria-label="コースを選択">${trackCards}</div>
-      <div class="steering-select" role="group" aria-label="ステアリング方式"><span>STEERING</span><div class="steering-options"><button class="steering-option" data-steering-mode="slider" type="button" aria-pressed="false">SLIDER</button><button class="steering-option selected" data-steering-mode="buttons" type="button" aria-pressed="true">BUTTONS</button></div></div>
-      <button id="start-button" class="primary-button" type="button">START ENGINE <span>↗</span></button>
-    </div>
-    <div class="menu-footer"><span>APEX ONE / ORIGINAL RACING EXPERIENCE</span><span>01 — ${String(TRACKS.length).padStart(2, '0')}</span></div>
-  </section>
-
-  <section id="pause-overlay" class="menu-overlay paused" hidden>
-    <div class="menu-card pause-card">
-      <div class="pause-copy"><div class="menu-kicker"><span class="kicker-line"></span> SESSION PAUSED</div><h2>TAKE A<br /><em>BREATH.</em></h2><p>走行を再開するか、スタート地点からやり直せます。</p></div>
-      <div class="pause-actions"><button id="resume-button" class="primary-button" type="button">RESUME <span>↗</span></button><button id="restart-button" class="secondary-button" type="button">RESTART LAP</button><button id="menu-button" class="secondary-button" type="button">SELECT CIRCUIT</button></div>
-    </div>
-  </section>
-
-  <div id="rotate-overlay" class="rotate-overlay"><div class="rotate-icon">↻</div><strong>横向きでプレイしてください</strong><p>端末を回転すると、コックピットが表示されます。</p></div>
-`;
-app.classList.add('button-steering');
-
-const scene = new THREE.Scene();
-let selectedTrack: TrackDefinition = TRACKS[0];
-let track = new Track(scene, selectedTrack);
-const car = new CarVisual();
-scene.add(car.group);
-let physics = new CarPhysics(track);
-car.setPose(physics.x, physics.z, physics.yaw);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-const mobile = window.matchMedia('(pointer: coarse)').matches;
-const standalone = window.matchMedia('(display-mode: standalone)').matches ||
-  (navigator as Navigator & { standalone?: boolean }).standalone === true;
-if (mobile && !standalone) {
-  app.classList.add('show-install-tip');
-  const steps = app.querySelector<HTMLElement>('#install-tip-steps')!;
-  steps.textContent = /iPhone|iPad|iPod/.test(navigator.userAgent)
-    ? 'Safariの共有 →「ホーム画面に追加」'
-    : /Android/.test(navigator.userAgent)
-      ? 'Chromeの︙ →「アプリをインストール」'
-      : 'ブラウザのメニュー →「ホーム画面に追加」';
-}
-if (mobile) {
-  // Safari can treat simultaneous steering and pedal touches as a page pinch.
-  // Cancel the native gesture while leaving Pointer Events for both controls intact.
-  const preventNativeGesture = (event: Event) => {
-    if (event.cancelable) event.preventDefault();
-  };
-  const preventMultiTouchGesture = (event: TouchEvent) => {
-    if (event.touches.length > 1) preventNativeGesture(event);
-  };
-  document.addEventListener('touchstart', preventMultiTouchGesture, { passive: false, capture: true });
-  document.addEventListener('touchmove', preventMultiTouchGesture, { passive: false, capture: true });
-  for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
-    document.addEventListener(type, preventNativeGesture, { passive: false, capture: true });
-  }
-  let lastTapTime = 0;
-  let lastTapX = 0;
-  let lastTapY = 0;
-  document.addEventListener('touchend', event => {
-    if (event.changedTouches.length !== 1 || event.touches.length !== 0) return;
-    const touch = event.changedTouches[0];
-    const doubleTap = lastTapTime > 0 && event.timeStamp - lastTapTime < 350
-      && Math.hypot(touch.clientX - lastTapX, touch.clientY - lastTapY) < 48;
-    if (doubleTap) {
-      if (event.cancelable) event.preventDefault();
-      lastTapTime = 0;
-    } else {
-      lastTapTime = event.timeStamp;
-      lastTapX = touch.clientX;
-      lastTapY = touch.clientY;
+    </main>`;
+  let prompt: InstallPrompt | null = null;
+  const button = app.querySelector<HTMLButtonElement>('#install-app')!;
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    prompt = event as InstallPrompt;
+    button.hidden = false;
+  });
+  button.addEventListener('click', async () => {
+    if (!prompt) return;
+    button.disabled = true;
+    const pending = prompt;
+    prompt = null;
+    try {
+      await pending.prompt();
+      const { outcome } = await pending.userChoice;
+      app.querySelector('#install-status')!.textContent = outcome === 'accepted'
+        ? '追加しました。ホーム画面またはアプリ一覧のAPEX ONEを開いてください。'
+        : 'メニューからも追加できます。追加後にアプリのアイコンを開いてください。';
+    } catch {
+      app.querySelector('#install-status')!.textContent = 'ブラウザのメニューから追加してください。';
+    } finally {
+      button.hidden = true;
+      button.disabled = false;
     }
-  }, { passive: false });
-}
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.35 : 1.8));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.35;
-renderer.shadowMap.enabled = !mobile;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-app.querySelector('#scene')!.appendChild(renderer.domElement);
-
-const controls = new Controls(app);
-const engineAudio = new EngineAudio();
-let laps = new LapTracker(track.length, readBestTime(selectedTrack.id));
-
-const speedElement = app.querySelector<HTMLElement>('#speed')!;
-const gearElement = app.querySelector<HTMLElement>('#gear')!;
-const soundButton = app.querySelector<HTMLButtonElement>('#sound-button')!;
-const currentTimeElement = app.querySelector<HTMLElement>('#current-time')!;
-const bestTimeElement = app.querySelector<HTMLElement>('#best-time')!;
-const lapNumberElement = app.querySelector<HTMLElement>('#lap-number')!;
-const lapStateElement = app.querySelector<HTMLElement>('#lap-state')!;
-const toastElement = app.querySelector<HTMLElement>('#toast')!;
-const pauseOverlay = app.querySelector<HTMLElement>('#pause-overlay')!;
-const startOverlay = app.querySelector<HTMLElement>('#start-overlay')!;
-const currentTrackName = app.querySelector<HTMLElement>('#current-track-name')!;
-const mapRoute = app.querySelector<SVGPolylineElement>('#course-map-route')!;
-const mapStart = app.querySelector<SVGCircleElement>('#course-map-start')!;
-const mapPosition = app.querySelector<SVGCircleElement>('#course-map-position')!;
-let courseMap: CourseMap;
-let active = false;
-let paused = false;
-let elapsed = 0;
-let lastFrame = 0;
-let accumulator = 0;
-let toastTimeout = 0;
-let lapProgressHint = 0;
-
-function refreshCourseMap(): void {
-  courseMap = createCourseMap(track);
-  mapRoute.setAttribute('points', courseMap.outline);
-  mapStart.setAttribute('cx', String(courseMap.start.x));
-  mapStart.setAttribute('cy', String(courseMap.start.y));
-  refreshMapPosition();
-}
-
-function refreshMapPosition(): void {
-  const point = courseMap.project(physics.x, physics.z);
-  mapPosition.setAttribute('cx', String(Math.max(6, Math.min(174, point.x))));
-  mapPosition.setAttribute('cy', String(Math.max(25, Math.min(122, point.y))));
-}
-
-const sceneElement = app.querySelector<HTMLElement>('#scene')!;
-const chromeOnIOS = /CriOS\//.test(navigator.userAgent) && /iPhone|iPad|iPod/.test(navigator.userAgent);
-function fitChromeLandscapeGutters(): void {
-  if (!chromeOnIOS) return;
-  const missingWidth = Math.max(window.screen.width, window.screen.height) - app.getBoundingClientRect().width;
-  // Some iOS Chrome builds inset the page on both sides despite viewport-fit=cover.
-  // Only extend the scenery when the missing width matches a landscape safe area.
-  const overhang = window.matchMedia('(orientation: landscape)').matches
-    && missingWidth >= 30 && missingWidth <= 180 ? missingWidth / 2 : 0;
-  document.documentElement.classList.toggle('chrome-ios-gutters', overhang > 0);
-  sceneElement.style.setProperty('--scene-overhang', `${overhang}px`);
-}
-function resize(): void {
-  fitChromeLandscapeGutters();
-  // In mobile Chrome the window dimensions can lag behind the CSS viewport
-  // after rotating or changing browser chrome. Size WebGL to its actual host.
-  const { width, height } = sceneElement.getBoundingClientRect();
-  if (width <= 0 || height <= 0) return;
-  renderer.setSize(width, height, false);
-  car.camera.aspect = width / height;
-  car.camera.updateProjectionMatrix();
-}
-window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', resize);
-window.visualViewport?.addEventListener('resize', resize);
-new ResizeObserver(resize).observe(sceneElement);
-resize();
-
-function toast(message: string, kind = ''): void {
-  toastElement.textContent = message;
-  toastElement.className = `toast visible ${kind}`;
-  window.clearTimeout(toastTimeout);
-  toastTimeout = window.setTimeout(() => toastElement.classList.remove('visible'), 2900);
-}
-
-function refreshHud(): void {
-  const kmh = physics.speed * 3.6;
-  speedElement.textContent = String(Math.round(kmh)).padStart(3, '0');
-  gearElement.textContent = String(gearAtSpeed(kmh).gear);
-  currentTimeElement.textContent = formatTime(laps.lapTime);
-  bestTimeElement.textContent = formatTime(laps.bestTime);
-  lapNumberElement.textContent = String(laps.lapNumber).padStart(2, '0');
-  lapStateElement.textContent = laps.valid ? 'VALID LAP' : `INVALID • ${laps.invalidReason}`;
-  lapStateElement.classList.toggle('invalid', !laps.valid);
-  const speedTicks = app.querySelectorAll<HTMLElement>('.speed-tick');
-  const tickCount = Math.min(speedTicks.length, Math.ceil(kmh / (TOP_SPEED_KMH / speedTicks.length)));
-  speedTicks.forEach((tick, index) => tick.classList.toggle('active', index < tickCount));
-}
-
-function refreshTrackChoices(): void {
-  app.querySelectorAll<HTMLButtonElement>('.track-option').forEach(button => {
-    const selected = button.dataset.trackId === selectedTrack.id;
-    button.classList.toggle('selected', selected);
-    button.setAttribute('aria-pressed', String(selected));
   });
-  for (const definition of TRACKS) {
-    app.querySelector<HTMLElement>(`[data-best-for="${definition.id}"]`)!.textContent =
-      formatTime(readBestTime(definition.id));
-  }
-}
-
-function setTrackPage(page: number): void {
-  startOverlay.dataset.page = String(page);
-  app.querySelectorAll<HTMLButtonElement>('.track-option').forEach(button => {
-    button.hidden = Number(button.dataset.page) !== page;
-  });
-  app.querySelectorAll<HTMLButtonElement>('.track-page').forEach(button => {
-    const selected = Number(button.dataset.trackPage) === page;
-    button.classList.toggle('selected', selected);
-    button.setAttribute('aria-pressed', String(selected));
+  window.addEventListener('appinstalled', () => {
+    button.hidden = true;
+    app.querySelector('#install-status')!.textContent = '追加しました。APEX ONEのアイコンから起動してください。';
   });
 }
 
-function selectTrack(id: TrackId): void {
-  if (active || selectedTrack.id === id) return;
-  const definition = TRACKS.find(item => item.id === id);
-  if (!definition) return;
-  track.dispose();
-  renderer.renderLists.dispose();
-  selectedTrack = definition;
-  setTrackPage(Math.floor(TRACKS.indexOf(definition) / 3));
-  track = new Track(scene, definition);
-  physics = new CarPhysics(track);
-  laps = new LapTracker(track.length, readBestTime(id));
-  lapProgressHint = 0;
-  currentTrackName.textContent = definition.name;
-  car.setPose(physics.x, physics.z, physics.yaw);
-  refreshCourseMap();
-  refreshTrackChoices();
-  refreshHud();
-  lastFrame = performance.now();
-}
-
-function reset(notify = true): void {
-  controls.clear();
-  physics.reset();
-  engineAudio.update(0, 0);
-  laps.reset(0);
-  lapProgressHint = 0;
-  accumulator = 0;
-  car.setPose(physics.x, physics.z, physics.yaw);
-  refreshMapPosition();
-  refreshHud();
-  if (notify) toast('START LINE に戻りました');
-}
-
-function setPaused(value: boolean): void {
-  if (!active) return;
-  paused = value;
-  pauseOverlay.hidden = !value;
-  if (value) controls.clear();
-  else engineAudio.unlock();
-  engineAudio.setActive(!value);
-  lastFrame = performance.now();
-}
-
-function start(): void {
-  engineAudio.unlock();
-  engineAudio.setActive(true);
-  active = true;
-  paused = false;
-  startOverlay.hidden = true;
-  pauseOverlay.hidden = true;
-  app.classList.add('in-game');
-  reset(false);
-  lastFrame = performance.now();
-}
-
-app.querySelector('#start-button')!.addEventListener('click', start);
-app.querySelectorAll<HTMLButtonElement>('.track-option').forEach(button => {
-  button.addEventListener('click', () => selectTrack(button.dataset.trackId as TrackId));
-});
-app.querySelectorAll<HTMLButtonElement>('.track-page').forEach(button => {
-  button.addEventListener('click', () => setTrackPage(Number(button.dataset.trackPage)));
-});
-app.querySelectorAll<HTMLButtonElement>('.steering-option').forEach(button => {
-  button.addEventListener('click', () => {
-    if (active) return;
-    const mode = button.dataset.steeringMode === 'buttons' ? 'buttons' : 'slider';
-    controls.setSteeringMode(mode);
-    app.classList.toggle('button-steering', mode === 'buttons');
-    app.querySelectorAll<HTMLButtonElement>('.steering-option').forEach(option => {
-      const selected = option === button;
-      option.classList.toggle('selected', selected);
-      option.setAttribute('aria-pressed', String(selected));
+// Register after attaching the install-prompt listener. Browser visitors never
+// initialize WebGL, controls or the game loop.
+void launch();
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`,
+      { scope: import.meta.env.BASE_URL }).catch(() => {
+      const status = document.querySelector('#install-status');
+      if (status) status.textContent = '読み込みを確認できませんでした。通信環境を確認して再読み込みしてください。';
     });
   });
-});
-soundButton.addEventListener('click', () => {
-  engineAudio.unlock();
-  engineAudio.setMuted(!engineAudio.isMuted);
-  soundButton.textContent = engineAudio.isMuted ? '×' : '♪';
-  soundButton.setAttribute('aria-label', engineAudio.isMuted ? '音を出す' : '音を消す');
-});
-app.querySelector('#pause-button')!.addEventListener('click', () => setPaused(!paused));
-app.querySelector('#resume-button')!.addEventListener('click', () => setPaused(false));
-app.querySelector('#reset-button')!.addEventListener('click', () => reset());
-app.querySelector('#restart-button')!.addEventListener('click', () => { reset(); setPaused(false); });
-app.querySelector('#menu-button')!.addEventListener('click', () => {
-  controls.clear();
-  engineAudio.setActive(false);
-  active = false;
-  paused = false;
-  pauseOverlay.hidden = true;
-  startOverlay.hidden = false;
-  app.classList.remove('in-game');
-  reset(false);
-  refreshTrackChoices();
-});
-window.addEventListener('keydown', event => {
-  if (event.repeat) return;
-  if (event.key === 'Escape') setPaused(!paused);
-  if (event.key.toLowerCase() === 'r' && active) reset();
-});
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) setPaused(true);
-});
-const portrait = window.matchMedia('(orientation: portrait) and (pointer: coarse)');
-portrait.addEventListener('change', () => { if (portrait.matches) setPaused(true); });
-
-function frame(now: number): void {
-  const dt = Math.min((now - lastFrame) / 1000 || 0, 0.05);
-  lastFrame = now;
-  if (active && !paused && !portrait.matches) {
-    accumulator = Math.min(accumulator + dt, 0.1);
-    while (accumulator >= 1 / 120) {
-      physics.step(controls.value, 1 / 120);
-      const position = track.nearest(physics.x, physics.z, lapProgressHint);
-      lapProgressHint = position.progress;
-      if (physics.collided) laps.invalidate('接触');
-      const event = laps.update(position.progress, physics.allWheelsOffTrack, physics.speed, 1 / 120);
-      if (event) {
-        if (event.newBest) {
-          saveBestTime(selectedTrack.id, event.time);
-          refreshTrackChoices();
-          toast(`NEW PERSONAL BEST  ${formatTime(event.time)}`, 'best');
-        } else if (event.valid) {
-          toast(`LAP ${String(event.lapNumber).padStart(2, '0')}  ${formatTime(event.time)}`);
-        } else {
-          toast('INVALID LAP • 記録されません', 'invalid');
-        }
-      }
-      elapsed += 1 / 120;
-      accumulator -= 1 / 120;
-    }
-    car.setPose(physics.x, physics.z, physics.yaw);
-    car.animate(controls.value.steer, physics.speed, elapsed);
-    engineAudio.update(physics.speed * 3.6, controls.value.throttle);
-    refreshMapPosition();
-    refreshHud();
-  }
-  renderer.render(scene, car.camera);
 }
-
-refreshCourseMap();
-refreshHud();
-refreshTrackChoices();
-renderer.setAnimationLoop(frame);
