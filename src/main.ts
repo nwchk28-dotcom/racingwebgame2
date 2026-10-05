@@ -11,6 +11,7 @@ async function launch(): Promise<void> {
     await import('./game');
     return;
   }
+  document.documentElement.classList.add('browser-entry');
   const app = document.querySelector<HTMLDivElement>('#app')!;
   app.innerHTML = `
     <main class="install-gate">

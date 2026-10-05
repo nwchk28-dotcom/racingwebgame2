@@ -172,6 +172,11 @@ html.chrome-ios-gutters #scene{left:calc(0px - var(--scene-overhang));right:calc
 }
 
 /* Browser entry is an install page; only the installed app initializes the game. */
+/* Allow native page scrolling through every ancestor of the install guide.
+   A child's pan-y cannot override the game's body-level touch-action:none. */
+html.browser-entry,html.browser-entry body,html.browser-entry #app{height:auto;min-height:100%;overflow:visible;touch-action:pan-y}
+html.browser-entry{overflow-x:hidden;overflow-y:auto}
+html.browser-entry .install-gate{position:relative;inset:auto;min-height:100vh;min-height:100svh;overflow:visible;display:flex}
 .install-gate{position:absolute;inset:0;overflow:auto;touch-action:pan-y;padding:max(26px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(26px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));background:radial-gradient(ellipse at 90% 0,#345458,transparent 65%),#101c20;display:grid;align-items:center}
 .install-card{width:min(860px,100%);margin:auto}.install-eyebrow{font-size:11px;color:#e96756;font-weight:800;letter-spacing:.2em;margin-top:24px}.install-card h1{font-size:clamp(30px,5vw,54px);line-height:1.2;margin:14px 0}.install-card h1 em{color:#ef5745;font-style:normal}.install-lead{font-size:clamp(14px,2vw,18px);line-height:1.7;max-width:680px}.install-benefit,#install-status{color:#aabfbd;font-size:13px;line-height:1.7}.install-instructions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}.install-instructions section{border:1px solid #8ba6a64d;border-radius:8px;background:#10262ca6;padding:16px}.install-instructions h2{font-size:16px;margin:0 0 10px}.install-instructions p{font-size:13px;line-height:1.7;margin:0}#install-app[hidden]{display:none}#install-app{max-width:420px}
 @media(max-width:600px){.install-instructions{grid-template-columns:1fr;gap:8px;margin:18px 0}.install-instructions section{padding:12px}.install-eyebrow{margin-top:16px}}
