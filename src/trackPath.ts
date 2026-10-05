@@ -23,6 +23,29 @@ export class TrackPath {
   readonly startYaw: number;
   private readonly cells = new Map<string, number[]>();
 
+  /** Smooth, cyclic width shared by the scene, walls and wheel validity checks. */
+  roadHalfWidthAt(progress: number): number {
+    const nodes = this.definition.widthProfile;
+    if (!nodes?.length) return this.definition.roadHalfWidth;
+    const p = ((progress % 1) + 1) % 1;
+    let low = 0;
+    let high = nodes.length - 1;
+    while (low + 1 < high) {
+      const middle = (low + high) >>> 1;
+      if (nodes[middle][0] <= p) low = middle;
+      else high = middle;
+    }
+    const [from, a] = nodes[low];
+    const [to, b] = nodes[high];
+    const t = (p - from) / (to - from);
+    const blend = t * t * (3 - 2 * t);
+    return (a + (b - a) * blend) / 2;
+  }
+
+  curbOuterEdgeAt(progress: number): number {
+    return this.roadHalfWidthAt(progress) + this.definition.curbWidth;
+  }
+
   constructor(readonly definition: TrackDefinition) {
     // The onboard camera faces local +Z, whose screen-right is world -X.
     // Mirror source eastings into world space so the driver sees the same

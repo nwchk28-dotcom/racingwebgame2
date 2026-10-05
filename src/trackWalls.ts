@@ -149,9 +149,9 @@ function hasWall(zones: readonly WallZone[], progress: number, side: -1 | 1): bo
     (zone.side === 'both' || zone.side === name));
 }
 
-function sharedTrackEdges(path: TrackPath, zones: readonly WallZone[], offset: number): Map<string, SharedEdgePoint> {
+function sharedTrackEdges(path: TrackPath, zones: readonly WallZone[], offsets: readonly number[]): Map<string, SharedEdgePoint> {
   const shared = new Map<string, SharedEdgePoint>();
-  const limitSquared = (offset * 2 + 3.5) ** 2;
+  const limitSquared = (Math.max(...offsets) * 2 + 3.5) ** 2;
   const sampleCellSize = 32;
   const pointCells = new Map<string, number[]>();
   for (let i = 0; i < path.sampleCount; i++) {
@@ -182,7 +182,7 @@ function sharedTrackEdges(path: TrackPath, zones: readonly WallZone[], offset: n
             const dx = path.samples[j].x - point.x;
             const dz = path.samples[j].z - point.z;
             const squared = dx * dx + dz * dz;
-            if (squared >= closestSquared) continue;
+            if (squared >= closestSquared || squared >= (offsets[i] + offsets[j] + 3.5) ** 2) continue;
             if ((dx * normal.x + dz * normal.z) * side < Math.sqrt(squared) * .78) continue;
             closest = j;
             closestSquared = squared;
@@ -202,7 +202,7 @@ function sharedTrackEdges(path: TrackPath, zones: readonly WallZone[], offset: n
   return shared;
 }
 
-function foldedWallSegments(path: TrackPath, offset: number): Set<string> {
+function foldedWallSegments(path: TrackPath, offsets: readonly number[]): Set<string> {
   const folded = new Set<string>();
   for (let i = 0; i < path.sampleCount; i++) {
     const a = path.samples[i];
@@ -211,8 +211,8 @@ function foldedWallSegments(path: TrackPath, offset: number): Set<string> {
     const dz = b.z - a.z;
     const distanceSquared = dx * dx + dz * dz;
     for (const side of [-1, 1] as const) {
-      const edgeX = dx + (path.normals[i + 1].x - path.normals[i].x) * side * offset;
-      const edgeZ = dz + (path.normals[i + 1].z - path.normals[i].z) * side * offset;
+      const edgeX = dx + (path.normals[i + 1].x * offsets[i + 1] - path.normals[i].x * offsets[i]) * side;
+      const edgeZ = dz + (path.normals[i + 1].z * offsets[i + 1] - path.normals[i].z * offsets[i]) * side;
       if ((edgeX * dx + edgeZ * dz) / distanceSquared >= .4) continue;
       // A constant-width offset can fold back at a hairpin with a radius
       // smaller than the wall setback. Leave a short opening rather than
@@ -229,11 +229,12 @@ export class TrackWalls {
   readonly segments: WallSegment[] = [];
   private readonly cells = new Map<string, number[]>();
 
-  constructor(path: TrackPath, curbOuterEdge: number) {
-    const offset = curbOuterEdge + 1.45;
+  constructor(path: TrackPath, curbOuterEdge = path.definition.roadHalfWidth + path.definition.curbWidth) {
+    const offsets = path.distances.map(distance => path.definition.widthProfile
+      ? path.curbOuterEdgeAt(distance / path.length) + 1.45 : curbOuterEdge + 1.45);
     const zones = WALL_ZONES[path.definition.id];
-    const sharedEdges = sharedTrackEdges(path, zones, offset);
-    const foldedEdges = foldedWallSegments(path, offset);
+    const sharedEdges = sharedTrackEdges(path, zones, offsets);
+    const foldedEdges = foldedWallSegments(path, offsets);
     for (let i = 0; i < path.sampleCount; i++) {
       const progress = (path.distances[i] + path.distances[i + 1]) / (2 * path.length);
       const a = path.samples[i];
@@ -249,10 +250,10 @@ export class TrackWalls {
         if (!shared && foldedEdges.has(key(i, side))) continue;
         const an = path.normals[i];
         const bn = path.normals[i + 1];
-        const ax = startShared?.x ?? a.x + an.x * side * offset;
-        const az = startShared?.z ?? a.z + an.z * side * offset;
-        const bx = endShared?.x ?? b.x + bn.x * side * offset;
-        const bz = endShared?.z ?? b.z + bn.z * side * offset;
+        const ax = startShared?.x ?? a.x + an.x * side * offsets[i];
+        const az = startShared?.z ?? a.z + an.z * side * offsets[i];
+        const bx = endShared?.x ?? b.x + bn.x * side * offsets[i + 1];
+        const bz = endShared?.z ?? b.z + bn.z * side * offsets[i + 1];
         const length = Math.hypot(bx - ax, bz - az);
         if (length < 0.001) continue;
         const roadX = b.x - a.x;

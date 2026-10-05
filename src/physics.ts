@@ -1,5 +1,5 @@
 import type { Track } from './track';
-import { gearAtSpeed, TOP_SPEED_MPS } from './vehicleTuning';
+import { gearAtSpeed, TOP_SPEED_MPS, CAR_LATERAL_SCALE, CAR_CONTACT_HALF_WIDTH, CAR_CONTACT_RADIUS } from './vehicleTuning';
 
 const ENGINE_FORCE = 19;
 const ENGINE_CUTOFF_MPS = 135;
@@ -9,15 +9,15 @@ const AERO_DRAG = (ENGINE_FORCE * (1 - TOP_SPEED_MPS / ENGINE_CUTOFF_MPS) - BASE
   (TOP_SPEED_MPS * TOP_SPEED_MPS);
 
 const BODY_CONTACTS = [
-  [-1.55, 4.3], [1.55, 4.3],
-  [-1.6, 2.4], [1.6, 2.4],
-  [-1.6, -1.75], [1.6, -1.75],
+  [-CAR_CONTACT_HALF_WIDTH, 4.3], [CAR_CONTACT_HALF_WIDTH, 4.3],
+  [-CAR_CONTACT_HALF_WIDTH, 2.4], [CAR_CONTACT_HALF_WIDTH, 2.4],
+  [-CAR_CONTACT_HALF_WIDTH, -1.75], [CAR_CONTACT_HALF_WIDTH, -1.75],
 ] as const;
 const WHEEL_CONTACTS = [
-  [-1.19, 2.42], [1.19, 2.42],
-  [-1.26, -1.75], [1.26, -1.75],
+  [-1.19 * CAR_LATERAL_SCALE, 2.42], [1.19 * CAR_LATERAL_SCALE, 2.42],
+  [-1.26 * CAR_LATERAL_SCALE, -1.75], [1.26 * CAR_LATERAL_SCALE, -1.75],
 ] as const;
-const TIRE_HALF_WIDTH = 0.205;
+const TIRE_HALF_WIDTH = 0.205 * CAR_LATERAL_SCALE;
 
 export interface DriverInput {
   steer: number;
@@ -28,6 +28,7 @@ export interface DriverInput {
 type PhysicsTrack = Pick<Track,
   'start' | 'startYaw' | 'curbOuterEdge' | 'outerFence' | 'colliders' | 'nearest'> & {
     walls: Pick<Track['walls'], 'contact'>;
+    curbOuterEdgeAt?: (progress: number) => number;
   };
 
 export class CarPhysics {
@@ -95,8 +96,13 @@ export class CarPhysics {
     this.x += this.vx * dt;
     this.z += this.vz * dt;
     this.resolveCollisions();
-    this.offTrack = this.track.nearest(this.x, this.z).distance > this.track.curbOuterEdge;
+    const nearest = this.track.nearest(this.x, this.z);
+    this.offTrack = nearest.distance > this.curbEdgeAt(nearest.progress);
     this.allWheelsOffTrack = this.offTrack && this.areAllWheelsOutsideCurbs();
+  }
+
+  private curbEdgeAt(progress: number): number {
+    return this.track.curbOuterEdgeAt?.(progress) ?? this.track.curbOuterEdge;
   }
 
   private areAllWheelsOutsideCurbs(): boolean {
@@ -106,9 +112,10 @@ export class CarPhysics {
     for (const [localX, localZ] of WHEEL_CONTACTS) {
       const wheelX = this.x + localX * cos + localZ * sin;
       const wheelZ = this.z - localX * sin + localZ * cos;
-      const signedDistance = this.track.nearest(wheelX, wheelZ).signedDistance;
+      const nearest = this.track.nearest(wheelX, wheelZ);
+      const signedDistance = nearest.signedDistance;
       // A tire still touching the curb keeps the lap valid.
-      if (Math.abs(signedDistance) <= this.track.curbOuterEdge + TIRE_HALF_WIDTH) return false;
+      if (Math.abs(signedDistance) <= this.curbEdgeAt(nearest.progress) + TIRE_HALF_WIDTH) return false;
       const wheelSide = Math.sign(signedDistance);
       if (side !== 0 && wheelSide !== side) return false;
       side = wheelSide;
@@ -133,7 +140,7 @@ export class CarPhysics {
         const dx = pointX - centerX;
         const dz = pointZ - centerZ;
         const distance = Math.hypot(dx, dz);
-        const penetration = distance - radius;
+        const penetration = distance + CAR_CONTACT_RADIUS - radius;
         if (penetration <= deepest) continue;
         deepest = penetration;
         collisionNormalX = dx / distance;
@@ -154,7 +161,7 @@ export class CarPhysics {
       for (const [localX, localZ] of BODY_CONTACTS) {
         const pointX = this.x + localX * cos + localZ * sin;
         const pointZ = this.z - localX * sin + localZ * cos;
-        const contact = this.track.walls.contact(pointX, pointZ, 0.28);
+        const contact = this.track.walls.contact(pointX, pointZ, CAR_CONTACT_RADIUS);
         if (!contact || contact.depth <= deepest) continue;
         deepest = contact.depth;
         inwardX = contact.normalX;
@@ -171,7 +178,7 @@ export class CarPhysics {
       const dz = obstacle.z - this.z;
       const localX = dx * cos - dz * sin;
       const localZ = dx * sin + dz * cos;
-      const nearestX = Math.max(-1.6, Math.min(1.6, localX));
+      const nearestX = Math.max(-CAR_CONTACT_HALF_WIDTH, Math.min(CAR_CONTACT_HALF_WIDTH, localX));
       const nearestZ = Math.max(-2.3, Math.min(4.45, localZ));
       const gapX = localX - nearestX;
       const gapZ = localZ - nearestZ;
@@ -187,8 +194,8 @@ export class CarPhysics {
         penetration = radius - gap;
       } else {
         const faces = [
-          { distance: 1.6 - localX, x: 1, z: 0 },
-          { distance: 1.6 + localX, x: -1, z: 0 },
+          { distance: CAR_CONTACT_HALF_WIDTH - localX, x: 1, z: 0 },
+          { distance: CAR_CONTACT_HALF_WIDTH + localX, x: -1, z: 0 },
           { distance: 4.45 - localZ, x: 0, z: 1 },
           { distance: 2.3 + localZ, x: 0, z: -1 },
         ];

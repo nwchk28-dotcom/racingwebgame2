@@ -41,8 +41,8 @@ function texturedCanvas(kind: 'road' | 'grass', grassColor: string): THREE.Canva
 function makeRibbon(
   points: THREE.Vector3[],
   normals: THREE.Vector3[],
-  inner: number,
-  outer: number,
+  inner: number | readonly number[],
+  outer: number | readonly number[],
   y: number,
   uvScale = 16,
 ): THREE.BufferGeometry {
@@ -54,8 +54,10 @@ function makeRibbon(
     for (const j of [i, i + 1]) {
       const p = points[j];
       const n = normals[j];
-      positions.push(p.x + n.x * inner, y, p.z + n.z * inner);
-      positions.push(p.x + n.x * outer, y, p.z + n.z * outer);
+      const near = typeof inner === 'number' ? inner : inner[j];
+      const far = typeof outer === 'number' ? outer : outer[j];
+      positions.push(p.x + n.x * near, y, p.z + n.z * near);
+      positions.push(p.x + n.x * far, y, p.z + n.z * far);
       uvs.push(0, j / uvScale, 1, j / uvScale);
     }
     indices.push(vertex, vertex + 2, vertex + 1, vertex + 1, vertex + 2, vertex + 3);
@@ -71,7 +73,7 @@ function makeRibbon(
 
 function makeStripedCurb(
   points: THREE.Vector3[], normals: THREE.Vector3[], distances: number[],
-  inner: number, outer: number,
+  inner: number | readonly number[], outer: number | readonly number[],
 ): THREE.BufferGeometry {
   const positions: number[] = [];
   const colors: number[] = [];
@@ -89,8 +91,9 @@ function makeStripedCurb(
       for (const distance of [cursor, end]) {
         const t = (distance - from) / (to - from);
         const point = points[i].clone().lerp(points[i + 1], t);
-        const normal = normals[i].clone().lerp(normals[i + 1], t).normalize();
-        for (const offset of [inner, outer]) {
+        const normal = normals[i].clone().lerp(normals[i + 1], t);
+        for (const edge of [inner, outer]) {
+          const offset = typeof edge === 'number' ? edge : edge[i] + (edge[i + 1] - edge[i]) * t;
           positions.push(point.x + normal.x * offset, 0.038, point.z + normal.z * offset);
           colors.push(color.r, color.g, color.b);
         }
@@ -204,11 +207,14 @@ export class Track extends TrackPath {
     ground.receiveShadow = true;
     scene.add(ground);
 
+    const widths = this.distances.map(distance => this.roadHalfWidthAt(distance / this.length));
+    const curbs = widths.map(width => width + this.definition.curbWidth);
     const roadTexture = texturedCanvas('road', this.definition.grass);
     const road = new THREE.Mesh(
-      makeRibbon(this.samples, this.normals, -this.roadHalfWidth, this.roadHalfWidth, 0.018, 10),
+      makeRibbon(this.samples, this.normals, widths.map(width => -width), widths, 0.018, 10),
       new THREE.MeshStandardMaterial({ map: roadTexture, roughness: 0.94, side: THREE.DoubleSide }),
     );
+    road.name = 'road';
     road.receiveShadow = true;
     scene.add(road);
 
@@ -218,13 +224,13 @@ export class Track extends TrackPath {
     const railMaterial = new THREE.MeshStandardMaterial({ color: '#d7dedc', roughness: 0.35, metalness: 0.7, side: THREE.DoubleSide });
 
     for (const side of [-1, 1]) {
-      const near = side * this.roadHalfWidth;
-      const far = side * (this.curbOuterEdge + 1.05);
+      const near = widths.map(width => side * width);
+      const far = curbs.map(width => side * (width + 1.05));
       scene.add(new THREE.Mesh(makeRibbon(this.samples, this.normals, near, far, 0.01), shoulderMaterial));
       scene.add(new THREE.Mesh(makeRibbon(this.samples, this.normals,
-        side * (this.roadHalfWidth - 0.33), side * (this.roadHalfWidth - 0.1), 0.04), lineMaterial));
+        widths.map(width => side * (width - 0.33)), widths.map(width => side * (width - 0.1)), 0.04), lineMaterial));
       scene.add(new THREE.Mesh(
-        makeStripedCurb(this.samples, this.normals, this.distances, side * this.roadHalfWidth, side * this.curbOuterEdge),
+        makeStripedCurb(this.samples, this.normals, this.distances, near, curbs.map(width => side * width)),
         curbMaterial,
       ));
     }
@@ -244,10 +250,11 @@ export class Track extends TrackPath {
     // so it does not end as a rectangular slab at either end of the corner.
     const start = this.distances.findIndex(distance => distance / this.length >= .585);
     const end = this.distances.findIndex(distance => distance / this.length >= .645);
-    const inner = this.curbOuterEdge + 1.05;
+
     const positions: number[] = [];
     const indices: number[] = [];
     for (let i = start; i <= end; i++) {
+      const inner = this.curbOuterEdgeAt(this.distances[i] / this.length) + 1.05;
       const fraction = (i - start) / (end - start);
       const width = 24 * Math.sin(Math.PI * fraction) ** 0.8;
       const point = this.samples[i];
@@ -352,7 +359,7 @@ export class Track extends TrackPath {
     const start = this.samples[0];
     const normal = this.normals[0];
     const paint = new THREE.MeshBasicMaterial({ color: '#f5f5f0', side: THREE.DoubleSide });
-    for (let i = -Math.floor(this.roadHalfWidth); i < Math.floor(this.roadHalfWidth); i++) {
+    for (let i = -Math.floor(this.roadHalfWidthAt(0)); i < Math.floor(this.roadHalfWidthAt(0)); i++) {
       if (i % 2 === 0) continue;
       const tile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1.5), paint);
       tile.rotation.x = -Math.PI / 2;
@@ -376,7 +383,8 @@ export class Track extends TrackPath {
       const distanceFromRoad = offset + Math.sign(offset) * attempt * 16;
       x = point.x + normal.x * distanceFromRoad;
       z = point.z + normal.z * distanceFromRoad;
-      if (this.nearest(x, z).distance > radius + this.curbOuterEdge + 8) {
+      const nearest = this.nearest(x, z);
+      if (nearest.distance > radius + this.curbOuterEdgeAt(nearest.progress) + 8) {
         clear = true;
         break;
       }

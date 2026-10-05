@@ -7,8 +7,8 @@ circular perimeter fence still keeps cars within the scene.
 
 These layouts are **visual and driving approximations**. Public F1 articles and
 circuit maps identify characteristic barriers and runoff, but do not provide a
-surveyed barrier centerline for every metre. The game's centerlines and constant
-road widths are simplified, so these fractions should not be used as safety or
+surveyed barrier centerline for every metre. The game's centerlines and road-width profiles are simplified
+(see [width references](TRACK_WIDTH_REFERENCES.md)), so these fractions should not be used as safety or
 engineering data. The wall intervals deliberately leave braking escape areas at
 selected corners and permit a wall on only one side.
 
@@ -52,8 +52,8 @@ remain visible against both asphalt and grass.
 ## Sepang
 
 - [Circuit operator architecture](https://www.sepangcircuit.com/architecture):
-  5.543 km, 15 corners, width 16–22 m. The game approximates this with a constant
-  18 m asphalt width plus 1.2 m curbs; it does not reproduce surveyed width changes.
+  5.543 km, 15 corners, width 16–22 m. The game varies from
+  16 m in corners to 22 m on the main straights, plus 1.2 m curbs; transition locations are approximate.
 - [Official safety briefing and facility map](https://www.sepangcircuit.com/media/wysiwyg/pdf/Daily_Safety_Briefing.pdf),
   circuit-layout page: home straight travels from T15 toward T1 beside the pit
   building; the parallel back straight travels the opposite way, with the central

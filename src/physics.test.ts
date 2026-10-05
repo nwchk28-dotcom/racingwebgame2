@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
 import { CarPhysics } from './physics';
 import type { Track } from './track';
-import { gearAtSpeed, TOP_SPEED_KMH } from './vehicleTuning';
+import { gearAtSpeed, TOP_SPEED_KMH, CAR_CONTACT_HALF_WIDTH, CAR_CONTACT_RADIUS, CAR_LATERAL_SCALE } from './vehicleTuning';
 
 const straightTrack = {
   start: new Vector3(0, 0, 0),
@@ -52,12 +52,12 @@ describe('car physics', () => {
     const car = new CarPhysics({ ...straightTrack,
       outerFence: { centerX: -60, centerZ: 40, radius: 50 },
     });
-    car.x = -11.4;
+    car.x = -10.7;
     car.z = 40;
     car.vx = 35;
     car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
     expect(car.collided).toBe(true);
-    expect(car.x).toBeLessThanOrEqual(-11.6);
+    expect(car.x).toBeLessThanOrEqual(-10 - CAR_CONTACT_HALF_WIDTH);
     expect(car.vx).toBeLessThan(0);
   });
 
@@ -91,12 +91,31 @@ describe('car physics', () => {
 
   it('keeps the lap legal while a tire touches the curb and flags four wheels beyond it', () => {
     const car = new CarPhysics(straightTrack);
-    car.x = 11.9;
+    car.x = straightTrack.curbOuterEdge + 1.465 * CAR_LATERAL_SCALE - .02;
     car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
     expect(car.allWheelsOffTrack).toBe(false);
-    car.x = 12.3;
+    car.x = straightTrack.curbOuterEdge + 1.465 * CAR_LATERAL_SCALE + .02;
     car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
     expect(car.allWheelsOffTrack).toBe(true);
+  });
+
+  it('uses each wheel local road width when the course widens or narrows', () => {
+    const car = new CarPhysics({ ...straightTrack,
+      curbOuterEdgeAt: progress => progress < .1 ? 6 : 11,
+    });
+    car.x = 8;
+    car.z = 50;
+    car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
+    expect(car.allWheelsOffTrack).toBe(true);
+    car.z = 150;
+    car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
+    expect(car.offTrack).toBe(false);
+    expect(car.allWheelsOffTrack).toBe(false);
+    // Front wheels reach the wider section while the center/rear are outside.
+    car.z = 99;
+    car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
+    expect(car.offTrack).toBe(true);
+    expect(car.allWheelsOffTrack).toBe(false);
   });
 
   it('cannot drive through an obstacle post', () => {
@@ -119,11 +138,11 @@ describe('car physics', () => {
           ? { depth: x + radius - 11, normalX: -1, normalZ: 0 }
           : null },
     });
-    car.x = 9.25;
+    car.x = 10.1;
     car.vx = 30;
     car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
     expect(car.collided).toBe(true);
-    expect(car.x + 1.6 + .28).toBeLessThanOrEqual(11.001);
+    expect(car.x + CAR_CONTACT_HALF_WIDTH + CAR_CONTACT_RADIUS).toBeLessThanOrEqual(11.001);
     expect(car.vx).toBeLessThan(0);
   });
 

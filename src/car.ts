@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CAR_LATERAL_SCALE } from './vehicleTuning';
 
 const red = new THREE.MeshStandardMaterial({ color: '#c72529', metalness: 0.45, roughness: 0.28 });
 const darkRed = new THREE.MeshStandardMaterial({ color: '#7c1820', metalness: 0.35, roughness: 0.35 });
@@ -50,6 +51,7 @@ function addNose(parent: THREE.Object3D): void {
 
 export class CarVisual {
   readonly group = new THREE.Group();
+  readonly model = new THREE.Group();
   readonly camera: THREE.PerspectiveCamera;
   private readonly frontWheels: THREE.Group[] = [];
   private readonly wheelMeshes: THREE.Mesh[] = [];
@@ -60,6 +62,8 @@ export class CarVisual {
     this.camera.position.set(0, this.baseCameraY, -0.7);
     this.camera.lookAt(0, 1.95, 32);
     this.group.add(this.camera);
+    this.model.scale.x = CAR_LATERAL_SCALE;
+    this.group.add(this.model);
     this.build();
   }
 
@@ -77,7 +81,7 @@ export class CarVisual {
   }
 
   private build(): void {
-    const car = this.group;
+    const car = this.model;
     // Lower tub and tapered nose. The cockpit is intentionally visible from the camera.
     addBox(car, [1.72, 0.48, 3.7], [0, 0.48, 0.2], red);
     addBox(car, [1.32, 0.35, 2.6], [0, 0.78, 0.25], darkRed);
@@ -129,7 +133,7 @@ export class CarVisual {
   private buildWheel(side: number, z: number, front: boolean): void {
     const pivot = new THREE.Group();
     pivot.position.set(side * (front ? 1.19 : 1.26), 0.52, z);
-    this.group.add(pivot);
+    this.model.add(pivot);
     const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.41, 24), tire);
     wheel.rotation.z = Math.PI / 2;
     wheel.castShadow = true;

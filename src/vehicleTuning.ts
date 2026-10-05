@@ -12,3 +12,10 @@ export function gearAtSpeed(kmh: number): { gear: number; rev: number } {
   const high = GEAR_END_SPEEDS[gearIndex];
   return { gear: gearIndex + 1, rev: Math.min(1, (speed - low) / (high - low)) };
 }
+
+// Model's original widest part (front-wing endplates) spans 3.08 m.
+// Scale only lateral geometry; preserve the existing camera and handling.
+export const CAR_WIDTH_M = 2;
+export const CAR_LATERAL_SCALE = CAR_WIDTH_M / 3.08;
+export const CAR_CONTACT_RADIUS = 0.1;
+export const CAR_CONTACT_HALF_WIDTH = CAR_WIDTH_M / 2 - CAR_CONTACT_RADIUS;

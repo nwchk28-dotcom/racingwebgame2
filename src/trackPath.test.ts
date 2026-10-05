@@ -70,15 +70,17 @@ describe('all circuits', () => {
   it('keeps both curb edges moving forward through tight corners', () => {
     for (const definition of TRACKS) {
       const path = new TrackPath(definition);
-      const edge = definition.roadHalfWidth + definition.curbWidth;
+
       for (let i = 0; i < path.sampleCount; i++) {
+        const edge = path.curbOuterEdgeAt(path.distances[i] / path.length);
+        const nextEdge = path.curbOuterEdgeAt(path.distances[i + 1] / path.length);
         const start = path.samples[i];
         const end = path.samples[i + 1];
         const dx = end.x - start.x;
         const dz = end.z - start.z;
         for (const side of [-1, 1]) {
-          const edgeDx = dx + (path.normals[i + 1].x - path.normals[i].x) * edge * side;
-          const edgeDz = dz + (path.normals[i + 1].z - path.normals[i].z) * edge * side;
+          const edgeDx = dx + (path.normals[i + 1].x * nextEdge - path.normals[i].x * edge) * side;
+          const edgeDz = dz + (path.normals[i + 1].z * nextEdge - path.normals[i].z * edge) * side;
           expect(edgeDx * dx + edgeDz * dz, `${definition.id} segment ${i} side ${side}`).toBeGreaterThan(0);
         }
       }
@@ -172,7 +174,7 @@ describe('all circuits', () => {
     const forward = path.samples[1].clone().sub(path.samples[0]).normalize();
     expect(forward.x).toBeGreaterThan(.99); // Mirrored world eastings: driving west.
     expect(forward.z).toBeLessThan(0);
-    expect(definition.roadHalfWidth * 2).toBe(18);
+    expect(path.roadHalfWidthAt(0) * 2).toBe(22);
     // T1's rightward change in heading must survive world-axis conversion.
     const entry = original.samples[t1Entry.progress * original.sampleCount | 0];
     // Test the first half of the >180-degree T1 arc; the full exit

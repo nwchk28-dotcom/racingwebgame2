@@ -104,6 +104,7 @@ describe('trackside walls', () => {
           curbOuterEdge: definition.roadHalfWidth + definition.curbWidth,
           outerFence: { centerX: 0, centerZ: 0, radius: 1e6 },
           colliders: [], walls, nearest: path.nearest.bind(path),
+        curbOuterEdgeAt: path.curbOuterEdgeAt.bind(path),
         });
         car.x = point.x + path.normals[i].x * side * 1.5;
         car.z = point.z + path.normals[i].z * side * 1.5;
@@ -123,9 +124,11 @@ describe('trackside walls', () => {
         curbOuterEdge: definition.roadHalfWidth + definition.curbWidth,
         outerFence: { centerX: 0, centerZ: 0, radius: 1e6 },
         colliders: [], walls, nearest: path.nearest.bind(path),
+        curbOuterEdgeAt: path.curbOuterEdgeAt.bind(path),
       });
-      const laneOffset = Math.min(4, definition.roadHalfWidth - 2.2);
+
       for (let i = 0; i < path.sampleCount; i++) {
+        const laneOffset = Math.min(4, path.roadHalfWidthAt(path.distances[i] / path.length) - 1.2);
         const point = path.samples[i];
         const next = path.samples[i + 1];
         const yaw = Math.atan2(next.x - point.x, next.z - point.z);
@@ -144,7 +147,7 @@ describe('trackside walls', () => {
 
   it('leaves Spa La Source and Baku close parallel streets free of collision pockets', () => {
     for (const [trackId, fractions, offset] of [
-      ['spa', [.032, .033, .034, .035, .036], 7],
+      ['spa', [.032, .033, .034, .035, .036], 5],
       ['baku', [.389, .390, .763, .769], 4],
     ] as const) {
       const definition = TRACKS.find(track => track.id === trackId)!;
@@ -155,6 +158,7 @@ describe('trackside walls', () => {
         curbOuterEdge: definition.roadHalfWidth + definition.curbWidth,
         outerFence: { centerX: 0, centerZ: 0, radius: 1e6 },
         colliders: [], walls, nearest: path.nearest.bind(path),
+        curbOuterEdgeAt: path.curbOuterEdgeAt.bind(path),
       });
       for (const fraction of fractions) {
         const i = path.distances.findIndex(distance => distance / path.length >= fraction);
@@ -176,8 +180,9 @@ describe('trackside walls', () => {
     const walls = new TrackWalls(path, definition.roadHalfWidth + definition.curbWidth);
     const offset = definition.roadHalfWidth + definition.curbWidth + 1.4;
     for (const fraction of [.02, .98]) {
-      const right = pointAt(path, fraction, -1, offset);
-      const left = pointAt(path, fraction, 1, offset);
+      const localOffset = path.curbOuterEdgeAt(fraction) + 1.4;
+      const right = pointAt(path, fraction, -1, localOffset);
+      const left = pointAt(path, fraction, 1, localOffset);
       expect(walls.contact(...right, .35)?.depth).toBeGreaterThan(0);
       expect(walls.contact(...left, .35)).toBeNull();
     }

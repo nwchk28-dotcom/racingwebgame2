@@ -25,6 +25,8 @@ npm run dev
 
 実在24コースの中心線は [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) のMITライセンスのデータを加工したものです。出典とライセンス全文は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) に記載しています。距離は公式値に合わせ（セパンは5.543 km）、元データの座標が計時線と異なる上海などは周回原点を補正しました。全24コースの周回方向と最初の主要コーナーの左右を検証しています。シンガポールは元データの逆回りを修正したため、旧記録を保持したまま新しい保存キーで計測します。スタート位置と壁の範囲は公開コース図を参照した近似です。すべて現行の平面路面モデルで走行でき、高低差や正確な路面勾配、施設配置は再現していません。公式のコース図やロゴはゲーム内に収録していません。
 
+道幅はFIAの基準幅と運営者・主催者の公開資料を参照して設定しています。セパン16〜22 m、上海通常14 m・T13付近20 m、バクー7.6〜13 mの幅変化に対応し、描画と壁・全輪コースアウト判定を共通化しました。車体横幅も約2 mに合わせています。区間別の実測データがない部分は近似です。[コース別設定・出典・再現の限界](TRACK_WIDTH_REFERENCES.md)を参照してください。
+
 ## エンジン音
 
 実車のエンジン録音を使用しています。音源は [Edvvc / Ed Pond, “Red-Bull-Cosworth-STR1-2006-David-Coulthard.ogg”](https://commons.wikimedia.org/wiki/File:Red-Bull-Cosworth-STR1-2006-David-Coulthard.ogg)（[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)）。Goodwood Festival of Speedでのコース脇からの録音で、オンボード録音ではありません。Wikimedia CommonsのMP3変換版を収録し、再生時に異なる回転域の安定した区間から3つの波形を作ってブレンドします。録音の時間経過は再生せず、車速とギアから音程を決め、アクセル負荷で音色を変えています。音源ファイルとその改変部分はCC BY-SA 3.0で利用できます。
