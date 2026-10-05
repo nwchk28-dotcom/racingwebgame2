@@ -25,6 +25,7 @@ Sepang uses `circuits/my-1999.geojson`.
 They were projected to local metre coordinates and
 rounded; Monza, Silverstone, Monaco, Jeddah, Baku, Yas Marina, Singapore, and
 Shanghai and Sepang were additionally rotated to their timing lines.
+Singapore's vertex order was reversed to match its anti-clockwise racing direction.
 
 Copyright (c) 2019-2025 Tomislav Bacinger
 

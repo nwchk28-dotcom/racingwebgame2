@@ -40,6 +40,20 @@ describe('per-circuit best laps', () => {
     expect(values.size).toBe(14);
   });
 
+  it('keeps reverse-direction Singapore records separate from the corrected lap', () => {
+    const oldKey = 'apex-one:best-lap:v1:singapore';
+    const values = new Map([[oldKey, '90.123']]);
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value); },
+    };
+    expect(readBestTime('singapore', storage)).toBeNull();
+    saveBestTime('singapore', 110.456, storage);
+    expect(readBestTime('singapore', storage)).toBe(110.456);
+    expect(values.get(oldKey)).toBe('90.123');
+    expect(bestTimeKey('monza')).toBe('apex-one:best-lap:v1:monza');
+  });
+
   it('ignores invalid or unavailable storage values', () => {
     expect(readBestTime('monza', { getItem: () => 'NaN' })).toBeNull();
     expect(readBestTime('monza', { getItem: () => '0' })).toBeNull();

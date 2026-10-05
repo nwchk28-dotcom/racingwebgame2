@@ -3,7 +3,10 @@ import type { TrackId } from './trackData';
 const BEST_LAP_PREFIX = 'apex-one:best-lap:v1';
 
 export function bestTimeKey(trackId: TrackId): string {
-  return `${BEST_LAP_PREFIX}:${trackId}`;
+  // Old Singapore records were driven in reverse and are not comparable.
+  // Retain that stored value, but use a fresh record for the corrected layout.
+  const version = trackId === 'singapore' ? ':direction-v2' : '';
+  return `${BEST_LAP_PREFIX}:${trackId}${version}`;
 }
 
 export function readBestTime(trackId: TrackId, storage?: Pick<Storage, 'getItem'>): number | null {

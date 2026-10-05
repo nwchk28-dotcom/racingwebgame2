@@ -76,10 +76,12 @@ export const WALL_ZONES: Record<TrackId, readonly WallZone[]> = {
     { from: .94, to: 1, side: 'right' },
   ],
   singapore: [
-    { from: 0, to: .14, side: 'both' }, { from: .14, to: .18, side: 'right' },
-    { from: .18, to: .43, side: 'both' }, { from: .43, to: .48, side: 'left' },
-    { from: .48, to: .74, side: 'both' }, { from: .74, to: .78, side: 'right' },
-    { from: .78, to: 1, side: 'both' },
+    // Source lap order was reversed: old [a,b] becomes [1-b,1-a], and
+    // driver-left/right swaps. Preserve the physical walls and escape sides.
+    { from: 0, to: .22, side: 'both' }, { from: .22, to: .26, side: 'left' },
+    { from: .26, to: .52, side: 'both' }, { from: .52, to: .57, side: 'right' },
+    { from: .57, to: .82, side: 'both' }, { from: .82, to: .86, side: 'left' },
+    { from: .86, to: 1, side: 'both' },
   ],
   shanghai: [
     // Keep the physical wall locations after moving the lap origin from the

@@ -84,7 +84,7 @@ export const abuDhabiPoints: readonly (readonly [number, number])[] = [
   [-274.1, -39.9], [-257.4, -36.9],
 ];
 
-export const singaporePoints: readonly (readonly [number, number])[] = [
+const singaporeSurveyPoints: readonly (readonly [number, number])[] = [
   [0, 0], [28.5, -217.3], [31.3, -245.4], [28.5, -259.3], [20.8, -271.4],
   [-14.5, -325.2], [-20.8, -334], [-27.5, -337.2], [-35.9, -338.2], [-55.3, -337.2],
   [-144.7, -332.3], [-282.5, -317.6], [-299.9, -313.1], [-310.9, -306.4], [-319.6, -296.9],
@@ -108,4 +108,10 @@ export const singaporePoints: readonly (readonly [number, number])[] = [
   [-185.1, 338.6], [-172.4, 351.4], [-161.7, 352.4], [-152, 349.8], [-141.3, 337.5],
   [-135.6, 330], [-130, 322.3], [-120, 313.8], [-96.9, 302.5], [-77.6, 297.2],
   [-53.3, 299.5], [-40.8, 294.5], [-34.5, 285.6], [-30.8, 271.4], [-21, 151.8],
+];
+
+// The upstream survey lists Marina Bay clockwise. F1 races anti-clockwise.
+// Keep the timing-line vertex and geographic layout; reverse only lap order.
+export const singaporePoints: readonly (readonly [number, number])[] = [
+  singaporeSurveyPoints[0], ...singaporeSurveyPoints.slice(1).reverse(),
 ];

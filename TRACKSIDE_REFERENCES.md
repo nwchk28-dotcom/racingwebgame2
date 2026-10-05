@@ -72,3 +72,33 @@ remain visible against both asphalt and grass.
 
 As with the other courses, elevations, pit-lane driving, gravel/asphalt runoff
 textures and exact barrier setbacks are not surveyed reproductions.
+
+## Racing-direction audit (2026-10-05)
+
+All 24 source centerlines were checked using signed east/north polygon area,
+then checked again after the camera's world mirror and the HUD's inverse mirror.
+The first substantial turn after each configured timing line was also checked
+independently: clockwise winding does not imply that T1 turns right (Canada),
+and anti-clockwise winding does not imply T1 turns left (Miami).
+
+| Direction | Game circuits |
+| --- | --- |
+| Anti-clockwise | São Paulo, Jeddah, Baku, Yas Marina, Singapore, Miami, Imola, Austin, Las Vegas |
+| Clockwise | Monza, Silverstone, Albert Park, Mexico City, Gilles-Villeneuve, Monaco, Spa, Shanghai, Bahrain, Barcelona, Austria, Hungary, Zandvoort, Lusail, Sepang |
+
+Cross-check: [circuit direction register](https://en.wikipedia.org/wiki/List_of_Formula_One_circuits),
+[F1 Imola guide](https://www.formula1.com/en/racing/2025/emiliaromagna),
+[FIA Las Vegas media kit](https://www.fia.com/sites/default/files/las_vegas_grand_prix_2023_media_kit_fia_accredited_1.pdf),
+and the numbered Singapore maps below. No other centerline had the wrong winding.
+Regression tests are in `src/trackDirection.test.ts`.
+
+Singapore's upstream survey was listed clockwise. It is now reversed while
+keeping the same control-line vertex and geographic shape. The new start heads
+north along the pit straight into T1 (left), T2 (right), T3 (left), rather than
+south into the last corners. Sources:
+[Singapore GP 2025 venue map with race-direction arrows](https://storage.singaporegp.sg/web/2024/circuit-park-map/circuit-park-map.pdf?v=3),
+[FIA 2025 numbered circuit and pit-lane map](https://www.fia.com/system/files/decision-document/2025_singapore_grand_prix_-_event_notes_-_circuit_map_pit_lane_emergency_exits_map_and_quarantine_zone.pdf).
+The near-wall intervals were remapped from `[a,b]` to `[1-b,1-a]`, swapping
+left/right so the physical barriers and open escape sides are retained.
+Singapore's old reverse-direction record remains stored but is no longer read;
+correct-direction records use `apex-one:best-lap:v1:singapore:direction-v2`.

@@ -187,4 +187,17 @@ describe('trackside walls', () => {
     }
   });
 
+  it('swaps Singapore driver-relative escape sides after reversing lap order', () => {
+    const definition = TRACKS.find(track => track.id === 'singapore')!;
+    const path = new TrackPath(definition);
+    const walls = new TrackWalls(path, definition.roadHalfWidth + definition.curbWidth);
+    const offset = definition.roadHalfWidth + definition.curbWidth + 1.4;
+    for (const [fraction, wallSide] of [[.24, 1], [.545, -1], [.84, 1]]) {
+      const blocked = pointAt(path, fraction, wallSide, offset);
+      const open = pointAt(path, fraction, -wallSide, offset);
+      expect(walls.contact(...blocked, .35)?.depth).toBeGreaterThan(0);
+      expect(walls.contact(...open, .35)).toBeNull();
+    }
+  });
+
 });
