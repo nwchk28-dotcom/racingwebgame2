@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createEngineNoise, engineLayerWeightsAt, engineToneAt, EngineAudio, gearAtSpeed, pitchAtSpeed } from './engineAudio';
 
 describe('engine gears', () => {
@@ -90,5 +90,61 @@ describe('engine gears', () => {
     expect(Math.abs(samples[0])).toBeLessThan(1e-6);
     expect(Math.abs(samples.at(-1)!)).toBeLessThan(1e-6);
     expect(samples.reduce((energy, sample) => energy + sample * sample, 0) / samples.length).toBeGreaterThan(0.05);
+  });
+});
+
+
+describe('idle engine power use', () => {
+  it('suspends the audio graph on mute and pause, then restores it on resume', async () => {
+    const context = {
+      state: 'running', currentTime: 10,
+      resume: vi.fn(async () => { context.state = 'running'; }),
+      suspend: vi.fn(async () => { context.state = 'suspended'; }),
+    };
+    const frequency = vi.fn();
+    const gain = vi.fn();
+    const audio = new EngineAudio();
+    Object.assign(audio, { context, source: { frequency: { setTargetAtTime: frequency } },
+      gain: { gain: { setTargetAtTime: gain } } });
+    audio.setActive(true);
+    audio.setMuted(true);
+    await Promise.resolve();
+    expect(context.suspend).toHaveBeenCalledTimes(1);
+    frequency.mockClear();
+    audio.update(150, 1);
+    expect(frequency).not.toHaveBeenCalled();
+    audio.setMuted(false);
+    await Promise.resolve();
+    expect(context.resume).toHaveBeenCalledTimes(1);
+    expect(frequency).toHaveBeenLastCalledWith(pitchAtSpeed(150), 10, .055);
+    expect(gain).toHaveBeenLastCalledWith(1, 10, .025);
+    audio.setActive(false);
+    await Promise.resolve();
+    expect(context.suspend).toHaveBeenCalledTimes(2);
+    audio.setMuted(true);
+    audio.setMuted(false);
+    expect(context.resume).toHaveBeenCalledTimes(1);
+  });
+
+  it('reconciles rapid pause/resume changes while suspension is pending', async () => {
+    let complete: () => void = () => undefined;
+    const context = {
+      state: 'running', currentTime: 0,
+      suspend: vi.fn(() => new Promise<void>(resolve => {
+        complete = () => { context.state = 'suspended'; resolve(); };
+      })),
+      resume: vi.fn(async () => { context.state = 'running'; }),
+    };
+    const audio = new EngineAudio();
+    Object.assign(audio, { context });
+    audio.setActive(false);
+    audio.setActive(true);
+    audio.setActive(true);
+    expect(context.suspend).toHaveBeenCalledTimes(1);
+    complete();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(context.resume).toHaveBeenCalledTimes(1);
+    expect(context.state).toBe('running');
   });
 });

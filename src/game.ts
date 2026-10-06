@@ -12,6 +12,7 @@ import { TrackPath } from './trackPath';
 import { TOP_SPEED_KMH } from './vehicleTuning';
 import { SECTOR_BOUNDARIES } from './sectors';
 import { LapHud } from './lapHud';
+import { FrameBudget } from './frameBudget';
 
 function coursePreview(definition: TrackDefinition): { outline: string; length: number } {
   const path = new TrackPath(definition);
@@ -135,8 +136,11 @@ scene.add(car.group);
 let physics = new CarPhysics(track);
 car.setPose(physics.x, physics.z, physics.yaw);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 const mobile = window.matchMedia('(pointer: coarse)').matches;
+const renderer = new THREE.WebGLRenderer({ antialias: !mobile, powerPreference: mobile ? 'low-power' : 'high-performance' });
+app.classList.toggle('mobile-rendering', mobile);
+const frameBudget = new FrameBudget(60);
+const hudBudget = new FrameBudget(20);
 if (mobile) {
   // Safari can treat simultaneous steering and pedal touches as a page pinch.
   // Cancel the native gesture while leaving Pointer Events for both controls intact.
@@ -169,7 +173,7 @@ if (mobile) {
     }
   }, { passive: false });
 }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.35 : 1.8));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1 : 1.8));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.35;
@@ -187,7 +191,15 @@ const gearElement = app.querySelector<HTMLElement>('#gear')!;
 const soundButton = app.querySelector<HTMLButtonElement>('#sound-button')!;
 const currentTimeElement = app.querySelector<HTMLElement>('#current-time')!;
 const gapElement = app.querySelector<HTMLElement>('#pb-gap')!;
-const sectorCells = [1, 2, 3].map(n => app.querySelector<HTMLElement>(`#sector-${n}`)!);
+const sectorCells = [1, 2, 3].map(n => {
+  const cell = app.querySelector<HTMLElement>(`#sector-${n}`)!;
+  return { cell, time: cell.querySelector<HTMLElement>('.sector-time')!,
+    delta: cell.querySelector<HTMLElement>('.sector-delta')!, caption: cell.querySelector<HTMLElement>('small')! };
+});
+const speedTicks = app.querySelectorAll<HTMLElement>('.speed-tick');
+function setText(element: HTMLElement, text: string): void {
+  if (element.textContent !== text) element.textContent = text;
+}
 const bestTimeElement = app.querySelector<HTMLElement>('#best-time')!;
 const lapNumberElement = app.querySelector<HTMLElement>('#lap-number')!;
 const lapStateElement = app.querySelector<HTMLElement>('#lap-state')!;
@@ -242,6 +254,7 @@ function resize(): void {
   renderer.setSize(width, height, false);
   car.camera.aspect = width / height;
   car.camera.updateProjectionMatrix();
+  renderer.render(scene, car.camera);
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', resize);
@@ -259,26 +272,24 @@ function toast(message: string, kind = ''): void {
 function refreshHud(): void {
   const timing = lapHud.view(laps, performance.now());
   const kmh = physics.speed * 3.6;
-  speedElement.textContent = String(Math.round(kmh)).padStart(3, '0');
-  gearElement.textContent = String(gearAtSpeed(kmh).gear);
-  currentTimeElement.textContent = formatTime(timing.time);
-  bestTimeElement.textContent = formatTime(laps.bestTime);
-  lapNumberElement.textContent = String(timing.lapNumber).padStart(2, '0');
-  lapStateElement.textContent = timing.valid ? 'VALID LAP' : `INVALID • ${timing.invalidReason}`;
+  setText(speedElement, String(Math.round(kmh)).padStart(3, '0'));
+  setText(gearElement, String(gearAtSpeed(kmh).gear));
+  setText(currentTimeElement, formatTime(timing.time));
+  setText(bestTimeElement, formatTime(laps.bestTime));
+  setText(lapNumberElement, String(timing.lapNumber).padStart(2, '0'));
+  setText(lapStateElement, timing.valid ? 'VALID LAP' : `INVALID • ${timing.invalidReason}`);
   lapStateElement.classList.toggle('invalid', !timing.valid);
-  gapElement.textContent = formatGap(timing.gap);
+  setText(gapElement, formatGap(timing.gap));
   gapElement.className = timing.gap === null ? '' : timing.gap <= 0 ? 'ahead' : 'behind';
-  sectorCells.forEach((cell, index) => {
+  sectorCells.forEach(({ cell, time: timeElement, delta: deltaElement, caption }, index) => {
     const { active, previous, time, delta } = timing.sectors[index];
-    cell.querySelector('.sector-time')!.textContent = time === null ? '—' : time.toFixed(3);
-    const deltaElement = cell.querySelector<HTMLElement>('.sector-delta')!;
-    deltaElement.textContent = formatGap(delta);
+    setText(timeElement, time === null ? '—' : time.toFixed(3));
+    setText(deltaElement, formatGap(delta));
     deltaElement.className = `sector-delta ${delta === null ? '' : delta <= 0 ? 'ahead' : 'behind'}`;
     cell.classList.toggle('active', active);
     cell.classList.toggle('previous', previous);
-    cell.querySelector('small')!.textContent = previous ? '前周' : active ? '計測' : '';
+    setText(caption, previous ? '前周' : active ? '計測' : '');
   });
-  const speedTicks = app.querySelectorAll<HTMLElement>('.speed-tick');
   const tickCount = Math.min(speedTicks.length, Math.ceil(kmh / (TOP_SPEED_KMH / speedTicks.length)));
   speedTicks.forEach((tick, index) => tick.classList.toggle('active', index < tickCount));
 }
@@ -326,6 +337,7 @@ function selectTrack(id: TrackId): void {
   refreshTrackChoices();
   refreshHud();
   lastFrame = performance.now();
+  syncRenderLoop();
 }
 
 function reset(notify = true): void {
@@ -339,6 +351,7 @@ function reset(notify = true): void {
   car.setPose(physics.x, physics.z, physics.yaw);
   refreshMapPosition();
   refreshHud();
+  renderer.render(scene, car.camera);
   if (notify) toast('START LINE に戻りました');
 }
 
@@ -350,6 +363,7 @@ function setPaused(value: boolean): void {
   else engineAudio.unlock();
   engineAudio.setActive(!value);
   lastFrame = performance.now();
+  syncRenderLoop();
 }
 
 function start(): void {
@@ -362,6 +376,7 @@ function start(): void {
   app.classList.add('in-game');
   reset(false);
   lastFrame = performance.now();
+  syncRenderLoop();
 }
 
 app.querySelector('#start-button')!.addEventListener('click', start);
@@ -404,6 +419,7 @@ app.querySelector('#menu-button')!.addEventListener('click', () => {
   app.classList.remove('in-game');
   reset(false);
   refreshTrackChoices();
+  syncRenderLoop();
 });
 window.addEventListener('keydown', event => {
   if (event.repeat) return;
@@ -412,11 +428,21 @@ window.addEventListener('keydown', event => {
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) setPaused(true);
+  syncRenderLoop();
 });
 const portrait = window.matchMedia('(orientation: portrait) and (pointer: coarse)');
-portrait.addEventListener('change', () => { if (portrait.matches) setPaused(true); });
+portrait.addEventListener('change', () => { if (portrait.matches) setPaused(true); syncRenderLoop(); });
+
+function syncRenderLoop(): void {
+  const running = active && !paused && !portrait.matches && !document.hidden;
+  frameBudget.reset();
+  hudBudget.reset();
+  renderer.setAnimationLoop(running ? frame : null);
+  if (!document.hidden) renderer.render(scene, car.camera);
+}
 
 function frame(now: number): void {
+  if (!frameBudget.due(now)) return;
   const dt = Math.min((now - lastFrame) / 1000 || 0, 0.05);
   lastFrame = now;
   if (active && !paused && !portrait.matches) {
@@ -445,8 +471,10 @@ function frame(now: number): void {
     car.setPose(physics.x, physics.z, physics.yaw);
     car.animate(controls.value.steer, physics.speed, elapsed);
     engineAudio.update(physics.speed * 3.6, controls.value.throttle);
-    refreshMapPosition();
-    refreshHud();
+    if (hudBudget.due(now)) {
+      refreshMapPosition();
+      refreshHud();
+    }
   }
   renderer.render(scene, car.camera);
 }
@@ -454,4 +482,4 @@ function frame(now: number): void {
 refreshCourseMap();
 refreshHud();
 refreshTrackChoices();
-renderer.setAnimationLoop(frame);
+syncRenderLoop();

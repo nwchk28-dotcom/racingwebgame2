@@ -64,6 +64,7 @@ export class EngineAudio {
   private lastGear = 1;
   private lastUpshiftAt = -Infinity;
   private loading: Promise<void> | null = null;
+  private changingState = false;
 
   get isMuted(): boolean { return this.muted; }
 
@@ -74,7 +75,7 @@ export class EngineAudio {
       this.gain.gain.value = 0;
       this.gain.connect(this.context.destination);
     }
-    void this.context.resume().catch(error => console.warn('Engine audio could not resume', error));
+    this.syncContextState();
     if (!this.loading) this.loading = this.loadRecording();
   }
 
@@ -181,20 +182,42 @@ export class EngineAudio {
     }
   }
 
+  // Muting a gain alone leaves every oscillator/filter processing audio.
+  // Suspend the whole graph while idle, and reconcile fast pause/resume taps.
+  private syncContextState(): void {
+    const context = this.context;
+    if (!context || this.changingState || context.state === 'closed') return;
+    const running = this.active && !this.muted;
+    const operation = running ? context.resume : context.suspend;
+    if (typeof operation !== 'function' || context.state === (running ? 'running' : 'suspended')) return;
+    this.changingState = true;
+    void operation.call(context).then(() => {
+      this.changingState = false;
+      if (context.state === 'running') this.update(this.speed, this.throttle);
+      // Reconcile only if the requested state changed while awaiting the browser.
+      if (running !== (this.active && !this.muted)) this.syncContextState();
+    }).catch(error => {
+      this.changingState = false;
+      console.warn('Engine audio state could not change', error);
+    });
+  }
+
   setActive(active: boolean): void {
     this.active = active;
     this.update(this.speed, this.throttle);
+    this.syncContextState();
   }
 
   setMuted(muted: boolean): void {
     this.muted = muted;
     this.update(this.speed, this.throttle);
+    this.syncContextState();
   }
 
   update(speedKmh: number, throttle: number): void {
     this.speed = speedKmh;
     this.throttle = throttle;
-    if (!this.context || !this.gain) return;
+    if (!this.context || !this.gain || this.context.state === 'suspended') return;
     const now = this.context.currentTime;
     const pitch = pitchAtSpeed(speedKmh);
     const gear = gearAtSpeed(speedKmh).gear;
