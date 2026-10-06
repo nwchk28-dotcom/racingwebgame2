@@ -15,13 +15,33 @@ beforeAll(() => {
 afterAll(() => vi.unstubAllGlobals());
 
 describe('track scenes', () => {
-  it('keeps the car two metres wide without moving the onboard camera', () => {
+  it('keeps the car two metres wide with the reference onboard framing', () => {
     const car = new CarVisual();
     const size = new Box3().setFromObject(car.model).getSize(new Vector3());
     expect(size.x).toBeCloseTo(2, 5);
     expect(car.camera.parent).toBe(car.group);
-    expect(car.camera.position.y).toBe(2.45);
-    expect(car.camera.fov).toBe(68);
+    expect(car.camera.position.y).toBe(2.05);
+    expect(car.camera.fov).toBe(40);
+  });
+
+  it('keeps both front tyre tops and the halo inside landscape frames with road above them', () => {
+    const car = new CarVisual();
+    for (const aspect of [16 / 9, 844 / 390]) {
+      car.camera.aspect = aspect;
+      car.camera.updateProjectionMatrix();
+      car.group.updateMatrixWorld(true);
+      const halo = new Vector3(0, 1.62, 1.57).project(car.camera);
+      expect(Math.abs(halo.x)).toBeLessThan(.01);
+      expect(Math.abs(halo.y)).toBeLessThan(.2);
+      for (const side of [-1, 1]) {
+        const tyre = new Vector3(side * .773, 1.04, 2.42).project(car.camera);
+        expect(Math.abs(tyre.x)).toBeLessThan(.9);
+        expect(tyre.y).toBeGreaterThan(-.8);
+        expect(tyre.y).toBeLessThan(halo.y);
+      }
+      const ahead = new Vector3(0, 0, 35).project(car.camera);
+      expect(ahead.y).toBeGreaterThan(halo.y + .25);
+    }
   });
 
   // Each circuit gets its own CI time budget; adding courses must not combine

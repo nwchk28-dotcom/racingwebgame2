@@ -55,12 +55,13 @@ export class CarVisual {
   readonly camera: THREE.PerspectiveCamera;
   private readonly frontWheels: THREE.Group[] = [];
   private readonly wheelMeshes: THREE.Mesh[] = [];
-  private readonly baseCameraY = 2.45;
+  private readonly baseCameraY = 2.05;
 
   constructor() {
-    this.camera = new THREE.PerspectiveCamera(68, 1, 0.055, 1100);
-    this.camera.position.set(0, this.baseCameraY, -0.7);
-    this.camera.lookAt(0, 1.95, 32);
+    this.camera = new THREE.PerspectiveCamera(40, 1, 0.055, 1100);
+    this.camera.position.set(0, this.baseCameraY, -0.55);
+    // A closer, narrower onboard view frames the wheels and halo below the road.
+    this.camera.lookAt(0, 0.70, 6);
     this.group.add(this.camera);
     this.model.scale.x = CAR_LATERAL_SCALE;
     this.group.add(this.model);

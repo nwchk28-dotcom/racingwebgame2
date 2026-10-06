@@ -137,7 +137,7 @@ let physics = new CarPhysics(track);
 car.setPose(physics.x, physics.z, physics.yaw);
 
 const mobile = window.matchMedia('(pointer: coarse)').matches;
-const renderer = new THREE.WebGLRenderer({ antialias: !mobile, powerPreference: mobile ? 'low-power' : 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: mobile ? 'low-power' : 'high-performance' });
 app.classList.toggle('mobile-rendering', mobile);
 const frameBudget = new FrameBudget(60);
 const hudBudget = new FrameBudget(20);
@@ -173,7 +173,7 @@ if (mobile) {
     }
   }, { passive: false });
 }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1 : 1.8));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.35 : 1.8));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.35;

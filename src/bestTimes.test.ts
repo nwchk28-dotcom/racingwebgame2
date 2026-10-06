@@ -8,7 +8,7 @@ describe('per-circuit best laps', () => {
       getItem: (key: string) => values.get(key) ?? null,
       setItem: (key: string, value: string) => { values.set(key, value); },
     };
-    expect(bestTimeKey('monza')).toBe('apex-one:best-lap:v1:monza');
+    expect(bestTimeKey('monza')).toBe('apex-one:best-lap:v1:monza:rules-1:course-0');
     expect(readBestTime('monza', storage)).toBeNull();
     saveBestTime('monza', 112.3, storage);
     saveBestTime('silverstone', 118.2, storage);
@@ -51,7 +51,7 @@ describe('per-circuit best laps', () => {
     saveBestTime('singapore', 110.456, storage);
     expect(readBestTime('singapore', storage)).toBe(110.456);
     expect(values.get(oldKey)).toBe('90.123');
-    expect(bestTimeKey('monza')).toBe('apex-one:best-lap:v1:monza');
+    expect(bestTimeKey('monza')).toBe('apex-one:best-lap:v1:monza:rules-1:course-0');
   });
 
   it('ignores invalid or unavailable storage values', () => {
