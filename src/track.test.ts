@@ -32,7 +32,7 @@ describe('track scenes', () => {
       car.group.updateMatrixWorld(true);
       const ahead = new Vector3(0, 0, 35).project(car.camera);
       for (const side of [-1, 1]) {
-        const tyre = new Vector3(side * .773, 1.04, 2.42).project(car.camera);
+        const tyre = new Vector3(side * .773, .98, 2.42).project(car.camera);
         expect(Math.abs(tyre.x)).toBeLessThan(.9);
         expect(tyre.y).toBeGreaterThan(-.8);
         expect(ahead.y).toBeGreaterThan(tyre.y + .25);

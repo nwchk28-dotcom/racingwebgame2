@@ -82,10 +82,10 @@ export class CarVisual {
     addBox(car, [0.10, 0.035, 2.25], [0, 0.83, 1.85], accent);
     addBox(car, [2.25, 0.31, 2.15], [0, 0.65, -1.15], red);
     for (const side of [-1, 1]) {
-      const sidepod = addBox(car, [0.54, 0.31, 1.95], [side * 0.94, 0.69, -0.65], red);
+      const sidepod = addBox(car, [0.70, 0.31, 1.95], [side * 1.03, 0.69, -0.65], red);
       sidepod.rotation.y = side * 0.08;
       addBox(car, [0.13, 0.12, 1.7], [side * 0.66, 0.9, -0.45], carbon);
-      addBox(car, [0.11, 0.12, 1.7], [side * 1.06, 0.83, -0.55], darkRed);
+      addBox(car, [0.11, 0.12, 1.7], [side * 1.20, 0.83, -0.55], darkRed);
       addBox(car, [0.12, 0.1, 1.9], [side * 0.54, 0.47, 2.6], carbon);
     }
 
@@ -112,19 +112,21 @@ export class CarVisual {
   }
 
   private buildWheel(side: number, z: number, front: boolean): void {
+    const radius = 0.49;
+    const radialScale = radius / 0.52;
     const pivot = new THREE.Group();
-    pivot.position.set(side * (front ? FRONT_WHEEL_MODEL_OFFSET : REAR_WHEEL_MODEL_OFFSET), 0.52, z);
+    pivot.position.set(side * (front ? FRONT_WHEEL_MODEL_OFFSET : REAR_WHEEL_MODEL_OFFSET), radius, z);
     this.model.add(pivot);
-    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, TIRE_MODEL_WIDTH, 24), tire);
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, TIRE_MODEL_WIDTH, 24), tire);
     wheel.name = front ? 'front-tyre' : 'rear-tyre';
     wheel.rotation.z = Math.PI / 2;
     wheel.castShadow = true;
     pivot.add(wheel);
-    const face = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.015, 24), rim);
+    const face = new THREE.Mesh(new THREE.CylinderGeometry(0.3 * radialScale, 0.3 * radialScale, 0.015, 24), rim);
     face.rotation.z = Math.PI / 2;
     face.position.x = side * (TIRE_MODEL_WIDTH / 2 + 0.015);
     pivot.add(face);
-    const stripe = new THREE.Mesh(new THREE.TorusGeometry(0.385, 0.026, 5, 28), red);
+    const stripe = new THREE.Mesh(new THREE.TorusGeometry(0.385 * radialScale, 0.026 * radialScale, 5, 28), red);
     stripe.rotation.y = Math.PI / 2;
     stripe.position.x = side * (TIRE_MODEL_WIDTH / 2 + 0.012);
     pivot.add(stripe);
