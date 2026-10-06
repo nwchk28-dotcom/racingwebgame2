@@ -12,6 +12,10 @@ export interface LapEvent {
   lapNumber: number;
   sectors: SectorTimes;
   record: BestLapRecord;
+  /** Compare against the PB before this finish, including a newly improved PB. */
+  gap: number | null;
+  sectorDeltas: (number | null)[];
+  invalidReason: string;
 }
 
 export class LapTracker {
@@ -120,6 +124,8 @@ export class LapTracker {
       time, valid: this.valid,
       newBest: this.valid && (this.bestTime === null || time < this.bestTime),
       lapNumber: this.lapNumber, sectors: [...sectors], record,
+      gap: this.valid && this.bestTime !== null ? time - this.bestTime : null,
+      sectorDeltas: [...this.sectorDeltas], invalidReason: this.invalidReason,
     };
     this.lastSectorTimes = [...sectors];
     this.lastSectorDeltas = [...this.sectorDeltas];

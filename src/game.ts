@@ -11,6 +11,7 @@ import { TRACKS, type TrackDefinition, type TrackId } from './trackData';
 import { TrackPath } from './trackPath';
 import { TOP_SPEED_KMH } from './vehicleTuning';
 import { SECTOR_BOUNDARIES } from './sectors';
+import { LapHud } from './lapHud';
 
 function coursePreview(definition: TrackDefinition): { outline: string; length: number } {
   const path = new TrackPath(definition);
@@ -179,6 +180,7 @@ app.querySelector('#scene')!.appendChild(renderer.domElement);
 const controls = new Controls(app);
 const engineAudio = new EngineAudio();
 let laps = new LapTracker(track.length, readBestTime(selectedTrack.id), SECTOR_BOUNDARIES[selectedTrack.id], readBestRecord(selectedTrack.id));
+const lapHud = new LapHud();
 
 const speedElement = app.querySelector<HTMLElement>('#speed')!;
 const gearElement = app.querySelector<HTMLElement>('#gear')!;
@@ -255,21 +257,19 @@ function toast(message: string, kind = ''): void {
 }
 
 function refreshHud(): void {
+  const timing = lapHud.view(laps, performance.now());
   const kmh = physics.speed * 3.6;
   speedElement.textContent = String(Math.round(kmh)).padStart(3, '0');
   gearElement.textContent = String(gearAtSpeed(kmh).gear);
-  currentTimeElement.textContent = formatTime(laps.lapTime);
+  currentTimeElement.textContent = formatTime(timing.time);
   bestTimeElement.textContent = formatTime(laps.bestTime);
-  lapNumberElement.textContent = String(laps.lapNumber).padStart(2, '0');
-  lapStateElement.textContent = laps.valid ? 'VALID LAP' : `INVALID • ${laps.invalidReason}`;
-  lapStateElement.classList.toggle('invalid', !laps.valid);
-  gapElement.textContent = formatGap(laps.gap);
-  gapElement.className = laps.gap === null ? '' : laps.gap <= 0 ? 'ahead' : 'behind';
+  lapNumberElement.textContent = String(timing.lapNumber).padStart(2, '0');
+  lapStateElement.textContent = timing.valid ? 'VALID LAP' : `INVALID • ${timing.invalidReason}`;
+  lapStateElement.classList.toggle('invalid', !timing.valid);
+  gapElement.textContent = formatGap(timing.gap);
+  gapElement.className = timing.gap === null ? '' : timing.gap <= 0 ? 'ahead' : 'behind';
   sectorCells.forEach((cell, index) => {
-    const active = laps.started && laps.currentSector === index + 1;
-    const previous = !active && laps.sectorTimes[index] === null && laps.lastSectorTimes !== null;
-    const time = laps.sectorTimes[index] ?? (active ? laps.currentSectorTime : laps.lastSectorTimes?.[index] ?? null);
-    const delta = previous ? laps.lastSectorDeltas[index] : laps.sectorDeltas[index];
+    const { active, previous, time, delta } = timing.sectors[index];
     cell.querySelector('.sector-time')!.textContent = time === null ? '—' : time.toFixed(3);
     const deltaElement = cell.querySelector<HTMLElement>('.sector-delta')!;
     deltaElement.textContent = formatGap(delta);
@@ -318,6 +318,7 @@ function selectTrack(id: TrackId): void {
   track = new Track(scene, definition);
   physics = new CarPhysics(track);
   laps = new LapTracker(track.length, readBestTime(id), SECTOR_BOUNDARIES[id], readBestRecord(id));
+  lapHud.reset();
   lapProgressHint = 0;
   currentTrackName.textContent = definition.name;
   car.setPose(physics.x, physics.z, physics.yaw);
@@ -332,6 +333,7 @@ function reset(notify = true): void {
   physics.reset();
   engineAudio.update(0, 0);
   laps.reset(0);
+  lapHud.reset();
   lapProgressHint = 0;
   accumulator = 0;
   car.setPose(physics.x, physics.z, physics.yaw);
@@ -426,6 +428,7 @@ function frame(now: number): void {
       if (physics.collided) laps.invalidate('接触');
       const event = laps.update(position.progress, physics.allWheelsOffTrack, physics.speed, 1 / 120);
       if (event) {
+        lapHud.completed(event, now);
         if (event.newBest) {
           saveBestRecord(selectedTrack.id, event.record);
           refreshTrackChoices();
