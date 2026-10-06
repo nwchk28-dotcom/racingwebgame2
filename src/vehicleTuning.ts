@@ -19,3 +19,9 @@ export const CAR_WIDTH_M = 2;
 export const CAR_LATERAL_SCALE = CAR_WIDTH_M / 3.08;
 export const CAR_CONTACT_RADIUS = 0.1;
 export const CAR_CONTACT_HALF_WIDTH = CAR_WIDTH_M / 2 - CAR_CONTACT_RADIUS;
+
+// Shared visual/contact dimensions; model X is scaled to a two-metre car.
+export const TIRE_MODEL_WIDTH = 0.62;
+export const TIRE_WIDTH_M = TIRE_MODEL_WIDTH * CAR_LATERAL_SCALE;
+export const FRONT_WHEEL_MODEL_OFFSET = 1.19;
+export const REAR_WHEEL_MODEL_OFFSET = 1.19;

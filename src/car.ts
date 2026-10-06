@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CAR_LATERAL_SCALE } from './vehicleTuning';
+import { CAR_LATERAL_SCALE, TIRE_MODEL_WIDTH, FRONT_WHEEL_MODEL_OFFSET, REAR_WHEEL_MODEL_OFFSET } from './vehicleTuning';
 
 const red = new THREE.MeshStandardMaterial({ color: '#c72529', metalness: 0.45, roughness: 0.28 });
 const darkRed = new THREE.MeshStandardMaterial({ color: '#7c1820', metalness: 0.35, roughness: 0.35 });
@@ -16,14 +16,6 @@ function addBox(parent: THREE.Object3D, size: [number, number, number],
   mesh.receiveShadow = true;
   parent.add(mesh);
   return mesh;
-}
-
-function addTube(parent: THREE.Object3D, points: THREE.Vector3[], radius: number,
-  material: THREE.Material): void {
-  const curve = new THREE.CatmullRomCurve3(points);
-  const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, radius, 7, false), material);
-  mesh.castShadow = true;
-  parent.add(mesh);
 }
 
 function addNose(parent: THREE.Object3D): void {
@@ -110,19 +102,7 @@ export class CarVisual {
       addBox(car, [0.14, 0.17, 0.48], [side * 1.47, 0.34, 4.22], red);
       addBox(car, [0.35, 0.08, 0.3], [side * 0.83, 0.77, -0.75], carbon);
       addBox(car, [0.05, 0.07, 0.55], [side * 0.65, 1.03, 0.62], accent);
-      addTube(car, [
-        new THREE.Vector3(side * 0.78, 1.12, 0.05),
-        new THREE.Vector3(side * 0.68, 1.25, 0.55),
-        new THREE.Vector3(side * 0.50, 1.51, 1.12),
-        new THREE.Vector3(side * 0.16, 1.60, 1.51),
-      ], 0.052, carbon);
     }
-    addTube(car, [
-      new THREE.Vector3(-0.16, 1.60, 1.51),
-      new THREE.Vector3(0, 1.62, 1.57),
-      new THREE.Vector3(0.16, 1.60, 1.51),
-    ], 0.052, carbon);
-    addTube(car, [new THREE.Vector3(0, 1.61, 1.57), new THREE.Vector3(0, 1.02, 2.12)], 0.033, carbon);
 
     // Steering wheel and compact instrument cluster remain below the horizon.
     addBox(car, [0.76, 0.38, 0.16], [0, 0.98, 0.16], carbon);
@@ -133,19 +113,20 @@ export class CarVisual {
 
   private buildWheel(side: number, z: number, front: boolean): void {
     const pivot = new THREE.Group();
-    pivot.position.set(side * (front ? 1.19 : 1.26), 0.52, z);
+    pivot.position.set(side * (front ? FRONT_WHEEL_MODEL_OFFSET : REAR_WHEEL_MODEL_OFFSET), 0.52, z);
     this.model.add(pivot);
-    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.41, 24), tire);
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, TIRE_MODEL_WIDTH, 24), tire);
+    wheel.name = front ? 'front-tyre' : 'rear-tyre';
     wheel.rotation.z = Math.PI / 2;
     wheel.castShadow = true;
     pivot.add(wheel);
     const face = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.015, 24), rim);
     face.rotation.z = Math.PI / 2;
-    face.position.x = side * 0.22;
+    face.position.x = side * (TIRE_MODEL_WIDTH / 2 + 0.015);
     pivot.add(face);
     const stripe = new THREE.Mesh(new THREE.TorusGeometry(0.385, 0.026, 5, 28), red);
     stripe.rotation.y = Math.PI / 2;
-    stripe.position.x = side * 0.217;
+    stripe.position.x = side * (TIRE_MODEL_WIDTH / 2 + 0.012);
     pivot.add(stripe);
     if (front) this.frontWheels.push(pivot);
     this.wheelMeshes.push(wheel);

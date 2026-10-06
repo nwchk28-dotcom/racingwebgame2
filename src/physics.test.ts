@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
 import { CarPhysics } from './physics';
 import type { Track } from './track';
-import { gearAtSpeed, TOP_SPEED_KMH, CAR_CONTACT_HALF_WIDTH, CAR_CONTACT_RADIUS, CAR_LATERAL_SCALE } from './vehicleTuning';
+import { gearAtSpeed, TOP_SPEED_KMH, CAR_CONTACT_HALF_WIDTH, CAR_CONTACT_RADIUS, CAR_LATERAL_SCALE, TIRE_WIDTH_M, FRONT_WHEEL_MODEL_OFFSET, REAR_WHEEL_MODEL_OFFSET } from './vehicleTuning';
 
 const straightTrack = {
   start: new Vector3(0, 0, 0),
@@ -91,10 +91,11 @@ describe('car physics', () => {
 
   it('keeps the lap legal while a tire touches the curb and flags four wheels beyond it', () => {
     const car = new CarPhysics(straightTrack);
-    car.x = straightTrack.curbOuterEdge + 1.465 * CAR_LATERAL_SCALE - .02;
+    const outerTireReach = Math.max(FRONT_WHEEL_MODEL_OFFSET, REAR_WHEEL_MODEL_OFFSET) * CAR_LATERAL_SCALE + TIRE_WIDTH_M / 2;
+    car.x = straightTrack.curbOuterEdge + outerTireReach - .02;
     car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
     expect(car.allWheelsOffTrack).toBe(false);
-    car.x = straightTrack.curbOuterEdge + 1.465 * CAR_LATERAL_SCALE + .02;
+    car.x = straightTrack.curbOuterEdge + outerTireReach + .02;
     car.step({ steer: 0, throttle: 0, brake: 0 }, 1 / 120);
     expect(car.allWheelsOffTrack).toBe(true);
   });
