@@ -1,5 +1,5 @@
 import { extractEngineLayers } from './engineWaveform';
-import { gearAtSpeed, TOP_SPEED_KMH } from './vehicleTuning';
+import { gearAtSpeed, TOP_SPEED_KMH, GEAR_END_SPEEDS } from './vehicleTuning';
 
 export { gearAtSpeed } from './vehicleTuning';
 
@@ -61,16 +61,19 @@ export class EngineAudio {
   private muted = false;
   private speed = 0;
   private throttle = 0;
-  private lastGear = 1;
   private lastUpshiftAt = -Infinity;
+  private audioGear = 1;
   private loading: Promise<void> | null = null;
   private changingState = false;
+  private retryResumeAt = 0;
 
   get isMuted(): boolean { return this.muted; }
 
   unlock(): void {
+    this.retryResumeAt = 0;
     if (!this.context) {
-      this.context = new AudioContext();
+      this.context = new AudioContext({ latencyHint: 'balanced' });
+      this.context.addEventListener('statechange', () => this.syncContextState());
       this.gain = this.context.createGain();
       this.gain.gain.value = 0;
       this.gain.connect(this.context.destination);
@@ -175,7 +178,7 @@ export class EngineAudio {
       layerSources.forEach(source => source.start());
       rumbleSource.start();
       noiseSource.start();
-      this.lastGear = gearAtSpeed(this.speed).gear;
+      this.audioGear = gearAtSpeed(this.speed).gear;
       this.update(this.speed, this.throttle);
     } catch (error) {
       console.warn('Engine audio could not load', error);
@@ -188,16 +191,19 @@ export class EngineAudio {
     const context = this.context;
     if (!context || this.changingState || context.state === 'closed') return;
     const running = this.active && !this.muted;
+    if (running && performance.now() < this.retryResumeAt) return;
     const operation = running ? context.resume : context.suspend;
     if (typeof operation !== 'function' || context.state === (running ? 'running' : 'suspended')) return;
     this.changingState = true;
     void operation.call(context).then(() => {
       this.changingState = false;
       if (context.state === 'running') this.update(this.speed, this.throttle);
+      else if (running) this.retryResumeAt = performance.now() + 1000;
       // Reconcile only if the requested state changed while awaiting the browser.
       if (running !== (this.active && !this.muted)) this.syncContextState();
     }).catch(error => {
       this.changingState = false;
+      this.retryResumeAt = performance.now() + 1000;
       console.warn('Engine audio state could not change', error);
     });
   }
@@ -217,14 +223,21 @@ export class EngineAudio {
   update(speedKmh: number, throttle: number): void {
     this.speed = speedKmh;
     this.throttle = throttle;
-    if (!this.context || !this.gain || this.context.state === 'suspended') return;
+    if (!this.context || !this.gain) return;
+    if (this.context.state === 'suspended' || (this.context.state as string) === 'interrupted') {
+      if (this.active && !this.muted) this.syncContextState();
+      return;
+    }
     const now = this.context.currentTime;
     const pitch = pitchAtSpeed(speedKmh);
     const gear = gearAtSpeed(speedKmh).gear;
-    if (this.active && this.layerSources.length > 0 && gear > this.lastGear && now - this.lastUpshiftAt > 0.18) {
+    // Pitch remains speed-derived. Only the short shift-volume effect is latched.
+    if (gear < this.audioGear && speedKmh < GEAR_END_SPEEDS[gear - 1] - 3) this.audioGear = gear;
+    const upshift = gear > this.audioGear;
+    if (upshift) this.audioGear = gear;
+    if (this.active && this.layerSources.length > 0 && upshift && now - this.lastUpshiftAt > 0.18) {
       this.lastUpshiftAt = now;
     }
-    this.lastGear = gear;
     const tone = engineToneAt(speedKmh, throttle);
     this.source?.frequency.setTargetAtTime(pitch, now, 0.055);
     for (let i = 1; i < this.layerSources.length; i++) {
@@ -243,6 +256,19 @@ export class EngineAudio {
     this.noiseFilter?.frequency.setTargetAtTime(tone.noiseCutoff, now, 0.08);
     const sinceShift = now - this.lastUpshiftAt;
     const shiftCut = sinceShift < 0.09 ? 0.28 + 0.72 * sinceShift / 0.09 : 1;
-    this.gain.gain.setTargetAtTime(this.active && !this.muted && this.source ? shiftCut : 0, now, 0.025);
+    const master = this.gain.gain;
+    const audible = this.active && !this.muted && Boolean(this.source);
+    if (!audible) {
+      master.cancelScheduledValues?.(now);
+      master.setTargetAtTime(0, now, .025);
+    } else if (typeof master.linearRampToValueAtTime === 'function') {
+      if (upshift && this.layerSources.length > 0 && this.lastUpshiftAt === now) {
+        // Recover on the audio clock even when WebGL stalls during the shift.
+        master.cancelScheduledValues(now);
+        master.setValueAtTime(master.value, now);
+        master.linearRampToValueAtTime(.45, now + .015);
+        master.linearRampToValueAtTime(1, now + .09);
+      } else if (sinceShift >= .1) master.setTargetAtTime(1, now, .025);
+    } else master.setTargetAtTime(shiftCut, now, .025);
   }
 }

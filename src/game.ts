@@ -80,8 +80,8 @@ app.innerHTML = `
 
   <main id="hud" class="hud" aria-live="off">
     <div class="timing-panel">
-      <div class="panel-eyebrow">SESSION 01 <span>•</span> SOLO TIME ATTACK</div>
-      <div class="lap-row"><span>LAP <b id="lap-number">01</b></span><span id="lap-state" class="lap-state">VALID LAP</span></div>
+      <div class="panel-eyebrow">SOLO TIME ATTACK</div>
+      <div class="lap-status"><span id="lap-state" class="lap-state">VALID LAP</span></div>
       <div id="current-time" class="current-time">00:00.000</div>
       <div class="best-row"><span>PERSONAL BEST</span><strong id="best-time">--:--.---</strong></div>
       <div class="gap-row"><span>GAP TO PB</span><strong id="pb-gap">—</strong></div>
@@ -183,6 +183,12 @@ app.querySelector('#scene')!.appendChild(renderer.domElement);
 
 const controls = new Controls(app);
 const engineAudio = new EngineAudio();
+// A trusted control touch can recover iOS audio after an OS interruption.
+for (const type of ['pointerdown', 'touchstart'] as const) {
+  app.querySelector('.touch-controls')!.addEventListener(type, () => {
+    if (active && !paused) engineAudio.unlock();
+  }, { passive: true });
+}
 let laps = new LapTracker(track.length, readBestTime(selectedTrack.id), SECTOR_BOUNDARIES[selectedTrack.id], readBestRecord(selectedTrack.id));
 const lapHud = new LapHud();
 
@@ -201,7 +207,6 @@ function setText(element: HTMLElement, text: string): void {
   if (element.textContent !== text) element.textContent = text;
 }
 const bestTimeElement = app.querySelector<HTMLElement>('#best-time')!;
-const lapNumberElement = app.querySelector<HTMLElement>('#lap-number')!;
 const lapStateElement = app.querySelector<HTMLElement>('#lap-state')!;
 const toastElement = app.querySelector<HTMLElement>('#toast')!;
 const pauseOverlay = app.querySelector<HTMLElement>('#pause-overlay')!;
@@ -276,7 +281,6 @@ function refreshHud(): void {
   setText(gearElement, String(gearAtSpeed(kmh).gear));
   setText(currentTimeElement, formatTime(timing.time));
   setText(bestTimeElement, formatTime(laps.bestTime));
-  setText(lapNumberElement, String(timing.lapNumber).padStart(2, '0'));
   setText(lapStateElement, timing.valid ? 'VALID LAP' : `INVALID • ${timing.invalidReason}`);
   lapStateElement.classList.toggle('invalid', !timing.valid);
   setText(gapElement, formatGap(timing.gap));

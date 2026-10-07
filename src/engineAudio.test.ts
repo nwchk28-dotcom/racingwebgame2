@@ -148,3 +148,40 @@ describe('idle engine power use', () => {
     expect(context.state).toBe('running');
   });
 });
+
+describe('audio continuity', () => {
+  it('recovers an interrupted audio context while driving', async () => {
+    const context = { state: 'interrupted', currentTime: 10,
+      resume: vi.fn(async () => { context.state = 'running'; }) };
+    const audio = new EngineAudio();
+    const frequency = vi.fn();
+    Object.assign(audio, { context, active: true,
+      source: { frequency: { setTargetAtTime: frequency } },
+      gain: { gain: { setTargetAtTime: vi.fn() } } });
+    audio.update(150, 1);
+    await Promise.resolve();
+    expect(context.resume).toHaveBeenCalledTimes(1);
+    expect(frequency).toHaveBeenLastCalledWith(pitchAtSpeed(150), 10, .055);
+  });
+  it('restores shift volume on the audio clock and does not retrigger at a jittering gear boundary', () => {
+    const context = { currentTime: 10 };
+    const master = { value: 1, setTargetAtTime: vi.fn(), cancelScheduledValues: vi.fn(),
+      setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() };
+    const source = { frequency: { setTargetAtTime: vi.fn() } };
+    const audio = new EngineAudio();
+    Object.assign(audio, { context, source, layerSources: [source], gain: { gain: master } });
+    audio.setActive(true);
+    audio.update(49, 1);
+    context.currentTime = 10.1;
+    audio.update(50, 1);
+    expect(master.linearRampToValueAtTime).toHaveBeenLastCalledWith(1, 10.19);
+    expect(master.linearRampToValueAtTime).toHaveBeenCalledTimes(2);
+    for (const [time, speed] of [[10.4, 49.8], [10.5, 50.2], [10.7, 49.9], [10.8, 50.1]]) {
+      context.currentTime = time; audio.update(speed, 1);
+    }
+    expect(master.linearRampToValueAtTime).toHaveBeenCalledTimes(2);
+    audio.setMuted(true);
+    expect(master.cancelScheduledValues).toHaveBeenLastCalledWith(10.8);
+    expect(master.setTargetAtTime).toHaveBeenLastCalledWith(0, 10.8, .025);
+  });
+});

@@ -188,3 +188,9 @@ html.browser-entry .install-gate{position:relative;inset:auto;min-height:100vh;m
 
 /* Avoid repeatedly compositing blurred translucent HUD surfaces on phones. */
 .mobile-rendering .timing-panel,.mobile-rendering .icon-button{backdrop-filter:none;-webkit-backdrop-filter:none}
+
+/* Compact timing header leaves more room for stable, taller control hit areas. */
+.lap-status{display:flex;justify-content:flex-end;line-height:1;margin-top:5px;margin-bottom:2px}
+.steering-input .steer-button{height:clamp(76px,25svh,112px)}
+.steering-input .steer-button.pressed,.pedal.pressed{transform:none}
+@media(pointer:coarse), (orientation:landscape) and (max-height:500px){.lap-status{margin-top:0;margin-bottom:2px}}
