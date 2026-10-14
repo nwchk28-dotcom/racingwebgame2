@@ -13,6 +13,7 @@ import { TOP_SPEED_KMH } from './vehicleTuning';
 import { SECTOR_BOUNDARIES } from './sectors';
 import { LapHud } from './lapHud';
 import { FrameBudget } from './frameBudget';
+import { bindGameViewport } from './gameViewport';
 
 function coursePreview(definition: TrackDefinition): { outline: string; length: number } {
   const path = new TrackPath(definition);
@@ -261,9 +262,7 @@ function resize(): void {
   car.camera.updateProjectionMatrix();
   renderer.render(scene, car.camera);
 }
-window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', resize);
-window.visualViewport?.addEventListener('resize', resize);
+const syncViewport = bindGameViewport(app, resize);
 new ResizeObserver(resize).observe(sceneElement);
 resize();
 
@@ -439,6 +438,8 @@ portrait.addEventListener('change', () => { if (portrait.matches) setPaused(true
 
 function syncRenderLoop(): void {
   const running = active && !paused && !portrait.matches && !document.hidden;
+  syncViewport();
+  resize();
   frameBudget.reset();
   hudBudget.reset();
   renderer.setAnimationLoop(running ? frame : null);
@@ -447,6 +448,8 @@ function syncRenderLoop(): void {
 
 function frame(now: number): void {
   if (!frameBudget.due(now)) return;
+  // Recover even when mobile viewport changes arrive after the resize event.
+  if (syncViewport()) resize();
   const dt = Math.min((now - lastFrame) / 1000 || 0, 0.05);
   lastFrame = now;
   if (active && !paused && !portrait.matches) {
