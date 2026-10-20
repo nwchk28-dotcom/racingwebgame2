@@ -195,3 +195,21 @@ html.browser-entry .install-gate{position:relative;inset:auto;min-height:100vh;m
 .steering-input .steer-button{height:clamp(76px,25svh,112px)}
 .steering-input .steer-button.pressed,.pedal.pressed{transform:none}
 @media(pointer:coarse), (orientation:landscape) and (max-height:500px){.lap-status{margin-top:0;margin-bottom:2px}}
+/* Native Formula World HUD: identical timing order and compact landscape layout. */
+.brand{font:900 23px system-ui;letter-spacing:-1px;min-width:180px}
+.topbar{height:56px;padding:0 max(20px,env(safe-area-inset-left));gap:12px}
+.track-name{font:700 10px system-ui;letter-spacing:.05em}.track-meta,.brand-mark,.panel-eyebrow,.speed-caption,.speed-line,.drive-hint{display:none}
+.timing-panel{top:58px;left:max(20px,env(safe-area-inset-left));width:255px;height:148px;padding:10px 14px;background:#07131988;border:0;border-radius:8px;box-shadow:none;backdrop-filter:none;display:flex;flex-direction:column;gap:0;font-family:system-ui}
+.lap-status{height:14px}.lap-state{font-size:9px}.current-time{font:700 32px/38px ui-monospace,monospace;letter-spacing:-1px}
+.best-row{font-size:10px;margin:5px 0 0;padding:0;border:0;justify-content:flex-start;gap:8px}.best-row strong{font:700 10px ui-monospace,monospace}
+.sector-panel{order:4;display:flex;gap:9px;margin-top:6px;padding:0;border:0;height:34px}.sector-cell{display:grid;grid-template-columns:auto auto;gap:2px;border:0;padding:0;flex:1;opacity:1}.sector-heading{font:700 9px system-ui}.sector-heading small{display:none}.sector-time{font:10px ui-monospace,monospace}.sector-delta{grid-column:1 / 3;font:9px ui-monospace,monospace}
+.gap-row{order:5;margin-top:2px;font:700 11px system-ui;justify-content:flex-start;gap:8px}.gap-row strong{font:11px ui-monospace,monospace}
+.speed-panel{bottom:max(30px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);min-width:130px;text-align:center}.speed-main{display:flex;flex-direction:column;align-items:center}.speed-main strong{font:900 42px/48px ui-monospace,monospace}.speed-main span{font:700 10px system-ui}
+.course-map{top:58px;right:max(20px,env(safe-area-inset-right));width:130px;padding:0;background:#07131966;border:0}.course-map-heading,.course-map-caption{display:none}
+.menu-card h1{color:#ed4938;font-family:system-ui;font-size:clamp(32px,5vw,60px)}
+.layout-editor{position:fixed;inset:0;z-index:100;background:#071319e8;touch-action:none}.layout-toolbar{position:absolute;top:8px;left:12px;right:12px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;font:12px system-ui;color:white}.layout-toolbar button{padding:8px;background:#233a42;color:white;border:1px solid #69828b;border-radius:6px}.layout-toolbar label{display:flex;align-items:center;gap:4px}.layout-toolbar input{width:90px}.layout-handle{position:absolute;width:95px;height:65px;border:2px solid #ed4938;border-radius:12px;background:#304954;color:white;font:bold 12px system-ui;touch-action:none}.layout-handle:focus{outline:3px solid white}
+@media(min-width:1000px){.timing-panel{width:300px}}
+@media(max-height:500px){.menu-card h1{font-size:30px;margin:6px 0}.steering-select{margin:4px 0}#layout-button{height:30px;margin:4px 0}.primary-button{height:40px}}
+
+.lap-status{justify-content:flex-start;text-align:left}.timing-panel .best-row{letter-spacing:0}.menu-footer{font-family:system-ui}
+.menu-overlay:not(.paused){background:rgba(9,19,24,.94)}.menu-card h1{font-style:normal;letter-spacing:-1.5px}.sector-time{font-size:9px;white-space:nowrap}.sector-heading{font-size:9px;letter-spacing:0}

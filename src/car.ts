@@ -60,9 +60,12 @@ export class CarVisual {
     this.build();
   }
 
-  setPose(x: number, z: number, yaw: number): void {
-    this.group.position.set(x, 0, z);
-    this.group.rotation.y = yaw;
+  setPose(x: number, z: number, yaw: number, height=0, gradientX=0, gradientZ=0): void {
+    this.group.position.set(x, height, z);
+    const forward=new THREE.Vector3(Math.sin(yaw),gradientX*Math.sin(yaw)+gradientZ*Math.cos(yaw),Math.cos(yaw)).normalize();
+    const up=new THREE.Vector3(-gradientX,1,-gradientZ).normalize();
+    const right=up.clone().cross(forward).normalize();
+    this.group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right,forward.clone().cross(right).normalize(),forward));
   }
 
   animate(steering: number, speed: number, elapsed: number): void {

@@ -7,6 +7,7 @@ export interface WallSegment {
   ax: number; az: number; bx: number; bz: number;
   inwardX: number; inwardZ: number;
   twoSided?: boolean;
+  heightA?: number; heightB?: number;
 }
 export interface WallContact { depth: number; normalX: number; normalZ: number }
 
@@ -15,6 +16,7 @@ export interface WallContact { depth: number; normalX: number; normalZ: number }
 // Side is from the driver's view, not from the source map's east/west axes.
 // See TRACKSIDE_REFERENCES.md for the circuit evidence and fidelity limits.
 export const WALL_ZONES: Record<TrackId, readonly WallZone[]> = {
+  suzuka: [{from:0,to:.08,side:'right'}],
   sepang: [
     // Pit building is on the right when driving toward T1. End the wall
     // before the braking/runoff area; T15's outside remains open as well.
@@ -230,6 +232,17 @@ export class TrackWalls {
   private readonly cells = new Map<string, number[]>();
 
   constructor(path: TrackPath, curbOuterEdge = path.definition.roadHalfWidth + path.definition.curbWidth) {
+    if (path.native) {
+      this.segments.push(...path.native.corridor.barriers.map(w => ({ ax:w.a.x,az:w.a.z,bx:w.b.x,bz:w.b.z,
+        inwardX:w.inward.x,inwardZ:w.inward.z,twoSided:w.twoSided,heightA:w.heightA,heightB:w.heightB })));
+      for (const [index,w] of this.segments.entries()) {
+        for(let x=Math.floor((Math.min(w.ax,w.bx)-2)/CELL_SIZE);x<=Math.floor((Math.max(w.ax,w.bx)+2)/CELL_SIZE);x++)
+          for(let z=Math.floor((Math.min(w.az,w.bz)-2)/CELL_SIZE);z<=Math.floor((Math.max(w.az,w.bz)+2)/CELL_SIZE);z++) {
+            const k=key(x,z),list=this.cells.get(k)??[];list.push(index);this.cells.set(k,list);
+          }
+      }
+      return;
+    }
     const offsets = path.distances.map(distance => path.definition.widthProfile
       ? path.curbOuterEdgeAt(distance / path.length) + 1.45 : curbOuterEdge + 1.45);
     const zones = WALL_ZONES[path.definition.id];
@@ -277,7 +290,7 @@ export class TrackWalls {
     }
   }
 
-  contact(x: number, z: number, radius: number): WallContact | null {
+  contact(x: number, z: number, radius: number, height?: number): WallContact | null {
     const candidates = this.cells.get(key(Math.floor(x / CELL_SIZE), Math.floor(z / CELL_SIZE)));
     if (!candidates) return null;
     let best: WallContact | null = null;
@@ -287,6 +300,7 @@ export class TrackWalls {
       const dz = wall.bz - wall.az;
       const t = ((x - wall.ax) * dx + (z - wall.az) * dz) / (dx * dx + dz * dz);
       if (t < -.12 || t > 1.12) continue;
+      if (height !== undefined && Math.abs(height - ((wall.heightA ?? 0)*(1-t)+(wall.heightB ?? 0)*t)) > 3) continue;
       const inwardDistance = (x - wall.ax) * wall.inwardX + (z - wall.az) * wall.inwardZ;
       const depth = radius - (wall.twoSided ? Math.abs(inwardDistance) : inwardDistance);
       if (depth <= 0 || depth > 5 || (best && depth <= best.depth)) continue;

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { nativeCircuits } from './nativeCircuit';
 import type { TrackDefinition } from './trackData';
 
 export interface TrackPosition {
@@ -23,8 +24,47 @@ export class TrackPath {
   readonly startYaw: number;
   private readonly cells = new Map<string, number[]>();
 
+  get native() { return nativeCircuits[this.definition.id]; }
+
+  surfaceAt(x: number, z: number, hint?: number) {
+    const p = this.nearest(x, z, hint);
+    const data = this.native;
+    if (!data) return { height: 0, gradientX: 0, gradientZ: 0, progress: p.progress };
+    for (const area of data.corridor.escapeAreas ?? []) {
+      let inside=false;
+      for(let i=0,j=area.polygon.length-1;i<area.polygon.length;j=i++) {
+        const a=area.polygon[i],b=area.polygon[j];
+        if((a.z>z)!==(b.z>z) && x<(b.x-a.x)*(z-a.z)/(b.z-a.z)+a.x)inside=!inside;
+      }
+      if(inside)return {height:area.height,gradientX:0,gradientZ:0,progress:p.progress};
+    }
+    const distance = p.progress * this.length;
+    let lo = 0, hi = this.sampleCount;
+    while (lo + 1 < hi) { const mid = (lo + hi) >>> 1; if (this.distances[mid] <= distance) lo = mid; else hi = mid; }
+    const t = (distance - this.distances[lo]) / Math.max(1e-9, this.distances[hi] - this.distances[lo]);
+    const span=this.distances[hi]-this.distances[lo];
+    const hermite=(k:number,slope:number) => {
+      const a=data.surface[lo][k],b=data.surface[hi][k],u=data.surface[lo][slope]*span,v=data.surface[hi][slope]*span;
+      return {value:(2*t**3-3*t*t+1)*a+(t**3-2*t*t+t)*u+(-2*t**3+3*t*t)*b+(t**3-t*t)*v,
+        derivative:((6*t*t-6*t)*a+(3*t*t-4*t+1)*u+(-6*t*t+6*t)*b+(3*t*t-2*t)*v)/span};
+    };
+    const elevation=hermite(0,1),banking=hermite(2,3),bank=Math.tan(banking.value);
+    // C1 heights and gradients extend through the painted edges and runoff.
+    const grade = elevation.derivative + p.signedDistance * banking.derivative * (1 + bank * bank);
+    return { height: elevation.value + p.signedDistance * bank,
+      gradientX: -p.normalZ * grade + p.normalX * bank,
+      gradientZ: p.normalX * grade + p.normalZ * bank, progress: p.progress };
+  }
+
   /** Smooth, cyclic width shared by the scene, walls and wheel validity checks. */
   roadHalfWidthAt(progress: number): number {
+    if (this.native) {
+      const d = ((progress % 1) + 1) % 1 * this.native.length;
+      let lo=0, hi=this.native.distances.length-1;
+      while(lo+1<hi) { const mid=(lo+hi)>>>1; if(this.native.distances[mid]<=d) lo=mid; else hi=mid; }
+      const t=(d-this.native.distances[lo])/Math.max(1e-9,this.native.distances[hi]-this.native.distances[lo]);
+      return this.native.widths[lo]*(1-t)+this.native.widths[hi]*t;
+    }
     const nodes = this.definition.widthProfile;
     if (!nodes?.length) return this.definition.roadHalfWidth;
     const p = ((progress % 1) + 1) % 1;
@@ -132,11 +172,17 @@ export class TrackPath {
       const scale = (definition.targetLength ?? smoothedLength) / smoothedLength;
       for (const point of this.samples) point.sub(origin).multiplyScalar(scale);
     }
+    if (this.native) {
+      this.samples.length = 0;
+      this.samples.push(...this.native.points.slice(0,-1).map(([x,z]) => new THREE.Vector3(x,0,z)));
+      this.sampleCount = this.samples.length;
+    }
     this.samples.push(this.samples[0].clone());
     for (let i = 1; i <= this.sampleCount; i++) {
       this.distances.push(this.distances[i - 1] + this.samples[i].distanceTo(this.samples[i - 1]));
     }
-    this.length = this.distances[this.sampleCount];
+    if(this.native)this.distances.splice(0,this.distances.length,...this.native.distances);
+    this.length = this.native?.length ?? this.distances[this.sampleCount];
     this.start = this.samples[0].clone();
     const first = this.samples[1].clone().sub(this.samples[0]);
     this.startYaw = Math.atan2(first.x, first.z);
@@ -171,6 +217,9 @@ export class TrackPath {
       }
     }
     this.normals.push(this.normals[0].clone());
+    if (this.native) {
+      this.normals.splice(0, this.normals.length, ...this.native.normals.map(([x,z]) => new THREE.Vector3(x,0,z)));
+    }
   }
 
   nearest(x: number, z: number, progressHint?: number): TrackPosition {
@@ -196,7 +245,7 @@ export class TrackPath {
         const rx = x - (a.x + dx * t);
         const rz = z - (a.z + dz * t);
         const distance = Math.hypot(rx, rz);
-        const progress = (this.distances[i] + Math.sqrt(segmentLengthSquared) * t) / this.length % 1;
+        const progress = (this.distances[i] + (this.distances[i+1]-this.distances[i]) * t) / this.length % 1;
         const hintDifference = progressHint === undefined ? 0 :
           Math.min(Math.abs(progress - progressHint), 1 - Math.abs(progress - progressHint));
         const tolerance = progressHint === undefined ? 0 : 0.5;

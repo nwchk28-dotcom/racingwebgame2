@@ -4,10 +4,10 @@ import { TrackPath } from './trackPath';
 import { LapTracker } from './lap';
 
 describe('all circuits', () => {
-  it('covers every 2025 venue except the Suzuka overpass, plus Sepang', () => {
-    expect(TRACKS).toHaveLength(24);
-    expect(new Set(TRACKS.map(track => track.id)).size).toBe(24);
-    expect(TRACKS.map(track => track.id as string)).not.toContain('suzuka');
+  it('covers every 2025 venue including Suzuka, plus Sepang', () => {
+    expect(TRACKS).toHaveLength(25);
+    expect(new Set(TRACKS.map(track => track.id)).size).toBe(25);
+    expect(TRACKS.map(track => track.id as string)).toContain('suzuka');
     for (const id of ['shanghai', 'bahrain', 'miami', 'imola', 'barcelona',
       'austria', 'hungary', 'zandvoort', 'austin', 'las-vegas', 'lusail', 'sepang']) {
       expect(TRACKS.some(track => track.id === id), id).toBe(true);

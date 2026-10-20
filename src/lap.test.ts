@@ -61,3 +61,9 @@ describe('lap timing', () => {
     expect(formatTime(83.456)).toBe('01:23.456');
   });
 });
+
+// Native iOS rounds total milliseconds before splitting minutes and seconds.
+it('carries rounded milliseconds into the next minute like iOS',()=>{
+  expect(formatTime(59.9996)).toBe('01:00.000');
+  expect(formatTime(119.9996)).toBe('02:00.000');
+});

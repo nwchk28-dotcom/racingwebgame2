@@ -8,6 +8,8 @@ interface InstallPrompt extends Event {
 
 async function launch(): Promise<void> {
   if (isWebApp()) {
+    const {loadNativeCircuit}=await import('./nativeCircuit');
+    await loadNativeCircuit('monza');
     await import('./game');
     return;
   }

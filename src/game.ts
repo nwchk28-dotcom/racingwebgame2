@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { CarVisual } from './car';
 import { readBestTime, readBestRecord, saveBestRecord } from './bestTimes';
+import { loadNativeCircuit } from './nativeCircuit';
 import { Controls } from './controls';
+import { ControlLayoutEditor } from './controlLayout';
 import { createCourseMap, type CourseMap } from './courseMap';
 import { EngineAudio, gearAtSpeed } from './engineAudio';
 import { LapTracker, formatTime, formatGap } from './lap';
@@ -60,7 +62,7 @@ app.innerHTML = `
   <div class="cinema-vignette" aria-hidden="true"></div>
 
   <header class="topbar">
-    <div class="brand"><span class="brand-mark">A<span>1</span></span><span class="brand-name">APEX <strong>ONE</strong><small>TIME ATTACK</small></span></div>
+    <div class="brand">formula world</div>
     <div class="track-name"><span class="live-dot"></span> <span id="current-track-name">${TRACKS[0].name}</span> <span class="track-meta">/ DRY / 23°C</span></div>
     <div class="top-actions">
       <button id="sound-button" class="icon-button" type="button" aria-label="音を消す">♪</button>
@@ -97,15 +99,15 @@ app.innerHTML = `
       <div class="steer-control"><div id="steering-track" class="steering-track" role="slider" aria-label="ハンドル" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0"><span class="steer-center"></span><span id="steering-thumb" class="steering-thumb"><span>≡</span></span></div></div>
       <div class="button-steer-control"><div class="steer-buttons"><button id="steer-left" class="steer-button" type="button" aria-label="左に曲がる"><span aria-hidden="true">←</span></button><button id="steer-right" class="steer-button" type="button" aria-label="右に曲がる"><span aria-hidden="true">→</span></button></div></div>
     </div>
-    <div class="pedals"><button id="brake" class="pedal brake" type="button" aria-label="ブレーキ"><span class="pedal-bars" aria-hidden="true">▮▮</span><strong>BRAKE</strong></button><button id="throttle" class="pedal throttle" type="button" aria-label="アクセル"><span class="pedal-bars" aria-hidden="true">///</span><strong>GAS</strong></button></div>
+    <div class="pedals"><button id="brake" class="pedal brake" type="button" aria-label="ブレーキ"><span class="pedal-bars" aria-hidden="true">▮▮</span><strong>BRAKE</strong></button><button id="throttle" class="pedal throttle" type="button" aria-label="アクセル"><span class="pedal-bars" aria-hidden="true">///</span><strong>THROTTLE</strong></button></div>
   </div>
 
   <div id="toast" class="toast" role="status"></div>
 
   <section id="start-overlay" class="menu-overlay" data-page="0">
     <div class="menu-card">
-      <div class="menu-kicker"><span class="kicker-line"></span> ONE CAR. ONE CIRCUIT. ONE LAP.</div>
-      <h1>FIND YOUR<br /><em>APEX.</em></h1>
+      <div class="menu-kicker"><span class="kicker-line"></span> ${TRACKS.length} CIRCUITS · ONE DRIVER</div>
+      <h1>CHASE YOUR<br /><em>NEXT APEX.</em></h1>
       <div class="menu-intro">
         <p>オンボード視点で、自己ベストを塗り替えよう。</p>
 
@@ -113,15 +115,16 @@ app.innerHTML = `
       <div class="track-select-heading"><span>SELECT CIRCUIT</span><div class="track-pages" role="group" aria-label="コース一覧のページ">${trackPages}</div><span class="track-total">SOLO TIME ATTACK / ${String(TRACKS.length).padStart(2, '0')} TRACKS</span></div>
       <div class="track-options" role="group" aria-label="コースを選択">${trackCards}</div>
       <div class="steering-select" role="group" aria-label="ステアリング方式"><span>STEERING</span><div class="steering-options"><button class="steering-option" data-steering-mode="slider" type="button" aria-pressed="false">SLIDER</button><button class="steering-option selected" data-steering-mode="buttons" type="button" aria-pressed="true">BUTTONS</button></div></div>
+      <button id="layout-button" class="secondary-button" type="button">ボタン配置を変更</button>
       <button id="start-button" class="primary-button" type="button">START ENGINE <span>↗</span></button>
     </div>
-    <div class="menu-footer"><span>APEX ONE / ORIGINAL RACING EXPERIENCE</span><span>01 — ${String(TRACKS.length).padStart(2, '0')}</span></div>
+    <div class="menu-footer"><span>FORMULA WORLD / SOLO TIME ATTACK</span><span>01 — ${String(TRACKS.length).padStart(2, '0')}</span></div>
   </section>
 
   <section id="pause-overlay" class="menu-overlay paused" hidden>
     <div class="menu-card pause-card">
-      <div class="pause-copy"><div class="menu-kicker"><span class="kicker-line"></span> SESSION PAUSED</div><h2>TAKE A<br /><em>BREATH.</em></h2><p>走行を再開するか、スタート地点からやり直せます。</p></div>
-      <div class="pause-actions"><button id="resume-button" class="primary-button" type="button">RESUME <span>↗</span></button><button id="restart-button" class="secondary-button" type="button">RESTART LAP</button><button id="menu-button" class="secondary-button" type="button">SELECT CIRCUIT</button></div>
+      <div class="pause-copy"><div class="menu-kicker"><span class="kicker-line"></span> SESSION PAUSED</div><h2>SESSION<br /><em>PAUSED.</em></h2><p>走行を再開するか、スタート地点からやり直せます。</p></div>
+      <div class="pause-actions"><button id="pause-layout-button" class="secondary-button" type="button">ボタン配置を変更</button><button id="resume-button" class="primary-button" type="button">RESUME <span>↗</span></button><button id="restart-button" class="secondary-button" type="button">RESTART LAP</button><button id="menu-button" class="secondary-button" type="button">SELECT CIRCUIT</button></div>
     </div>
   </section>
 
@@ -135,7 +138,7 @@ let track = new Track(scene, selectedTrack);
 const car = new CarVisual();
 scene.add(car.group);
 let physics = new CarPhysics(track);
-car.setPose(physics.x, physics.z, physics.yaw);
+car.setPose(physics.x, physics.z, physics.yaw, physics.y, physics.gradientX, physics.gradientZ);
 
 const mobile = window.matchMedia('(pointer: coarse)').matches;
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: mobile ? 'low-power' : 'high-performance' });
@@ -183,6 +186,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 app.querySelector('#scene')!.appendChild(renderer.domElement);
 
 const controls = new Controls(app);
+new ControlLayoutEditor(app, () => controls.clear());
 const engineAudio = new EngineAudio();
 // A trusted control touch can recover iOS audio after an OS interruption.
 for (const type of ['pointerdown', 'touchstart'] as const) {
@@ -280,13 +284,13 @@ function refreshHud(): void {
   setText(gearElement, String(gearAtSpeed(kmh).gear));
   setText(currentTimeElement, formatTime(timing.time));
   setText(bestTimeElement, formatTime(laps.bestTime));
-  setText(lapStateElement, timing.valid ? 'VALID LAP' : `INVALID • ${timing.invalidReason}`);
+  setText(lapStateElement, `${timing.sectors.some(s=>s.previous)?'前周 · ':''}${timing.valid ? 'VALID LAP' : `INVALID · ${timing.invalidReason}`}`);
   lapStateElement.classList.toggle('invalid', !timing.valid);
   setText(gapElement, formatGap(timing.gap));
   gapElement.className = timing.gap === null ? '' : timing.gap <= 0 ? 'ahead' : 'behind';
   sectorCells.forEach(({ cell, time: timeElement, delta: deltaElement, caption }, index) => {
     const { active, previous, time, delta } = timing.sectors[index];
-    setText(timeElement, time === null ? '—' : time.toFixed(3));
+    setText(timeElement, formatTime(time));
     setText(deltaElement, formatGap(delta));
     deltaElement.className = `sector-delta ${delta === null ? '' : delta <= 0 ? 'ahead' : 'behind'}`;
     cell.classList.toggle('active', active);
@@ -321,10 +325,24 @@ function setTrackPage(page: number): void {
   });
 }
 
-function selectTrack(id: TrackId): void {
-  if (active || selectedTrack.id === id) return;
+let trackRequest = 0;
+async function selectTrack(id: TrackId): Promise<void> {
+  if (active) return;
+  if (selectedTrack.id === id) {
+    ++trackRequest;
+    const button=app.querySelector<HTMLButtonElement>('#start-button')!;
+    button.disabled=false;button.innerHTML='START ENGINE <span>↗</span>';
+    return;
+  }
   const definition = TRACKS.find(item => item.id === id);
   if (!definition) return;
+  const request=++trackRequest;
+  const startButton=app.querySelector<HTMLButtonElement>('#start-button')!;
+  startButton.disabled=true;startButton.textContent='LOADING CIRCUIT…';
+  try { await loadNativeCircuit(id); }
+  catch { if(request===trackRequest) {startButton.disabled=false;startButton.innerHTML='START ENGINE <span>↗</span>';toast('コースを読み込めませんでした。通信を確認して再度選択してください');} return; }
+  if(request!==trackRequest)return;
+  startButton.disabled=false;startButton.innerHTML='START ENGINE <span>↗</span>';
   track.dispose();
   renderer.renderLists.dispose();
   selectedTrack = definition;
@@ -335,7 +353,7 @@ function selectTrack(id: TrackId): void {
   lapHud.reset();
   lapProgressHint = 0;
   currentTrackName.textContent = definition.name;
-  car.setPose(physics.x, physics.z, physics.yaw);
+  car.setPose(physics.x, physics.z, physics.yaw, physics.y, physics.gradientX, physics.gradientZ);
   refreshCourseMap();
   refreshTrackChoices();
   refreshHud();
@@ -351,7 +369,7 @@ function reset(notify = true): void {
   lapHud.reset();
   lapProgressHint = 0;
   accumulator = 0;
-  car.setPose(physics.x, physics.z, physics.yaw);
+  car.setPose(physics.x, physics.z, physics.yaw, physics.y, physics.gradientX, physics.gradientZ);
   refreshMapPosition();
   refreshHud();
   renderer.render(scene, car.camera);
@@ -475,7 +493,7 @@ function frame(now: number): void {
       elapsed += 1 / 120;
       accumulator -= 1 / 120;
     }
-    car.setPose(physics.x, physics.z, physics.yaw);
+    car.setPose(physics.x, physics.z, physics.yaw, physics.y, physics.gradientX, physics.gradientZ);
     car.animate(controls.value.steer, physics.speed, elapsed);
     engineAudio.update(physics.speed * 3.6, controls.value.throttle);
     if (hudBudget.due(now)) {

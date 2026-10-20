@@ -21,7 +21,10 @@ The added 2025 circuits use `circuits/cn-2004.geojson`, `circuits/bh-2002.geojso
 `circuits/us-2022.geojson`, `circuits/it-1953.geojson`, `circuits/es-1991.geojson`,
 `circuits/at-1969.geojson`, `circuits/hu-1986.geojson`, `circuits/nl-1948.geojson`,
 `circuits/us-2012.geojson`, `circuits/us-2023.geojson`, and `circuits/qa-2004.geojson`.
-Sepang uses `circuits/my-1999.geojson`.
+Sepang uses `circuits/my-1999.geojson`. Suzuka uses `circuits/jp-1962.geojson`.
+The generated `src/nativeCircuits` payloads reuse the FormulaWorldIOS circuit adaptations,
+terrain approximations and barrier geometry; the underlying centerline attribution
+and MIT license above also apply to these generated files.
 They were projected to local metre coordinates and
 rounded; Monza, Silverstone, Monaco, Jeddah, Baku, Yas Marina, Singapore, and
 Shanghai and Sepang were additionally rotated to their timing lines.

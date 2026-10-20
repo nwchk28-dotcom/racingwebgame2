@@ -28,11 +28,16 @@ export interface DriverInput {
 type PhysicsTrack = Pick<Track,
   'start' | 'startYaw' | 'curbOuterEdge' | 'outerFence' | 'colliders' | 'nearest'> & {
     walls: Pick<Track['walls'], 'contact'>;
+    surfaceAt?: (x:number,z:number,hint?:number) => {height:number;gradientX:number;gradientZ:number;progress:number};
     curbOuterEdgeAt?: (progress: number) => number;
   };
 
 export class CarPhysics {
   x = 0;
+  y = 0;
+  gradientX = 0;
+  gradientZ = 0;
+  private progress = 0;
   z = 0;
   yaw = 0;
   vx = 0;
@@ -58,6 +63,13 @@ export class CarPhysics {
     this.offTrack = false;
     this.allWheelsOffTrack = false;
     this.collided = false;
+    this.progress=0;this.updateSurface();
+  }
+
+  private updateSurface(): void {
+    const s=this.track.surfaceAt?.(this.x,this.z,this.progress);
+    this.y=s?.height??0;this.gradientX=s?.gradientX??0;this.gradientZ=s?.gradientZ??0;
+    this.progress=s?.progress??0;
   }
 
   step(input: DriverInput, dt: number): void {
@@ -89,13 +101,17 @@ export class CarPhysics {
     const drag = AERO_DRAG * speed * speed + BASE_DRAG;
     const dragX = speed > 0.01 ? -this.vx / speed * drag : 0;
     const dragZ = speed > 0.01 ? -this.vz / speed * drag : 0;
+    const gravityScale=-9.81/(1+this.gradientX**2+this.gradientZ**2);
+    this.vx += this.gradientX*gravityScale*dt; this.vz += this.gradientZ*gravityScale*dt;
     this.vx += (forwardX * forwardAcceleration + rightX * lateralAcceleration + dragX) * dt;
     this.vz += (forwardZ * forwardAcceleration + rightZ * lateralAcceleration + dragZ) * dt;
     if (input.brake > 0 && speed < 0.5 && input.throttle === 0) this.vx = this.vz = 0;
     if (input.throttle === 0 && this.speed < 0.05) this.vx = this.vz = 0;
     this.x += this.vx * dt;
     this.z += this.vz * dt;
+    this.updateSurface();
     this.resolveCollisions();
+    this.updateSurface();
     const nearest = this.track.nearest(this.x, this.z);
     this.offTrack = nearest.distance > this.curbEdgeAt(nearest.progress);
     this.allWheelsOffTrack = this.offTrack && this.areAllWheelsOutsideCurbs();
@@ -161,7 +177,7 @@ export class CarPhysics {
       for (const [localX, localZ] of BODY_CONTACTS) {
         const pointX = this.x + localX * cos + localZ * sin;
         const pointZ = this.z - localX * sin + localZ * cos;
-        const contact = this.track.walls.contact(pointX, pointZ, CAR_CONTACT_RADIUS);
+        const contact = this.track.walls.contact(pointX, pointZ, CAR_CONTACT_RADIUS, this.y);
         if (!contact || contact.depth <= deepest) continue;
         deepest = contact.depth;
         inwardX = contact.normalX;

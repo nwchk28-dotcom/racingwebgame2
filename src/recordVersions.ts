@@ -5,7 +5,7 @@ import type { TrackId } from './trackData';
  * Cosmetic/audio/UI changes do not need a revision increase. */
 export const RECORD_VERSIONS = {
   // Reliable immediate touch input changes attainable steering/braking timing.
-  global: 3,
+  global: 4,
   /** Increase only affected courses for layout, road width, wall or timing changes.
    * Missing entries have revision 0, preserving currently compatible records. */
   tracks: {} as Partial<Record<TrackId, number>>,

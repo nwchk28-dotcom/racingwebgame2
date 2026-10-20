@@ -56,8 +56,8 @@ function makeRibbon(
       const n = normals[j];
       const near = typeof inner === 'number' ? inner : inner[j];
       const far = typeof outer === 'number' ? outer : outer[j];
-      positions.push(p.x + n.x * near, y, p.z + n.z * near);
-      positions.push(p.x + n.x * far, y, p.z + n.z * far);
+      positions.push(p.x + n.x * near, p.y + n.y * near + y, p.z + n.z * near);
+      positions.push(p.x + n.x * far, p.y + n.y * far + y, p.z + n.z * far);
       uvs.push(0, j / uvScale, 1, j / uvScale);
     }
     indices.push(vertex, vertex + 2, vertex + 1, vertex + 1, vertex + 2, vertex + 3);
@@ -94,7 +94,7 @@ function makeStripedCurb(
         const normal = normals[i].clone().lerp(normals[i + 1], t);
         for (const edge of [inner, outer]) {
           const offset = typeof edge === 'number' ? edge : edge[i] + (edge[i + 1] - edge[i]) * t;
-          positions.push(point.x + normal.x * offset, 0.038, point.z + normal.z * offset);
+          positions.push(point.x + normal.x * offset, point.y + normal.y * offset + 0.038, point.z + normal.z * offset);
           colors.push(color.r, color.g, color.b);
         }
       }
@@ -135,10 +135,10 @@ function wallGeometry(segments: readonly WallSegment[], height: number, thicknes
   for (const wall of segments) {
     const half = thickness / 2;
     const start = positions.length / 3;
-    for (const [x, z] of [[wall.ax, wall.az], [wall.bx, wall.bz]]) {
+    for (const [x, z, y] of [[wall.ax, wall.az, wall.heightA ?? 0], [wall.bx, wall.bz, wall.heightB ?? 0]]) {
       for (const side of [-1, 1]) {
-        positions.push(x + wall.inwardX * side * half, 0, z + wall.inwardZ * side * half);
-        positions.push(x + wall.inwardX * side * half, height, z + wall.inwardZ * side * half);
+        positions.push(x + wall.inwardX * side * half, y, z + wall.inwardZ * side * half);
+        positions.push(x + wall.inwardX * side * half, y + height, z + wall.inwardZ * side * half);
       }
     }
     for (const [a, b, c, d] of [[0, 4, 5, 1], [2, 3, 7, 6], [1, 5, 7, 3]]) {
@@ -175,6 +175,9 @@ export class Track extends TrackPath {
     this.outerFence = { centerX, centerZ, radius: furthest + 55 };
     this.group.name = `track-${definition.id}`;
     scene.add(this.group);
+    if (this.native) {
+      this.samples.forEach((p,i) => { p.y=this.native.surface[i][0]; this.normals[i].y=Math.tan(this.native.surface[i][2]); });
+    }
     this.buildScene();
   }
 
@@ -200,15 +203,27 @@ export class Track extends TrackPath {
       new THREE.PlaneGeometry((this.outerFence.radius + 80) * 2, (this.outerFence.radius + 80) * 2),
       new THREE.MeshStandardMaterial({ map: grassTexture, roughness: 1 }),
     );
+    ground.name='terrain-backdrop';
     ground.rotation.x = -Math.PI / 2;
     ground.position.x = this.outerFence.centerX;
     ground.position.z = this.outerFence.centerZ;
-    ground.position.y = -0.08;
+    ground.position.y = Math.min(...this.samples.map(p => p.y)) - 2;
     ground.receiveShadow = true;
     scene.add(ground);
 
     const widths = this.distances.map(distance => this.roadHalfWidthAt(distance / this.length));
     const curbs = widths.map(width => width + this.definition.curbWidth);
+    if (this.native) {
+      const runoff = new THREE.Mesh(makeRibbon(this.samples,this.normals,
+        this.native.corridor.right.map(w=>-w), this.native.corridor.left, -.015),
+        new THREE.MeshStandardMaterial({map:grassTexture,roughness:1,side:THREE.DoubleSide}));
+      runoff.name='driving-corridor'; runoff.receiveShadow=true; scene.add(runoff);
+      for (const area of this.native.corridor.escapeAreas ?? []) {
+        const shape=new THREE.Shape(area.polygon.map(p=>new THREE.Vector2(p.x,-p.z)));
+        const mesh=new THREE.Mesh(new THREE.ShapeGeometry(shape),new THREE.MeshStandardMaterial({color:0x697375,side:THREE.DoubleSide}));
+        mesh.rotation.x=-Math.PI/2;mesh.position.y=area.height+.01;scene.add(mesh);
+      }
+    }
     const roadTexture = texturedCanvas('road', this.definition.grass);
     const road = new THREE.Mesh(
       makeRibbon(this.samples, this.normals, widths.map(width => -width), widths, 0.018, 10),
@@ -235,13 +250,23 @@ export class Track extends TrackPath {
       ));
     }
 
-    if (this.definition.id === 'baku') this.addBakuTurn16Runoff(scene);
+    if (!this.native && this.definition.id === 'baku') this.addBakuTurn16Runoff(scene);
     this.addOuterFence(scene, railMaterial);
     this.addTracksideWalls(scene);
     if (this.definition.id === 'monaco') this.addMonacoTunnel(scene);
     this.addStartLine(scene);
     this.addBuildings(scene);
     this.addTrees(scene);
+    if (this.native) {
+      this.colliders.splice(0,this.colliders.length,...this.native.obstacles);
+      // Lift the original scenery and timing gantry onto the local terrain.
+      scene.traverse(object => {
+        if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh) return;
+        if (object.name !== 'terrain-backdrop' && (object.geometry.type === 'BoxGeometry' || object.geometry.type === 'PlaneGeometry')) {
+          object.position.y += this.surfaceAt(object.position.x,object.position.z).height;
+        }
+      });
+    }
   }
 
   private addBakuTurn16Runoff(scene: THREE.Object3D): void {
@@ -483,10 +508,10 @@ export class Track extends TrackPath {
       if (this.nearest(x, z).distance < (this.definition.scenery === 'airfield' ? 65 : 38)) continue;
       if (Math.hypot(x - this.outerFence.centerX, z - this.outerFence.centerZ) > this.outerFence.radius - 8) continue;
       const scale = 0.6 + rand() * 0.9;
-      matrix.compose(new THREE.Vector3(x, 2.5 * scale, z), new THREE.Quaternion(),
+      matrix.compose(new THREE.Vector3(x, this.surfaceAt(x,z).height + 2.5 * scale, z), new THREE.Quaternion(),
         new THREE.Vector3(scale, scale, scale));
       trunks.setMatrixAt(added, matrix);
-      matrix.compose(new THREE.Vector3(x, 8.5 * scale, z), new THREE.Quaternion(),
+      matrix.compose(new THREE.Vector3(x, this.surfaceAt(x,z).height + 8.5 * scale, z), new THREE.Quaternion(),
         new THREE.Vector3(scale, scale, scale));
       crowns.setMatrixAt(added, matrix);
       added++;

@@ -6,6 +6,7 @@ import type { TrackId } from './trackData';
  * Sources and audit notes: SECTOR_REFERENCES.md. Sepang uses its final F1 event (2017).
  */
 export const SECTOR_BOUNDARIES: Record<TrackId, readonly [number, number]> = {
+  suzuka: [0.37609781298432926, 0.8110900637162046],
   monza: [.35207, .66760],
   silverstone: [.27222, .73371],
   'albert-park': [.33521, .59991],

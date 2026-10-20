@@ -23,8 +23,8 @@ function area(points: readonly (readonly [number, number])[]) {
 }
 
 describe('official racing direction', () => {
-  it('matches real lap direction on all 24 tracks in source, world and HUD coordinates', () => {
-    expect(TRACKS).toHaveLength(24);
+  it('matches real lap direction on all 25 tracks in source, world and HUD coordinates', () => {
+    expect(TRACKS).toHaveLength(25);
     for (const definition of TRACKS) {
       const expected = ANTICLOCKWISE.includes(definition.id) ? 1 : -1;
       expect(Math.sign(area(definition.points)), definition.id).toBe(expected);

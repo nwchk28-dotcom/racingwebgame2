@@ -178,7 +178,6 @@ export function formatGap(seconds: number | null): string {
 }
 export function formatTime(seconds: number | null): string {
   if (seconds === null) return '--:--.---';
-  const minutes = Math.floor(seconds / 60);
-  const remainder = seconds - minutes * 60;
-  return `${String(minutes).padStart(2, '0')}:${remainder.toFixed(3).padStart(6, '0')}`;
+  const ms=Math.round(Math.max(0,seconds)*1000);
+  return `${String(Math.floor(ms/60000)).padStart(2,'0')}:${String(Math.floor(ms/1000)%60).padStart(2,'0')}.${String(ms%1000).padStart(3,'0')}`;
 }
