@@ -37,6 +37,21 @@ describe('Pages-scoped web-app worker', () => {
     w.setOffline();
     expect(await (await w.fetch(navigation))!.text()).toBe('current');
   });
+  it('refreshes a previously cached install name and icon online, retaining offline metadata', async () => {
+    for (const file of ['manifest.webmanifest', 'manifest.webmanifest?v=formula-q-3', 'app-180.png', 'app-192.png', 'app-512.png']) {
+      const w = worker(), request = new Request(new URL(file, w.scope));
+      w.files.set(request.url, new Response('old install metadata'));
+      expect(await (await w.fetch(request))!.text()).toBe('current');
+      w.setOffline();
+      expect(await (await w.fetch(request))!.text()).toBe('current');
+    }
+  });
+  it('does not return HTML for an uncached manifest while offline', async () => {
+    const w = worker();
+    w.files.set(w.scope, new Response('<html>shell</html>'));
+    w.setOffline();
+    expect((await w.fetch(new Request(new URL('manifest.webmanifest', w.scope))))!.type).toBe('error');
+  });
   it('leaves external and other-project requests outside its cache', () => {
     const w = worker();
     expect(w.fetch(new Request('https://fonts.googleapis.com/css'))).toBeNull();

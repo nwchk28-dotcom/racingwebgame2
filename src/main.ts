@@ -69,7 +69,7 @@ void launch();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`,
-      { scope: import.meta.env.BASE_URL }).catch(() => {
+      { scope: import.meta.env.BASE_URL, updateViaCache: 'none' }).catch(() => {
       const status = document.querySelector('#install-status');
       if (status) status.textContent = '読み込みを確認できませんでした。通信環境を確認して再読み込みしてください。';
     });

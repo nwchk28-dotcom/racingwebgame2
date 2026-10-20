@@ -1,9 +1,9 @@
 /* Scope-relative URLs work on both GitHub Pages project sites and localhost. */
-const CACHE = 'apex-one-webapp-v2';
+const CACHE = 'apex-one-webapp-v3';
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll([
-    './', './manifest.webmanifest', './app-192.png', './app-512.png',
-  ])));
+    './', './manifest.webmanifest?v=formula-q-3', './app-192.png', './app-512.png',
+  ])).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys
@@ -17,14 +17,16 @@ self.addEventListener('fetch', event => {
       !url.pathname.startsWith(new URL(self.registration.scope).pathname)) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    // Refresh HTML online; offline uses the last successfully loaded shell.
-    if (request.mode === 'navigate') {
+    // Refresh install metadata as well as HTML; never pin an old app name.
+    const navigation = request.mode === 'navigate';
+    const metadata = /\/(manifest\.webmanifest|app-(180|192|512)\.png)$/.test(url.pathname);
+    if (navigation || metadata) {
       try {
-        const response = await fetch(request);
+        const response = await fetch(request, { cache: 'no-cache' });
         if (response.ok) await cache.put(request, response.clone());
         return response;
       } catch {
-        return (await cache.match(request)) || (await cache.match('./')) || Response.error();
+        return (await cache.match(request)) || (navigation ? await cache.match('./') : undefined) || Response.error();
       }
     }
     const cached = await cache.match(request);
