@@ -115,17 +115,17 @@ describe('trackside walls', () => {
     }
   });
 
-  it('keeps a car clear of walls throughout the drivable corridor on every circuit', () => {
-    for (const definition of TRACKS) {
-      const path = new TrackPath(definition);
-      const walls = new TrackWalls(path, definition.roadHalfWidth + definition.curbWidth);
-      const car = new CarPhysics({
-        start: path.start, startYaw: path.startYaw,
-        curbOuterEdge: definition.roadHalfWidth + definition.curbWidth,
-        outerFence: { centerX: 0, centerZ: 0, radius: 1e6 },
-        colliders: [], walls, nearest: path.nearest.bind(path),
-        curbOuterEdgeAt: path.curbOuterEdgeAt.bind(path),
-      });
+  // Keep exhaustive coverage, with an independent CI time budget per course.
+  it.each(TRACKS)('keeps a car clear of walls throughout $id driving lanes', definition => {
+    const path = new TrackPath(definition);
+    const walls = new TrackWalls(path, definition.roadHalfWidth + definition.curbWidth);
+    const car = new CarPhysics({
+      start: path.start, startYaw: path.startYaw,
+      curbOuterEdge: definition.roadHalfWidth + definition.curbWidth,
+      outerFence: { centerX: 0, centerZ: 0, radius: 1e6 },
+      colliders: [], walls, nearest: path.nearest.bind(path),
+      curbOuterEdgeAt: path.curbOuterEdgeAt.bind(path),
+    });
 
       for (let i = 0; i < path.sampleCount; i++) {
         const laneOffset = Math.min(4, path.roadHalfWidthAt(path.distances[i] / path.length) - 1.2);
@@ -142,7 +142,6 @@ describe('trackside walls', () => {
             .toBe(false);
         }
       }
-    }
   });
 
   it('leaves Spa La Source and Baku close parallel streets free of collision pockets', () => {

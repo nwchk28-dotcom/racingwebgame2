@@ -68,9 +68,10 @@ export class CarPhysics {
   }
 
   private updateSurface(): void {
-    const s=this.track.surfaceAt?.(this.x,this.z,this.progress);
-    this.y=s?.height??0;this.gradientX=s?.gradientX??0;this.gradientZ=s?.gradientZ??0;
-    this.progress=s?.progress??this.track.nearest(this.x,this.z,this.progress).progress;
+    if(!this.track.surfaceAt)return;
+    const s=this.track.surfaceAt(this.x,this.z,this.progress);
+    this.y=s.height;this.gradientX=s.gradientX;this.gradientZ=s.gradientZ;
+    this.progress=s.progress;
   }
 
   step(input: DriverInput, dt: number): void {
@@ -114,6 +115,7 @@ export class CarPhysics {
     this.resolveCollisions();
     this.updateSurface();
     const nearest = this.track.nearest(this.x, this.z, this.progress);
+    this.progress=nearest.progress;
     this.offTrack = nearest.distance > this.curbEdgeAt(nearest.progress);
     this.allWheelsOffTrack = this.offTrack && this.areAllWheelsOutsideCurbs();
   }
