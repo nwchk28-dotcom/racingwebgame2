@@ -229,7 +229,6 @@ let elapsed = 0;
 let lastFrame = 0;
 let accumulator = 0;
 let toastTimeout = 0;
-let lapProgressHint = 0;
 
 function refreshCourseMap(): void {
   courseMap = createCourseMap(track);
@@ -355,7 +354,6 @@ async function selectTrack(id: TrackId): Promise<void> {
   accumulator = 0;
   laps = new LapTracker(track.length, readBestTime(id), SECTOR_BOUNDARIES[id], readBestRecord(id));
   lapHud.reset();
-  lapProgressHint = 0;
   currentTrackName.textContent = definition.name;
   car.setPose(physics.x, physics.z, physics.yaw, physics.y, physics.gradientX, physics.gradientZ);
   refreshCourseMap();
@@ -372,7 +370,6 @@ function reset(notify = true): void {
   engineAudio.update(0, 0);
   laps.reset(0);
   lapHud.reset();
-  lapProgressHint = 0;
   accumulator = 0;
   car.setPose(physics.x, physics.z, physics.yaw, physics.y, physics.gradientX, physics.gradientZ);
   refreshMapPosition();
@@ -481,8 +478,7 @@ function frame(now: number): void {
     while (accumulator >= 1 / 120) {
       physics.step(controls.value, 1 / 120);
       renderPose.step(physics);
-      const position = track.nearest(physics.x, physics.z, lapProgressHint);
-      lapProgressHint = position.progress;
+      const position = track.nearest(physics.x, physics.z, physics.trackProgress);
       if (physics.collided) laps.invalidate('接触');
       const event = laps.update(position.progress, physics.allWheelsOffTrack, physics.speed, 1 / 120);
       if (event) {

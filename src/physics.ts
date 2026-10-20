@@ -38,6 +38,7 @@ export class CarPhysics {
   gradientX = 0;
   gradientZ = 0;
   private progress = 0;
+  get trackProgress(): number { return this.progress; }
   z = 0;
   yaw = 0;
   vx = 0;
@@ -69,7 +70,7 @@ export class CarPhysics {
   private updateSurface(): void {
     const s=this.track.surfaceAt?.(this.x,this.z,this.progress);
     this.y=s?.height??0;this.gradientX=s?.gradientX??0;this.gradientZ=s?.gradientZ??0;
-    this.progress=s?.progress??0;
+    this.progress=s?.progress??this.track.nearest(this.x,this.z,this.progress).progress;
   }
 
   step(input: DriverInput, dt: number): void {
@@ -112,7 +113,7 @@ export class CarPhysics {
     this.updateSurface();
     this.resolveCollisions();
     this.updateSurface();
-    const nearest = this.track.nearest(this.x, this.z);
+    const nearest = this.track.nearest(this.x, this.z, this.progress);
     this.offTrack = nearest.distance > this.curbEdgeAt(nearest.progress);
     this.allWheelsOffTrack = this.offTrack && this.areAllWheelsOutsideCurbs();
   }
@@ -128,7 +129,7 @@ export class CarPhysics {
     for (const [localX, localZ] of WHEEL_CONTACTS) {
       const wheelX = this.x + localX * cos + localZ * sin;
       const wheelZ = this.z - localX * sin + localZ * cos;
-      const nearest = this.track.nearest(wheelX, wheelZ);
+      const nearest = this.track.nearest(wheelX, wheelZ, this.progress);
       const signedDistance = nearest.signedDistance;
       // A tire still touching the curb keeps the lap valid.
       if (Math.abs(signedDistance) <= this.curbEdgeAt(nearest.progress) + TIRE_HALF_WIDTH) return false;

@@ -13,6 +13,6 @@ def compact(value):
 
 for path in (Path(__file__).resolve().parents[1] / 'src/nativeCircuits').glob('*.json'):
     data = json.loads(path.read_text())
-    data = {k: data[k] for k in ['id', 'length', 'startYaw', 'curbWidth', 'points', 'normals', 'distances', 'widths', 'surface', 'obstacles', 'corridor']}
+    data = {k: data[k] for k in ['id', 'length', 'startYaw', 'curbWidth', 'points', 'normals', 'distances', 'widths', 'surface', 'obstacles', 'corridor', 'terrain', 'fence']}
     data['corridor'] = {k: v for k, v in data['corridor'].items() if k in ['left', 'right', 'barriers', 'escapeAreas']}
     path.write_text(json.dumps(compact(data), separators=(',', ':')))

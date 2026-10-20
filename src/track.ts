@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { TrackDefinition } from './trackData';
 import { TrackPath } from './trackPath';
+import { terrainGeometry, apronGeometry, terrainHeight, perimeterHeight } from './terrainScenery';
 import { TrackWalls, type WallSegment } from './trackWalls';
 
 export interface ObstacleCollider {
@@ -172,7 +173,7 @@ export class Track extends TrackPath {
     const centerX = (Math.min(...xValues) + Math.max(...xValues)) / 2;
     const centerZ = (Math.min(...zValues) + Math.max(...zValues)) / 2;
     const furthest = Math.max(...this.samples.map(point => Math.hypot(point.x - centerX, point.z - centerZ)));
-    this.outerFence = { centerX, centerZ, radius: furthest + 55 };
+    this.outerFence = this.native?.fence ?? { centerX, centerZ, radius: furthest + 55 };
     this.group.name = `track-${definition.id}`;
     scene.add(this.group);
     if (this.native) {
@@ -207,10 +208,16 @@ export class Track extends TrackPath {
     ground.rotation.x = -Math.PI / 2;
     ground.position.x = this.outerFence.centerX;
     ground.position.z = this.outerFence.centerZ;
-    ground.position.y = Math.min(...this.samples.map(p => p.y)) - 2;
+    ground.position.y = this.native?.terrain.baseHeight ?? Math.min(...this.samples.map(p => p.y)) - 2;
     ground.receiveShadow = true;
     scene.add(ground);
 
+    if(this.native){
+      const material=new THREE.MeshStandardMaterial({map:grassTexture,roughness:1,side:THREE.DoubleSide});
+      for(const [name,geometry] of [['terrain-field',terrainGeometry(this.native.terrain)],['terrain-apron',apronGeometry(this.native)]] as const){
+        const mesh=new THREE.Mesh(geometry,material);mesh.name=name;mesh.receiveShadow=true;scene.add(mesh);
+      }
+    }
     const widths = this.distances.map(distance => this.roadHalfWidthAt(distance / this.length));
     const curbs = widths.map(width => width + this.definition.curbWidth);
     if (this.native) {
@@ -260,10 +267,10 @@ export class Track extends TrackPath {
     if (this.native) {
       this.colliders.splice(0,this.colliders.length,...this.native.obstacles);
       // Lift the original scenery and timing gantry onto the local terrain.
-      scene.traverse(object => {
+      scene.children.forEach(object => {
         if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh) return;
-        if (object.name !== 'terrain-backdrop' && (object.geometry.type === 'BoxGeometry' || object.geometry.type === 'PlaneGeometry')) {
-          object.position.y += this.surfaceAt(object.position.x,object.position.z).height;
+        if (object.name !== 'terrain-backdrop' && object.name !== 'start-line' && (object.geometry.type === 'BoxGeometry' || object.geometry.type === 'PlaneGeometry')) {
+          object.position.y += this.sceneryHeight(object.position.x,object.position.z);
         }
       });
     }
@@ -344,7 +351,7 @@ export class Track extends TrackPath {
         const bz = b.z + bn.z * side * halfWidth;
         const length = Math.hypot(bx - ax, bz - az);
         if (length < .001) continue;
-        sideSegments.push({ ax, az, bx, bz,
+        sideSegments.push({ ax, az, bx, bz, heightA:a.y+an.y*side*halfWidth,heightB:b.y+bn.y*side*halfWidth,
           inwardX: side * (az - bz) / length, inwardZ: side * (bx - ax) / length });
       }
     }
@@ -358,9 +365,36 @@ export class Track extends TrackPath {
     }
   }
 
+  private sceneryHeight(x:number,z:number):number {
+    return this.native ? terrainHeight(this.native.terrain,x,z) : 0;
+  }
+
   private addOuterFence(scene: THREE.Object3D, material: THREE.Material): void {
     const { centerX, centerZ, radius } = this.outerFence;
     const visibleRadius = radius + 0.15;
+    if(this.native){
+      const terrain=this.native.terrain,segments:WallSegment[]=[];
+      for(let i=0;i<512;i++){
+        const a=i/512*Math.PI*2,b=(i+1)/512*Math.PI*2;
+        segments.push({ax:centerX+Math.cos(a)*visibleRadius,az:centerZ+Math.sin(a)*visibleRadius,
+          bx:centerX+Math.cos(b)*visibleRadius,bz:centerZ+Math.sin(b)*visibleRadius,
+          inwardX:-Math.cos((a+b)/2),inwardZ:-Math.sin((a+b)/2),
+          heightA:perimeterHeight(terrain,i/512),heightB:perimeterHeight(terrain,(i+1)/512)});
+      }
+      for(const height of [.65,1.15,1.65]){
+        const rail=new THREE.Mesh(wallGeometry(segments.map(s=>({...s,heightA:s.heightA!+height-.15,heightB:s.heightB!+height-.15})),.3),material);
+        rail.name='perimeter-rail';scene.add(rail);
+      }
+      const count=Math.ceil(2*Math.PI*visibleRadius/7),matrix=new THREE.Matrix4();
+      const posts=new THREE.InstancedMesh(new THREE.CylinderGeometry(.09,.09,1.9,6),material,count);
+      posts.name='perimeter-posts';
+      for(let i=0;i<count;i++){
+        const angle=i/count*Math.PI*2;
+        matrix.makeTranslation(centerX+Math.cos(angle)*visibleRadius,perimeterHeight(terrain,i/count)+.95,centerZ+Math.sin(angle)*visibleRadius);
+        posts.setMatrixAt(i,matrix);
+      }
+      posts.castShadow=true;scene.add(posts);return;
+    }
     for (const height of [0.65, 1.15, 1.65]) {
       const rail = new THREE.Mesh(new THREE.TorusGeometry(visibleRadius, 0.15, 6, 384), material);
       rail.rotation.x = Math.PI / 2;
@@ -387,9 +421,10 @@ export class Track extends TrackPath {
     for (let i = -Math.floor(this.roadHalfWidthAt(0)); i < Math.floor(this.roadHalfWidthAt(0)); i++) {
       if (i % 2 === 0) continue;
       const tile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1.5), paint);
+      tile.name='start-line';
       tile.rotation.x = -Math.PI / 2;
       tile.rotation.z = -this.startYaw;
-      tile.position.set(start.x + normal.x * (i + 0.5), 0.06, start.z + normal.z * (i + 0.5));
+      tile.position.set(start.x + normal.x * (i + 0.5), start.y + normal.y * (i + .5) + .06, start.z + normal.z * (i + 0.5));
       scene.add(tile);
     }
   }
@@ -508,10 +543,10 @@ export class Track extends TrackPath {
       if (this.nearest(x, z).distance < (this.definition.scenery === 'airfield' ? 65 : 38)) continue;
       if (Math.hypot(x - this.outerFence.centerX, z - this.outerFence.centerZ) > this.outerFence.radius - 8) continue;
       const scale = 0.6 + rand() * 0.9;
-      matrix.compose(new THREE.Vector3(x, this.surfaceAt(x,z).height + 2.5 * scale, z), new THREE.Quaternion(),
+      matrix.compose(new THREE.Vector3(x, this.sceneryHeight(x,z) + 2.5 * scale, z), new THREE.Quaternion(),
         new THREE.Vector3(scale, scale, scale));
       trunks.setMatrixAt(added, matrix);
-      matrix.compose(new THREE.Vector3(x, this.surfaceAt(x,z).height + 8.5 * scale, z), new THREE.Quaternion(),
+      matrix.compose(new THREE.Vector3(x, this.sceneryHeight(x,z) + 8.5 * scale, z), new THREE.Quaternion(),
         new THREE.Vector3(scale, scale, scale));
       crowns.setMatrixAt(added, matrix);
       added++;

@@ -3,6 +3,9 @@ export interface NativeCircuit {
   id: string; length: number; startYaw: number; curbWidth: number;
   points: number[][]; normals: number[][]; distances: number[]; widths: number[];
   surface: number[][];
+  fence: {centerX:number;centerZ:number;radius:number};
+  terrain: { minX:number;minZ:number;spacing:number;columns:number;rows:number;baseHeight:number;
+    heights:number[];fenceHeights:number[];sceneryLeft:number[][];sceneryRight:number[][];bridgeRange?:number[] };
   obstacles: { x: number; z: number; radius: number }[];
   corridor: {
     left: number[]; right: number[];

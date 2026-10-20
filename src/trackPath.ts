@@ -239,7 +239,7 @@ export class TrackPath {
     }
     const scan = (indices: Iterable<number>): TrackPosition => {
       let best: TrackPosition | null = null;
-      let bestHintDifference = Infinity;
+
       for (const i of indices) {
         const a = this.samples[i];
         const b = this.samples[i + 1];
@@ -252,13 +252,8 @@ export class TrackPath {
         const rz = z - (a.z + dz * t);
         const distance = Math.hypot(rx, rz);
         const progress = (this.distances[i] + (this.distances[i+1]-this.distances[i]) * t) / this.length % 1;
-        const hintDifference = progressHint === undefined ? 0 :
-          Math.min(Math.abs(progress - progressHint), 1 - Math.abs(progress - progressHint));
-        const tolerance = progressHint === undefined ? 0 : 0.5;
-        if (best && (distance > best.distance + tolerance ||
-          (Math.abs(distance - best.distance) <= tolerance &&
-            (hintDifference > bestHintDifference ||
-              (hintDifference === bestHintDifference && distance >= best.distance))))) continue;
+        // Continuity selects a road arm, never a less accurate point on that arm.
+        if (best && distance >= best.distance) continue;
         const segmentLength = Math.sqrt(segmentLengthSquared);
         const normalX = dz / segmentLength;
         const normalZ = -dx / segmentLength;
@@ -266,13 +261,25 @@ export class TrackPath {
           progress, distance, centerX: a.x + dx * t, centerZ: a.z + dz * t,
           normalX, normalZ, signedDistance: rx * normalX + rz * normalZ,
         };
-        bestHintDifference = hintDifference;
+
       }
       return best ?? {
         progress: 0, distance: Infinity, centerX: 0, centerZ: 0,
         normalX: 1, normalZ: 0, signedDistance: Infinity,
       };
     };
+    if (progressHint !== undefined) {
+      const hint=((progressHint%1)+1)%1;
+      const connected=[...candidates].filter(i=>{
+        const mid=(this.distances[i]+this.distances[i+1])/(2*this.length);
+        const separation=Math.abs(mid-hint);
+        return Math.min(separation,1-separation)*this.length <= 80;
+      });
+      const local=scan(connected);
+      // A car inside the current driving corridor must keep the same arm at
+      // overpasses and hairpins, even when another arm is closer in X/Z.
+      if(local.distance < CELL_SIZE)return local;
+    }
     const nearby = scan(candidates);
     if (nearby.distance < CELL_SIZE) return nearby;
     return scan(Array.from({ length: this.sampleCount }, (_, i) => i));
