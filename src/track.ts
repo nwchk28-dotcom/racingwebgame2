@@ -330,11 +330,6 @@ export class Track extends TrackPath {
     barrier.name = 'trackside-wall';
     barrier.receiveShadow = true;
     scene.add(barrier);
-    const band = new THREE.Mesh(wallGeometry(this.walls.segments, .31, .42),
-      new THREE.MeshBasicMaterial({ color: '#ed4938', side: THREE.DoubleSide, toneMapped: false }));
-    band.name = 'wall-visibility-band';
-    band.position.y = 1.27;
-    scene.add(band);
   }
 
   private addMonacoTunnel(scene: THREE.Object3D): void {
