@@ -262,6 +262,7 @@ function resize(): void {
   // after rotating or changing browser chrome. Size WebGL to its actual host.
   const { width, height } = sceneElement.getBoundingClientRect();
   if (width <= 0 || height <= 0) return;
+  layoutEditor.refresh();
   renderer.setSize(width, height, false);
   car.camera.aspect = width / height;
   car.camera.updateProjectionMatrix();
@@ -397,6 +398,7 @@ function start(): void {
   startOverlay.hidden = true;
   pauseOverlay.hidden = true;
   app.classList.add('in-game');
+  layoutEditor.refresh();
   reset(false);
   lastFrame = performance.now();
   syncRenderLoop();

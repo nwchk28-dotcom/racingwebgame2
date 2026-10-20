@@ -36,17 +36,23 @@ export function drivingSurfaceGeometry(ribbon:RoadRibbon):Record<SurfaceKind,THR
    });
    for(let band=0;band<bands[0].length;band++){
     const a=bands[0][band],b=bands[1][band];if(a.outer-a.inner<1e-8&&b.outer-b.inner<1e-8)continue;
-    const bucket=buckets[a.kind],base=bucket.positions.length/3;
-    for(let row=0;row<2;row++){
-     const t=rows[k+row],edge=bands[row][band];
-     for(const offset of [edge.inner,edge.outer]){
-      const p=ribbon.at(i,t,offset),length=Math.hypot(p.gradientX,1,p.gradientZ);
-      bucket.positions.push(p.x,p.height+DRIVING_SURFACE_LIFT,p.z);
-      bucket.normals.push(-p.gradientX/length,1/length,-p.gradientZ/length);
-      bucket.uvs.push(a.kind==='runoff'?p.x/40:offset/14,a.kind==='runoff'?p.z/40:(start+span*t)/25);
+    // Subdivide across the width as well as along the track so changing
+    // bank angles are represented without large diagonal interpolation errors.
+    const columns=Math.max(1,Math.ceil(Math.max(a.outer-a.inner,b.outer-b.inner)/3));
+    for(let column=0;column<columns;column++){
+     const bucket=buckets[a.kind],base=bucket.positions.length/3;
+     for(let row=0;row<2;row++){
+      const t=rows[k+row],edge=bands[row][band];
+      for(const fraction of [column/columns,(column+1)/columns]){
+       const offset=edge.inner+(edge.outer-edge.inner)*fraction;
+       const p=ribbon.at(i,t,offset),length=Math.hypot(p.gradientX,1,p.gradientZ);
+       bucket.positions.push(p.x,p.height+DRIVING_SURFACE_LIFT,p.z);
+       bucket.normals.push(-p.gradientX/length,1/length,-p.gradientZ/length);
+       bucket.uvs.push(a.kind==='runoff'?p.x/40:offset/14,a.kind==='runoff'?p.z/40:(start+span*t)/25);
+      }
      }
+     bucket.indices.push(base,base+2,base+1,base+1,base+2,base+3);
     }
-    bucket.indices.push(base,base+2,base+1,base+1,base+2,base+3);
    }
   }
  }

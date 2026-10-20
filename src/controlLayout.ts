@@ -54,9 +54,9 @@ export class ControlLayoutEditor {
       const rect=this.elements[id].getBoundingClientRect();
       return [id, {x:(rect.left+rect.width/2-bounds.left)/bounds.width,y:(rect.top+rect.height/2-bounds.top)/bounds.height,scale:1,opacity:1}];
     }));
-    const custom = ids.some(id => layout[id] && sizes[id].width > 0);
+    // Cold starts must use the same explicit placement as the editor.
     for (const id of ids) {
-      const p = layout[id] ?? (custom ? defaults[id] : undefined), size = sizes[id];
+      const p = layout[id] ?? defaults[id], size = sizes[id];
       if (p && size.width > 0 && size.height > 0) {
         Object.assign(this.elements[id].style, placementStyle(p, size, bounds.width, bounds.height));
       }
