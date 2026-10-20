@@ -15,6 +15,8 @@ import { TrackPath } from './trackPath';
 import { TOP_SPEED_KMH } from './vehicleTuning';
 import { SECTOR_BOUNDARIES } from './sectors';
 import { LapHud } from './lapHud';
+import { RenderQuality } from './renderQuality';
+import { enhanceSceneColor } from './sceneColor';
 import { FrameBudget } from './frameBudget';
 import { bindGameViewport } from './gameViewport';
 
@@ -138,6 +140,7 @@ let selectedTrack: TrackDefinition = TRACKS[0];
 let track = new Track(scene, selectedTrack);
 const car = new CarVisual();
 scene.add(car.group);
+enhanceSceneColor(scene);
 let physics = new CarPhysics(track);
 const renderPose = new PoseInterpolator(physics);
 car.setPose(physics.x, physics.z, physics.yaw, physics.y, physics.gradientX, physics.gradientZ);
@@ -179,7 +182,8 @@ if (mobile) {
     }
   }, { passive: false });
 }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.35 : 1.8));
+const renderQuality = new RenderQuality(Math.min(window.devicePixelRatio || 1, mobile ? 1.35 : 1.8));
+renderer.setPixelRatio(renderQuality.pixelRatio);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.35;
@@ -350,6 +354,7 @@ async function selectTrack(id: TrackId): Promise<void> {
   selectedTrack = definition;
   setTrackPage(Math.floor(TRACKS.indexOf(definition) / 3));
   track = new Track(scene, definition);
+  enhanceSceneColor(scene);
   physics = new CarPhysics(track);
   renderPose.reset(physics);
   accumulator = 0;
@@ -463,6 +468,7 @@ function syncRenderLoop(): void {
   const running = active && !paused && !portrait.matches && !document.hidden;
   syncViewport();
   resize();
+  renderQuality.reset();
   frameBudget.reset();
   hudBudget.reset();
   renderer.setAnimationLoop(running ? frame : null);
@@ -471,6 +477,10 @@ function syncRenderLoop(): void {
 
 function frame(now: number): void {
   if (!frameBudget.due(now)) return;
+  if (mobile) {
+    const ratio = renderQuality.sample(now);
+    if (ratio !== renderer.getPixelRatio()) renderer.setPixelRatio(ratio);
+  }
   // Recover even when mobile viewport changes arrive after the resize event.
   if (syncViewport()) resize();
   const dt = Math.min((now - lastFrame) / 1000 || 0, 0.05);
@@ -480,9 +490,8 @@ function frame(now: number): void {
     while (accumulator >= 1 / 120) {
       physics.step(controls.value, 1 / 120);
       renderPose.step(physics);
-      const position = track.roadPosition(physics.x, physics.z, physics.trackProgress);
       if (physics.collided) laps.invalidate('接触');
-      const event = laps.update(position.progress, physics.allWheelsOffTrack, physics.speed, 1 / 120);
+      const event = laps.update(physics.trackProgress, physics.allWheelsOffTrack, physics.speed, 1 / 120);
       if (event) {
         lapHud.completed(event, now);
         if (event.newBest) {

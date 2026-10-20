@@ -220,6 +220,3 @@ html.browser-entry .install-gate{position:relative;inset:auto;min-height:100vh;m
 .control-layout-active .layout-editor .touch-controls{z-index:1}
 .layout-toolbar{z-index:2;pointer-events:auto;background:#071319;padding:8px;border-radius:8px}
 .layout-toolbar input{touch-action:auto}
-
-/* A modest colour boost for the rendered world, preserving neutral road tones. */
-#scene > canvas{filter:saturate(1.2)}

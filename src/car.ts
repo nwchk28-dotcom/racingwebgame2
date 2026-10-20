@@ -47,6 +47,11 @@ export class CarVisual {
   readonly camera: THREE.PerspectiveCamera;
   private readonly frontWheels: THREE.Group[] = [];
   private readonly wheelMeshes: THREE.Mesh[] = [];
+  private readonly poseForward=new THREE.Vector3();
+  private readonly poseUp=new THREE.Vector3();
+  private readonly poseRight=new THREE.Vector3();
+  private readonly poseVertical=new THREE.Vector3();
+  private readonly poseBasis=new THREE.Matrix4();
   private readonly baseCameraY = 2.05;
 
   constructor() {
@@ -62,10 +67,10 @@ export class CarVisual {
 
   setPose(x: number, z: number, yaw: number, height=0, gradientX=0, gradientZ=0): void {
     this.group.position.set(x, height, z);
-    const forward=new THREE.Vector3(Math.sin(yaw),gradientX*Math.sin(yaw)+gradientZ*Math.cos(yaw),Math.cos(yaw)).normalize();
-    const up=new THREE.Vector3(-gradientX,1,-gradientZ).normalize();
-    const right=up.clone().cross(forward).normalize();
-    this.group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right,forward.clone().cross(right).normalize(),forward));
+    const forward=this.poseForward.set(Math.sin(yaw),gradientX*Math.sin(yaw)+gradientZ*Math.cos(yaw),Math.cos(yaw)).normalize();
+    const up=this.poseUp.set(-gradientX,1,-gradientZ).normalize();
+    const right=this.poseRight.copy(up).cross(forward).normalize();
+    this.group.quaternion.setFromRotationMatrix(this.poseBasis.makeBasis(right,this.poseVertical.copy(forward).cross(right).normalize(),forward));
   }
 
   animate(steering: number, speed: number, _elapsed: number): void {

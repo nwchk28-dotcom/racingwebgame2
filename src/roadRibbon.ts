@@ -14,6 +14,8 @@ const clamp=(x:number)=>Math.max(0,Math.min(1,x));
 export class RoadRibbon {
   private readonly centers:Spline[]=[];
   private readonly normals:Spline[]=[];
+  private readonly heights:number[][]=[];
+  private readonly banks:number[][]=[];
   readonly count:number;
   constructor(readonly data:NativeCircuit){
     const p=data.points,n=data.normals,s=data.distances,count=this.count=p.length-1;
@@ -24,6 +26,9 @@ export class RoadRibbon {
     });
     for(let i=0;i<count;i++){
       const next=(i+1)%count,h=s[i+1]-s[i];
+      const a=data.surface[i],b=data.surface[i+1];
+      this.heights.push(cubic(a[0],b[0],a[1]*h,b[1]*h));
+      this.banks.push(cubic(a[2],b[2],a[3]*h,b[3]*h));
       this.centers.push({x:cubic(p[i][0],p[i+1][0],-n[i][1]*h,-n[next][1]*h),z:cubic(p[i][1],p[i+1][1],n[i][0]*h,n[next][0]*h)});
       this.normals.push({x:cubic(n[i][0],n[i+1][0],slopes[i][0]*h,slopes[next][0]*h),z:cubic(n[i][1],n[i+1][1],slopes[i][1]*h,slopes[next][1]*h)});
     }
@@ -56,9 +61,9 @@ export class RoadRibbon {
     return {x:x.value,z:z.value,dx:x.derivative,dz:z.derivative,nx:nx.value,nz:nz.value,ndx:nx.derivative,ndz:nz.derivative};
   }
   profile(segment:number,t:number){
-    const a=this.data.surface[segment],b=this.data.surface[segment+1],span=this.data.distances[segment+1]-this.data.distances[segment];
-    const height=polynomial(cubic(a[0],b[0],a[1]*span,b[1]*span),t);
-    const bank=polynomial(cubic(a[2],b[2],a[3]*span,b[3]*span),t);
+    const span=this.data.distances[segment+1]-this.data.distances[segment];
+    const height=polynomial(this.heights[segment],t);
+    const bank=polynomial(this.banks[segment],t);
     return {height:height.value,grade:height.derivative/span,bank:bank.value,bankRate:bank.derivative/span};
   }
   at(segment:number,t:number,offset:number){
@@ -91,7 +96,7 @@ export class RoadRibbon {
     return best;
   }
   position(l:RibbonLocation){
-    const f=this.frame(l.segment,l.t),normalLength=Math.hypot(f.nx,f.nz),s=this.at(l.segment,l.t,l.offset);
-    return {progress:s.progress,distance:Math.abs(l.offset),signedDistance:l.offset,centerX:f.x,centerZ:f.z,normalX:f.nx/normalLength,normalZ:f.nz/normalLength};
+    const f=this.frame(l.segment,l.t),normalLength=Math.hypot(f.nx,f.nz),progress=(this.data.distances[l.segment]+l.t*(this.data.distances[l.segment+1]-this.data.distances[l.segment]))/this.data.length%1;
+    return {progress,distance:Math.abs(l.offset),signedDistance:l.offset,centerX:f.x,centerZ:f.z,normalX:f.nx/normalLength,normalZ:f.nz/normalLength};
   }
 }

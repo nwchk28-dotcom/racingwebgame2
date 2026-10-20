@@ -53,3 +53,13 @@ describe('presentation frame budget', () => {
     expect(simulate(30)).toEqual(simulate(60));
   });
 });
+it('does not skip 60 Hz frames because of small callback timing jitter',()=>{
+ const budget=new FrameBudget(60);
+ const times=Array.from({length:600},(_,i)=>i*1000/60+Math.sin(i*1.9)*1.8);
+ expect(times.filter(t=>budget.due(t))).toHaveLength(600);
+});
+it('retains the 60 fps cap on a jittery 120 Hz display',()=>{
+ const budget=new FrameBudget(60);
+ const times=Array.from({length:1200},(_,i)=>i*1000/120+Math.sin(i*1.9)*1.2);
+ expect(times.filter(t=>budget.due(t))).toHaveLength(600);
+});
