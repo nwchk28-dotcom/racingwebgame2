@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { nativeCircuits } from './nativeCircuit';
+import { RoadRibbon } from './roadRibbon';
 import type { TrackDefinition } from './trackData';
 
 export interface TrackPosition {
@@ -26,40 +27,31 @@ export class TrackPath {
 
   get native() { return nativeCircuits[this.definition.id]; }
 
-  surfaceAt(x: number, z: number, hint?: number) {
-    const p = this.nearest(x, z, hint);
-    const data = this.native;
-    if (!data) return { height: 0, gradientX: 0, gradientZ: 0, progress: p.progress };
-    for (const area of data.corridor.escapeAreas ?? []) {
+  private nativeRibbon?: RoadRibbon;
+  get ribbon():RoadRibbon|undefined {
+    const data=this.native;
+    if(data&&this.nativeRibbon?.data!==data)this.nativeRibbon=new RoadRibbon(data);
+    return data?this.nativeRibbon:undefined;
+  }
+  roadPosition(x:number,z:number,hint?:number):TrackPosition {
+    const near=this.nearest(x,z,hint),ribbon=this.ribbon;
+    if(!ribbon)return near;
+    return ribbon.position(ribbon.locate(x,z,ribbon.segmentAt(near.progress)));
+  }
+  surfaceAt(x:number,z:number,hint?:number) {
+    const near=this.nearest(x,z,hint),ribbon=this.ribbon;
+    if(!ribbon)return {height:0,gradientX:0,gradientZ:0,progress:near.progress};
+    const l=ribbon.locate(x,z,ribbon.segmentAt(near.progress));
+    const result=ribbon.at(l.segment,l.t,l.offset);
+    for(const area of this.native.corridor.escapeAreas??[]){
       let inside=false;
-      for(let i=0,j=area.polygon.length-1;i<area.polygon.length;j=i++) {
+      for(let i=0,j=area.polygon.length-1;i<area.polygon.length;j=i++){
         const a=area.polygon[i],b=area.polygon[j];
-        if((a.z>z)!==(b.z>z) && x<(b.x-a.x)*(z-a.z)/(b.z-a.z)+a.x)inside=!inside;
+        if((a.z>z)!==(b.z>z)&&x<(b.x-a.x)*(z-a.z)/(b.z-a.z)+a.x)inside=!inside;
       }
-      if(inside)return {height:area.height,gradientX:0,gradientZ:0,progress:p.progress};
+      if(inside)return {height:area.height,gradientX:0,gradientZ:0,progress:result.progress};
     }
-    const distance = p.progress * this.length;
-    let lo = 0, hi = this.sampleCount;
-    while (lo + 1 < hi) { const mid = (lo + hi) >>> 1; if (this.distances[mid] <= distance) lo = mid; else hi = mid; }
-    const t = (distance - this.distances[lo]) / Math.max(1e-9, this.distances[hi] - this.distances[lo]);
-    const span=this.distances[hi]-this.distances[lo];
-    const hermite=(k:number,slope:number) => {
-      const a=data.surface[lo][k],b=data.surface[hi][k],u=data.surface[lo][slope]*span,v=data.surface[hi][slope]*span;
-      return {value:(2*t**3-3*t*t+1)*a+(t**3-2*t*t+t)*u+(-2*t**3+3*t*t)*b+(t**3-t*t)*v,
-        derivative:((6*t*t-6*t)*a+(3*t*t-4*t+1)*u+(-6*t*t+6*t)*b+(3*t*t-2*t)*v)/span};
-    };
-    // A polyline segment normal jumps at every sample. Interpolate the native
-    // shared vertex normals so banking and grade have one limit at each join.
-    const nx=data.normals[lo][0]*(1-t)+data.normals[hi][0]*t;
-    const nz=data.normals[lo][1]*(1-t)+data.normals[hi][1]*t;
-    const length=Math.hypot(nx,nz),normalX=nx/length,normalZ=nz/length;
-    const offset=(x-p.centerX)*normalX+(z-p.centerZ)*normalZ;
-    const elevation=hermite(0,1),banking=hermite(2,3),bank=Math.tan(banking.value);
-    // C1 heights and gradients extend through the painted edges and runoff.
-    const grade = elevation.derivative + offset * banking.derivative * (1 + bank * bank);
-    return { height: elevation.value + offset * bank,
-      gradientX: -normalZ * grade + normalX * bank,
-      gradientZ: normalX * grade + normalZ * bank, progress: p.progress };
+    return result;
   }
 
   /** Smooth, cyclic width shared by the scene, walls and wheel validity checks. */

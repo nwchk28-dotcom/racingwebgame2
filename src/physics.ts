@@ -28,6 +28,7 @@ export interface DriverInput {
 type PhysicsTrack = Pick<Track,
   'start' | 'startYaw' | 'curbOuterEdge' | 'outerFence' | 'colliders' | 'nearest'> & {
     walls: Pick<Track['walls'], 'contact'>;
+    roadPosition?: Track['roadPosition'];
     surfaceAt?: (x:number,z:number,hint?:number) => {height:number;gradientX:number;gradientZ:number;progress:number};
     curbOuterEdgeAt?: (progress: number) => number;
   };
@@ -114,12 +115,15 @@ export class CarPhysics {
     this.updateSurface();
     this.resolveCollisions();
     this.updateSurface();
-    const nearest = this.track.nearest(this.x, this.z, this.progress);
+    const nearest = this.roadPosition(this.x, this.z);
     this.progress=nearest.progress;
     this.offTrack = nearest.distance > this.curbEdgeAt(nearest.progress);
     this.allWheelsOffTrack = this.offTrack && this.areAllWheelsOutsideCurbs();
   }
 
+  private roadPosition(x:number,z:number){
+    return this.track.roadPosition?.(x,z,this.progress)??this.track.nearest(x,z,this.progress);
+  }
   private curbEdgeAt(progress: number): number {
     return this.track.curbOuterEdgeAt?.(progress) ?? this.track.curbOuterEdge;
   }
@@ -131,7 +135,7 @@ export class CarPhysics {
     for (const [localX, localZ] of WHEEL_CONTACTS) {
       const wheelX = this.x + localX * cos + localZ * sin;
       const wheelZ = this.z - localX * sin + localZ * cos;
-      const nearest = this.track.nearest(wheelX, wheelZ, this.progress);
+      const nearest = this.roadPosition(wheelX, wheelZ);
       const signedDistance = nearest.signedDistance;
       // A tire still touching the curb keeps the lap valid.
       if (Math.abs(signedDistance) <= this.curbEdgeAt(nearest.progress) + TIRE_HALF_WIDTH) return false;

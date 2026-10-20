@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { TrackDefinition } from './trackData';
 import { TrackPath } from './trackPath';
+import { drivingSurfaceGeometry } from './drivingSurface';
 import { terrainGeometry, apronGeometry, terrainHeight, perimeterHeight } from './terrainScenery';
 import { TrackWalls, type WallSegment } from './trackWalls';
 
@@ -200,6 +201,7 @@ export class Track extends TrackPath {
     scene.add(sun, sun.target);
 
     const grassTexture = texturedCanvas('grass', this.definition.grass);
+    if(!this.native){
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry((this.outerFence.radius + 80) * 2, (this.outerFence.radius + 80) * 2),
       new THREE.MeshStandardMaterial({ map: grassTexture, roughness: 1 }),
@@ -208,29 +210,39 @@ export class Track extends TrackPath {
     ground.rotation.x = -Math.PI / 2;
     ground.position.x = this.outerFence.centerX;
     ground.position.z = this.outerFence.centerZ;
-    ground.position.y = this.native?.terrain.baseHeight ?? Math.min(...this.samples.map(p => p.y)) - 2;
+    ground.position.y = Math.min(...this.samples.map(p => p.y)) - 2;
     ground.receiveShadow = true;
     scene.add(ground);
+    }
 
     if(this.native){
-      const material=new THREE.MeshStandardMaterial({map:grassTexture,roughness:1,side:THREE.DoubleSide});
-      for(const [name,geometry] of [['terrain-field',terrainGeometry(this.native.terrain)],['terrain-apron',apronGeometry(this.native)]] as const){
+      const material=new THREE.MeshStandardMaterial({map:grassTexture,roughness:1,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2});
+      for(const [name,geometry] of [['terrain-field',terrainGeometry(this.native.terrain)],['terrain-apron',apronGeometry(this.native,this.ribbon!)]] as const){
         const mesh=new THREE.Mesh(geometry,material);mesh.name=name;mesh.receiveShadow=true;scene.add(mesh);
       }
     }
+    const railMaterial = new THREE.MeshStandardMaterial({ color: '#d7dedc', roughness: .35, metalness: .7, side: THREE.DoubleSide });
+    if(this.native){
+      const geometries=drivingSurfaceGeometry(this.ribbon!);
+      const materials={
+        road:new THREE.MeshStandardMaterial({map:texturedCanvas('road',this.definition.grass),roughness:.94,side:THREE.DoubleSide}),
+        'curb-red':new THREE.MeshStandardMaterial({color:'#be332d',roughness:.82,side:THREE.DoubleSide}),
+        'curb-white':new THREE.MeshStandardMaterial({color:'#efece3',roughness:.82,side:THREE.DoubleSide}),
+        runoff:new THREE.MeshStandardMaterial({map:grassTexture,roughness:1,side:THREE.DoubleSide}),
+      };
+      for(const kind of ['road','curb-red','curb-white','runoff'] as const){
+        const mesh=new THREE.Mesh(geometries[kind],materials[kind]);mesh.name=kind==='runoff'?'driving-corridor':kind;mesh.receiveShadow=true;scene.add(mesh);
+      }
+      for(const area of this.native.corridor.escapeAreas??[]){
+        const shape=new THREE.Shape(area.polygon.map(p=>new THREE.Vector2(p.x,-p.z)));
+        // Same surface colour/depth where an escape road meets the runoff.
+        const material=new THREE.MeshStandardMaterial({color:0x697375,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+        const mesh=new THREE.Mesh(new THREE.ShapeGeometry(shape),material);mesh.name='escape-road';
+        mesh.rotation.x=-Math.PI/2;mesh.position.y=area.height+.018;scene.add(mesh);
+      }
+    } else {
     const widths = this.distances.map(distance => this.roadHalfWidthAt(distance / this.length));
     const curbs = widths.map(width => width + this.definition.curbWidth);
-    if (this.native) {
-      const runoff = new THREE.Mesh(makeRibbon(this.samples,this.normals,
-        this.native.corridor.right.map(w=>-w), this.native.corridor.left, -.015),
-        new THREE.MeshStandardMaterial({map:grassTexture,roughness:1,side:THREE.DoubleSide}));
-      runoff.name='driving-corridor'; runoff.receiveShadow=true; scene.add(runoff);
-      for (const area of this.native.corridor.escapeAreas ?? []) {
-        const shape=new THREE.Shape(area.polygon.map(p=>new THREE.Vector2(p.x,-p.z)));
-        const mesh=new THREE.Mesh(new THREE.ShapeGeometry(shape),new THREE.MeshStandardMaterial({color:0x697375,side:THREE.DoubleSide}));
-        mesh.rotation.x=-Math.PI/2;mesh.position.y=area.height+.01;scene.add(mesh);
-      }
-    }
     const roadTexture = texturedCanvas('road', this.definition.grass);
     const road = new THREE.Mesh(
       makeRibbon(this.samples, this.normals, widths.map(width => -width), widths, 0.018, 10),
@@ -243,7 +255,6 @@ export class Track extends TrackPath {
     const shoulderMaterial = new THREE.MeshStandardMaterial({ color: '#818b80', roughness: 1, side: THREE.DoubleSide });
     const lineMaterial = new THREE.MeshStandardMaterial({ color: '#f4f2e7', roughness: 0.72, side: THREE.DoubleSide });
     const curbMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, side: THREE.DoubleSide });
-    const railMaterial = new THREE.MeshStandardMaterial({ color: '#d7dedc', roughness: 0.35, metalness: 0.7, side: THREE.DoubleSide });
 
     for (const side of [-1, 1]) {
       const near = widths.map(width => side * width);
@@ -255,6 +266,8 @@ export class Track extends TrackPath {
         makeStripedCurb(this.samples, this.normals, this.distances, near, curbs.map(width => side * width)),
         curbMaterial,
       ));
+    }
+
     }
 
     if (!this.native && this.definition.id === 'baku') this.addBakuTurn16Runoff(scene);
@@ -269,7 +282,7 @@ export class Track extends TrackPath {
       // Lift the original scenery and timing gantry onto the local terrain.
       scene.children.forEach(object => {
         if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh) return;
-        if (object.name !== 'terrain-backdrop' && object.name !== 'start-line' && (object.geometry.type === 'BoxGeometry' || object.geometry.type === 'PlaneGeometry')) {
+        if (object.name !== 'terrain-backdrop' && object.name !== 'start-line' && object.name !== 'escape-road' && (object.geometry.type === 'BoxGeometry' || object.geometry.type === 'PlaneGeometry')) {
           object.position.y += this.sceneryHeight(object.position.x,object.position.z);
         }
       });

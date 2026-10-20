@@ -478,7 +478,7 @@ function frame(now: number): void {
     while (accumulator >= 1 / 120) {
       physics.step(controls.value, 1 / 120);
       renderPose.step(physics);
-      const position = track.nearest(physics.x, physics.z, physics.trackProgress);
+      const position = track.roadPosition(physics.x, physics.z, physics.trackProgress);
       if (physics.collided) laps.invalidate('接触');
       const event = laps.update(position.progress, physics.allWheelsOffTrack, physics.speed, 1 / 120);
       if (event) {

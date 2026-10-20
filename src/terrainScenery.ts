@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import type { NativeCircuit } from './nativeCircuit';
+import { RoadRibbon } from './roadRibbon';
+import { DRIVING_SURFACE_LIFT, surfaceCuts } from './drivingSurface';
 type Terrain = NativeCircuit['terrain'];
 
 /** Uses the same grid diagonal as the native renderer, including below bridges. */
@@ -29,21 +31,24 @@ export function terrainGeometry(terrain:Terrain):THREE.BufferGeometry {
   return geometry(positions,indices);
 }
 /** Connect the exact rail bases to the scenic field; leave the underpass open. */
-export function apronGeometry(data:NativeCircuit):THREE.BufferGeometry {
+export function apronGeometry(data:NativeCircuit,ribbon=new RoadRibbon(data)):THREE.BufferGeometry {
   const positions:number[]=[],indices:number[]=[],terrain=data.terrain;
   for(let i=0;i<data.points.length-1;i++){
     const bridge=terrain.bridgeRange;
     if(bridge&&data.distances[i]>=bridge[0]&&data.distances[i]<=bridge[1])continue;
+    const rows=surfaceCuts(data.distances[i],data.distances[i+1]-data.distances[i]);
     for(const side of [-1,1]){
       const limits=side>0?data.corridor.left:data.corridor.right;
       const outer=side>0?terrain.sceneryLeft:terrain.sceneryRight;
-      const v=positions.length/3;
-      for(const j of [i,i+1]){
-        const p=data.points[j],n=data.normals[j],offset=limits[j]*side;
-        positions.push(p[0]+n[0]*offset,data.surface[j][0]+Math.tan(data.surface[j][2])*offset-.015,p[1]+n[1]*offset);
-        positions.push(...outer[j]);
+      for(let k=0;k<rows.length-1;k++){
+        const v=positions.length/3;
+        for(const t of [rows[k],rows[k+1]]){
+          const offset=(limits[i]*(1-t)+limits[i+1]*t)*side,p=ribbon.at(i,t,offset);
+          positions.push(p.x,p.height+DRIVING_SURFACE_LIFT,p.z);
+          for(let axis=0;axis<3;axis++)positions.push(outer[i][axis]*(1-t)+outer[i+1][axis]*t);
+        }
+        indices.push(v,v+2,v+1,v+1,v+2,v+3);
       }
-      indices.push(v,v+2,v+1,v+1,v+2,v+3);
     }
   }
   return geometry(positions,indices);

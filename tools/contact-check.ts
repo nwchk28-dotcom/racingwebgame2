@@ -16,8 +16,15 @@ let track:Track,physics:CarPhysics,pose:PoseInterpolator,laps:LapTracker,distanc
 const point=(d:number)=>{
  let lo=0,hi=track.sampleCount;
  while(lo+1<hi){const m=(lo+hi)>>>1;if(track.distances[m]<=d)lo=m;else hi=m;}
- const t=(d-track.distances[lo])/(track.distances[hi]-track.distances[lo]),a=track.samples[lo],b=track.samples[hi],n=track.normals[lo].clone().lerp(track.normals[hi],t);
- const u=Number(offset.value);return {x:a.x+(b.x-a.x)*t+n.x*u,z:a.z+(b.z-a.z)*t+n.z*u};
+ const t=(d-track.distances[lo])/(track.distances[hi]-track.distances[lo]);
+ const data=track.native,mix=(a:number,b:number)=>a+(b-a)*t;
+ let u=Number(offset.value);
+ if(offset.value.endsWith('-edge')){
+  const side=offset.value==='left-edge'?1:-1,limit=side>0?data.corridor.left:data.corridor.right;
+  const edge=mix(data.widths[lo],data.widths[hi])+data.curbWidth;
+  u=side*Math.min(mix(limit[lo],limit[hi])-1.25,edge-.7+Math.sin((d-start)/9)*1.1);
+ }
+ const p=track.ribbon!.at(lo,t,u);return {x:p.x,z:p.z};
 };
 function reset(){
  distance=start;const p=point(distance),next=point(distance+.1);
