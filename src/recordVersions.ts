@@ -4,8 +4,8 @@ import type { TrackId } from './trackData';
  * Never decrease or reuse a revision: old, incompatible records must stay hidden.
  * Cosmetic/audio/UI changes do not need a revision increase. */
 export const RECORD_VERSIONS = {
-  // Reliable immediate touch input changes attainable steering/braking timing.
-  global: 4,
+  // Continuous bank/grade normals also change the slope gravity used by physics.
+  global: 5,
   /** Increase only affected courses for layout, road width, wall or timing changes.
    * Missing entries have revision 0, preserving currently compatible records. */
   tracks: {} as Partial<Record<TrackId, number>>,

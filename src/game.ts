@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { CarVisual } from './car';
+import { PoseInterpolator } from './renderPose';
 import { readBestTime, readBestRecord, saveBestRecord } from './bestTimes';
 import { loadNativeCircuit } from './nativeCircuit';
 import { Controls } from './controls';
@@ -138,6 +139,7 @@ let track = new Track(scene, selectedTrack);
 const car = new CarVisual();
 scene.add(car.group);
 let physics = new CarPhysics(track);
+const renderPose = new PoseInterpolator(physics);
 car.setPose(physics.x, physics.z, physics.yaw, physics.y, physics.gradientX, physics.gradientZ);
 
 const mobile = window.matchMedia('(pointer: coarse)').matches;
@@ -186,7 +188,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 app.querySelector('#scene')!.appendChild(renderer.domElement);
 
 const controls = new Controls(app);
-new ControlLayoutEditor(app, () => controls.clear());
+const layoutEditor = new ControlLayoutEditor(app, () => controls.clear());
 const engineAudio = new EngineAudio();
 // A trusted control touch can recover iOS audio after an OS interruption.
 for (const type of ['pointerdown', 'touchstart'] as const) {
@@ -349,6 +351,8 @@ async function selectTrack(id: TrackId): Promise<void> {
   setTrackPage(Math.floor(TRACKS.indexOf(definition) / 3));
   track = new Track(scene, definition);
   physics = new CarPhysics(track);
+  renderPose.reset(physics);
+  accumulator = 0;
   laps = new LapTracker(track.length, readBestTime(id), SECTOR_BOUNDARIES[id], readBestRecord(id));
   lapHud.reset();
   lapProgressHint = 0;
@@ -364,6 +368,7 @@ async function selectTrack(id: TrackId): Promise<void> {
 function reset(notify = true): void {
   controls.clear();
   physics.reset();
+  renderPose.reset(physics);
   engineAudio.update(0, 0);
   laps.reset(0);
   lapHud.reset();
@@ -413,6 +418,7 @@ app.querySelectorAll<HTMLButtonElement>('.steering-option').forEach(button => {
     const mode = button.dataset.steeringMode === 'buttons' ? 'buttons' : 'slider';
     controls.setSteeringMode(mode);
     app.classList.toggle('button-steering', mode === 'buttons');
+    layoutEditor.refresh();
     app.querySelectorAll<HTMLButtonElement>('.steering-option').forEach(option => {
       const selected = option === button;
       option.classList.toggle('selected', selected);
@@ -474,6 +480,7 @@ function frame(now: number): void {
     accumulator = Math.min(accumulator + dt, 0.1);
     while (accumulator >= 1 / 120) {
       physics.step(controls.value, 1 / 120);
+      renderPose.step(physics);
       const position = track.nearest(physics.x, physics.z, lapProgressHint);
       lapProgressHint = position.progress;
       if (physics.collided) laps.invalidate('接触');
@@ -493,7 +500,8 @@ function frame(now: number): void {
       elapsed += 1 / 120;
       accumulator -= 1 / 120;
     }
-    car.setPose(physics.x, physics.z, physics.yaw, physics.y, physics.gradientX, physics.gradientZ);
+    const pose=renderPose.sample(accumulator*120);
+    car.setPose(pose.x, pose.z, pose.yaw, pose.y, pose.gradientX, pose.gradientZ);
     car.animate(controls.value.steer, physics.speed, elapsed);
     engineAudio.update(physics.speed * 3.6, controls.value.throttle);
     if (hudBudget.due(now)) {

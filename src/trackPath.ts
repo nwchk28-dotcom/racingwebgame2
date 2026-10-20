@@ -48,12 +48,18 @@ export class TrackPath {
       return {value:(2*t**3-3*t*t+1)*a+(t**3-2*t*t+t)*u+(-2*t**3+3*t*t)*b+(t**3-t*t)*v,
         derivative:((6*t*t-6*t)*a+(3*t*t-4*t+1)*u+(-6*t*t+6*t)*b+(3*t*t-2*t)*v)/span};
     };
+    // A polyline segment normal jumps at every sample. Interpolate the native
+    // shared vertex normals so banking and grade have one limit at each join.
+    const nx=data.normals[lo][0]*(1-t)+data.normals[hi][0]*t;
+    const nz=data.normals[lo][1]*(1-t)+data.normals[hi][1]*t;
+    const length=Math.hypot(nx,nz),normalX=nx/length,normalZ=nz/length;
+    const offset=(x-p.centerX)*normalX+(z-p.centerZ)*normalZ;
     const elevation=hermite(0,1),banking=hermite(2,3),bank=Math.tan(banking.value);
     // C1 heights and gradients extend through the painted edges and runoff.
-    const grade = elevation.derivative + p.signedDistance * banking.derivative * (1 + bank * bank);
-    return { height: elevation.value + p.signedDistance * bank,
-      gradientX: -p.normalZ * grade + p.normalX * bank,
-      gradientZ: p.normalX * grade + p.normalZ * bank, progress: p.progress };
+    const grade = elevation.derivative + offset * banking.derivative * (1 + bank * bank);
+    return { height: elevation.value + offset * bank,
+      gradientX: -normalZ * grade + normalX * bank,
+      gradientZ: normalX * grade + normalZ * bank, progress: p.progress };
   }
 
   /** Smooth, cyclic width shared by the scene, walls and wheel validity checks. */

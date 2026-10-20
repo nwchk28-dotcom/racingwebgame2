@@ -207,9 +207,16 @@ html.browser-entry .install-gate{position:relative;inset:auto;min-height:100vh;m
 .speed-panel{bottom:max(30px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);min-width:130px;text-align:center}.speed-main{display:flex;flex-direction:column;align-items:center}.speed-main strong{font:900 42px/48px ui-monospace,monospace}.speed-main span{font:700 10px system-ui}
 .course-map{top:58px;right:max(20px,env(safe-area-inset-right));width:130px;padding:0;background:#07131966;border:0}.course-map-heading,.course-map-caption{display:none}
 .menu-card h1{color:#ed4938;font-family:system-ui;font-size:clamp(32px,5vw,60px)}
-.layout-editor{position:fixed;inset:0;z-index:100;background:#071319e8;touch-action:none}.layout-toolbar{position:absolute;top:8px;left:12px;right:12px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;font:12px system-ui;color:white}.layout-toolbar button{padding:8px;background:#233a42;color:white;border:1px solid #69828b;border-radius:6px}.layout-toolbar label{display:flex;align-items:center;gap:4px}.layout-toolbar input{width:90px}.layout-handle{position:absolute;width:95px;height:65px;border:2px solid #ed4938;border-radius:12px;background:#304954;color:white;font:bold 12px system-ui;touch-action:none}.layout-handle:focus{outline:3px solid white}
+.layout-editor{position:fixed;inset:0;z-index:100;background:#071319e8;touch-action:none}.layout-toolbar{position:absolute;top:8px;left:12px;right:12px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;font:12px system-ui;color:white}.layout-toolbar button{padding:8px;background:#233a42;color:white;border:1px solid #69828b;border-radius:6px}.layout-toolbar label{display:flex;align-items:center;gap:4px}.layout-toolbar input{width:90px}
 @media(min-width:1000px){.timing-panel{width:300px}}
 @media(max-height:500px){.menu-card h1{font-size:30px;margin:6px 0}.steering-select{margin:4px 0}#layout-button{height:30px;margin:4px 0}.primary-button{height:40px}}
 
 .lap-status{justify-content:flex-start;text-align:left}.timing-panel .best-row{letter-spacing:0}.menu-footer{font-family:system-ui}
 .menu-overlay:not(.paused){background:rgba(9,19,24,.94)}.menu-card h1{font-style:normal;letter-spacing:-1.5px}.sector-time{font-size:9px;white-space:nowrap}.sector-heading{font-size:9px;letter-spacing:0}
+
+/* Editor uses the live controls, preserving responsive dimensions and hit areas. */
+.control-layout-active .touch-controls,.control-layout-measuring .touch-controls{display:flex!important}
+.control-layout-measuring .touch-controls{visibility:hidden}
+.control-layout-active .layout-editor .touch-controls{z-index:1}
+.layout-toolbar{z-index:2;pointer-events:auto;background:#071319;padding:8px;border-radius:8px}
+.layout-toolbar input{touch-action:auto}

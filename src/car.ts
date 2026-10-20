@@ -68,12 +68,11 @@ export class CarVisual {
     this.group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right,forward.clone().cross(right).normalize(),forward));
   }
 
-  animate(steering: number, speed: number, elapsed: number): void {
+  animate(steering: number, speed: number, _elapsed: number): void {
     // The camera looks along local +Z; its screen-right axis is local -X.
     for (const wheel of this.frontWheels) wheel.rotation.y = -steering * 0.3;
     for (const mesh of this.wheelMeshes) mesh.rotation.x -= speed * 0.002;
-    const vibration = Math.min(speed / 80, 1) * 0.005;
-    this.camera.position.y = this.baseCameraY + Math.sin(elapsed * 52) * vibration;
+    this.camera.position.y = this.baseCameraY;
   }
 
   private build(): void {
