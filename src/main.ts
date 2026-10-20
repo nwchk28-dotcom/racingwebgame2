@@ -18,10 +18,10 @@ async function launch(): Promise<void> {
   app.innerHTML = `
     <main class="install-gate">
       <div class="install-card">
-        <div class="brand"><span class="brand-mark">A<span>1</span></span><span class="brand-name">APEX <strong>ONE</strong><small>TIME ATTACK</small></span></div>
+        <div class="brand"><span class="brand-mark">F<span>Q</span></span><span class="brand-name">Formula <strong>Q</strong><small>TIME ATTACK</small></span></div>
         <p class="install-eyebrow">HOME SCREEN EDITION</p>
         <h1>ホーム画面から、<br><em>コースへ。</em></h1>
-        <p class="install-lead">APEX ONEはWebアプリ専用です。ホーム画面に追加して、アプリのアイコンから起動してください。</p>
+        <p class="install-lead">Formula QはWebアプリ専用です。ホーム画面に追加して、アプリのアイコンから起動してください。</p>
         <p class="install-benefit">ブラウザのバーが隠れ、横画面いっぱいで運転できます。</p>
         <div class="install-instructions">
           <section><h2>iPhone / iPad</h2><p>Safariでこのページを開く → 共有 →「ホーム画面に追加」→「追加」。<br>「Webアプリとして開く」が表示されたらオンにします。</p></section>
@@ -48,7 +48,7 @@ async function launch(): Promise<void> {
       await pending.prompt();
       const { outcome } = await pending.userChoice;
       app.querySelector('#install-status')!.textContent = outcome === 'accepted'
-        ? '追加しました。ホーム画面またはアプリ一覧のAPEX ONEを開いてください。'
+        ? '追加しました。ホーム画面またはアプリ一覧のFormula Qを開いてください。'
         : 'メニューからも追加できます。追加後にアプリのアイコンを開いてください。';
     } catch {
       app.querySelector('#install-status')!.textContent = 'ブラウザのメニューから追加してください。';
@@ -59,7 +59,7 @@ async function launch(): Promise<void> {
   });
   window.addEventListener('appinstalled', () => {
     button.hidden = true;
-    app.querySelector('#install-status')!.textContent = '追加しました。APEX ONEのアイコンから起動してください。';
+    app.querySelector('#install-status')!.textContent = '追加しました。Formula Qのアイコンから起動してください。';
   });
 }
 

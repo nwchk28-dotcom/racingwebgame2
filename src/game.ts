@@ -63,7 +63,7 @@ app.innerHTML = `
   <div class="cinema-vignette" aria-hidden="true"></div>
 
   <header class="topbar">
-    <div class="brand">formula world</div>
+    <div class="brand">Formula Q</div>
     <div class="track-name"><span class="live-dot"></span> <span id="current-track-name">${TRACKS[0].name}</span> <span class="track-meta">/ DRY / 23°C</span></div>
     <div class="top-actions">
       <button id="sound-button" class="icon-button" type="button" aria-label="音を消す">♪</button>
@@ -119,7 +119,7 @@ app.innerHTML = `
       <button id="layout-button" class="secondary-button" type="button">ボタン配置を変更</button>
       <button id="start-button" class="primary-button" type="button">START ENGINE <span>↗</span></button>
     </div>
-    <div class="menu-footer"><span>FORMULA WORLD / SOLO TIME ATTACK</span><span>01 — ${String(TRACKS.length).padStart(2, '0')}</span></div>
+    <div class="menu-footer"><span>Formula Q / SOLO TIME ATTACK</span><span>01 — ${String(TRACKS.length).padStart(2, '0')}</span></div>
   </section>
 
   <section id="pause-overlay" class="menu-overlay paused" hidden>

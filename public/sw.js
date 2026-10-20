@@ -1,5 +1,5 @@
 /* Scope-relative URLs work on both GitHub Pages project sites and localhost. */
-const CACHE = 'apex-one-webapp-v1';
+const CACHE = 'apex-one-webapp-v2';
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll([
     './', './manifest.webmanifest', './app-192.png', './app-512.png',
