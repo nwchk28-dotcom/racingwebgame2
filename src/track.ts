@@ -235,10 +235,11 @@ export class Track extends TrackPath {
       }
       for(const area of this.native.corridor.escapeAreas??[]){
         const shape=new THREE.Shape(area.polygon.map(p=>new THREE.Vector2(p.x,-p.z)));
-        // Same surface colour/depth where an escape road meets the runoff.
-        const material=new THREE.MeshStandardMaterial({color:0x697375,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+        // Keep the escape paving beneath the road and kerbs, including where
+        // its polygon overlaps a chicane. Negative depth bias hides the asphalt.
+        const material=new THREE.MeshStandardMaterial({color:0x697375,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
         const mesh=new THREE.Mesh(new THREE.ShapeGeometry(shape),material);mesh.name='escape-road';
-        mesh.rotation.x=-Math.PI/2;mesh.position.y=area.height+.018;scene.add(mesh);
+        mesh.rotation.x=-Math.PI/2;mesh.position.y=area.height+.008;scene.add(mesh);
       }
     } else {
     const widths = this.distances.map(distance => this.roadHalfWidthAt(distance / this.length));

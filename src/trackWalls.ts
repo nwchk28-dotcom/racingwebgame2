@@ -233,7 +233,8 @@ export class TrackWalls {
 
   constructor(path: TrackPath, curbOuterEdge = path.definition.roadHalfWidth + path.definition.curbWidth) {
     if (path.native) {
-      this.segments.push(...path.native.corridor.barriers.map(w => ({ ax:w.a.x,az:w.a.z,bx:w.b.x,bz:w.b.z,
+      // Native escape openings must be absent from both rendered rails and contacts.
+      this.segments.push(...path.native.corridor.barriers.filter(w => !w.passable).map(w => ({ ax:w.a.x,az:w.a.z,bx:w.b.x,bz:w.b.z,
         inwardX:w.inward.x,inwardZ:w.inward.z,twoSided:w.twoSided,heightA:w.heightA,heightB:w.heightB })));
       for (const [index,w] of this.segments.entries()) {
         for(let x=Math.floor((Math.min(w.ax,w.bx)-2)/CELL_SIZE);x<=Math.floor((Math.max(w.ax,w.bx)+2)/CELL_SIZE);x++)

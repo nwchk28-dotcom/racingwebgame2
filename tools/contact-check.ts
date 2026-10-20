@@ -33,9 +33,9 @@ function reset(){
  laps=new LapTracker(track.length);laps.reset(physics.trackProgress);maxHeightStep=0;previousHeight=physics.y;accumulator=0;
 }
 async function select(){
- loading=true;const id=route.value==='spa'?'spa':'suzuka';await loadNativeCircuit(id);
+ loading=true;const id=route.value==='spa'?'spa':route.value==='monaco'?'monaco':'suzuka';await loadNativeCircuit(id);
  if(track)track.dispose();track=new Track(scene,TRACKS.find(t=>t.id===id)!);
- start=route.value==='spa'?1000:route.value==='lower'?2489.88481448:4860.14075137;end=start+(id==='spa'?250:120);
+ start=route.value==='spa'?1000:route.value==='monaco'?2010:route.value==='chicane'?5300:route.value==='lower'?2489.88481448:4860.14075137;end=start+(route.value==='chicane'?300:id==='monaco'?260:id==='spa'?250:120);
  reset();loading=false;
 }
 route.onchange=()=>void select();offset.onchange=()=>{if(!loading)reset();};

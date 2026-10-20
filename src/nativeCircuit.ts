@@ -9,7 +9,7 @@ export interface NativeCircuit {
   obstacles: { x: number; z: number; radius: number }[];
   corridor: {
     left: number[]; right: number[];
-    barriers: { a: {x:number;z:number}; b:{x:number;z:number}; inward:{x:number;z:number}; heightA:number; heightB:number; twoSided:boolean }[];
+    barriers: { a: {x:number;z:number}; b:{x:number;z:number}; inward:{x:number;z:number}; heightA:number; heightB:number; twoSided:boolean; passable?:boolean }[];
     escapeAreas?: {polygon:{x:number;z:number}[];height:number}[];
   };
 }

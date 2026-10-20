@@ -8,5 +8,6 @@ export const RECORD_VERSIONS = {
   global: 7,
   /** Increase only affected courses for layout, road width, wall or timing changes.
    * Missing entries have revision 0, preserving currently compatible records. */
-  tracks: {} as Partial<Record<TrackId, number>>,
+  // Restore the native passable rail openings at both chicanes.
+  tracks: {monaco:1,suzuka:1} as Partial<Record<TrackId, number>>,
 };

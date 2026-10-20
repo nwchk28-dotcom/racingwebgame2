@@ -11,7 +11,7 @@ describe('iOS course transfer',()=>{
     const path=new TrackPath(d),n=nativeCircuits[d.id],walls=new TrackWalls(path);
     expect(path.sampleCount).toBe(n.points.length-1);
     expect(path.length).toBeCloseTo(n.length,3);
-    expect(walls.segments).toHaveLength(n.corridor.barriers.length);
+    expect(walls.segments).toHaveLength(n.corridor.barriers.filter(w=>!w.passable).length);
     for(let i=0;i<path.sampleCount;i+=73){
       expect([path.samples[i].x,path.samples[i].z]).toEqual(n.points[i]);
       expect(path.roadHalfWidthAt(path.distances[i]/path.length)).toBeCloseTo(n.widths[i],4);
@@ -42,4 +42,19 @@ describe('iOS course transfer',()=>{
     expect(walls.contact(x,z,.35,h)?.depth).toBeGreaterThan(0);
     expect(walls.contact(x,z,.35,h+100)).toBeNull();
   });
+});
+
+it.each(['monaco','suzuka'])('%s keeps native escape openings free of visible and collidable rails',id=>{
+ const path=new TrackPath(TRACKS.find(t=>t.id===id)!),walls=new TrackWalls(path),barriers=nativeCircuits[id].corridor.barriers;
+ const openings=barriers.filter(w=>w.passable);
+ expect(openings.length).toBeGreaterThan(0);
+ for(const w of openings.filter((_,i)=>i%7===3)){
+  const x=(w.a.x+w.b.x)/2,z=(w.a.z+w.b.z)/2,h=(w.heightA+w.heightB)/2;
+  for(const offset of [-1,0,1])expect(walls.contact(x+w.inward.x*offset,z+w.inward.z*offset,.35,h),`${id} opening at ${x},${z}`).toBeNull();
+ }
+ // The outer safety rails remain present and collidable.
+ for(const w of barriers.slice(-3)){
+  const x=(w.a.x+w.b.x)/2+w.inward.x*.1,z=(w.a.z+w.b.z)/2+w.inward.z*.1;
+  expect(walls.contact(x,z,.35,(w.heightA+w.heightB)/2)).not.toBeNull();
+ }
 });

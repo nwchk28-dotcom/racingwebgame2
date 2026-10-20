@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
-import { Matrix4, Mesh, InstancedMesh, Scene } from 'three';
+import { Matrix4, Mesh, InstancedMesh, Scene, Raycaster, Vector3, MeshStandardMaterial } from 'three';
 import { loadNativeCircuit, nativeCircuits } from './nativeCircuit';
 import { TRACKS } from './trackData';
 import { Track } from './track';
@@ -38,3 +38,23 @@ it('keeps the terrain field below the lower Suzuka crossing arm',()=>{
  const data=nativeCircuits.suzuka,point={x:-887.25633182,z:-71.56775933};
  expect(terrainHeight(data.terrain,point.x,point.z)).toBeLessThan(-2);
 });
+
+it('keeps the Suzuka final chicane asphalt above the escape paving',()=>{
+ const track=new Track(new Scene(),TRACKS.find(t=>t.id==='suzuka')!);
+ track.group.updateMatrixWorld(true);
+ const escape=track.group.getObjectByName('escape-road') as Mesh;
+ expect((escape.material as MeshStandardMaterial).polygonOffsetFactor).toBeGreaterThanOrEqual(0);
+ const surfaces=track.group.children.filter(o=>['road','curb-red','curb-white','escape-road'].includes(o.name));
+ const ray=new Raycaster();
+ for(let distance=5300;distance<=5570;distance+=10){
+  const i=track.distances.findIndex(d=>d>distance)-1,t=(distance-track.distances[i])/(track.distances[i+1]-track.distances[i]);
+  for(const offset of [-4,0,4]){
+   const p=track.ribbon!.at(i,t,offset);
+   ray.set(new Vector3(p.x,p.height+20,p.z),new Vector3(0,-1,0));
+   const hits=ray.intersectObjects(surfaces,false);
+   expect(hits[0]?.object.name,`visible asphalt at ${distance}m, offset ${offset}`).toBe('road');
+   expect(hits[0].point.y).toBeCloseTo(p.height+.018,2);
+  }
+ }
+ track.dispose();
+},15000);
