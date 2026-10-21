@@ -28,14 +28,16 @@ const point=(d:number)=>{
 };
 function reset(){
  distance=start;const p=point(distance),next=point(distance+.1);
- physics=new CarPhysics(track);physics.x=p.x;physics.z=p.z;physics.yaw=Math.atan2(next.x-p.x,next.z-p.z);
+ physics=new CarPhysics(track);
+ const lo=track.ribbon!.segmentAt(start/track.length),t=(start-track.distances[lo])/(track.distances[lo+1]-track.distances[lo]),center=track.ribbon!.at(lo,t,0);
+ physics.x=center.x;physics.z=center.z;physics.step({throttle:0,brake:0,steer:0},1/120);physics.x=p.x;physics.z=p.z;physics.yaw=Math.atan2(next.x-p.x,next.z-p.z);
  physics.step({throttle:0,brake:0,steer:0},1/120);pose=new PoseInterpolator(physics);
  laps=new LapTracker(track.length);laps.reset(physics.trackProgress);maxHeightStep=0;previousHeight=physics.y;accumulator=0;
 }
 async function select(){
- loading=true;const id=route.value==='spa'?'spa':route.value==='monaco'?'monaco':'suzuka';await loadNativeCircuit(id);
+ loading=true;const id=route.value==='spa'?'spa':route.value==='monaco'?'monaco':route.value.startsWith('baku-')?'baku':'suzuka';await loadNativeCircuit(id);
  if(track)track.dispose();track=new Track(scene,TRACKS.find(t=>t.id===id)!);
- start=route.value==='spa'?1000:route.value==='monaco'?2010:route.value==='chicane'?5300:route.value==='lower'?2489.88481448:4860.14075137;end=start+(route.value==='chicane'?300:id==='monaco'?260:id==='spa'?250:120);
+ start=route.value==='baku-out'?2050:route.value==='baku-back'?4700:route.value==='spa'?1000:route.value==='monaco'?2010:route.value==='chicane'?5300:route.value==='lower'?2489.88481448:4860.14075137;end=start+(route.value==='chicane'?300:id==='monaco'?260:id==='spa'?250:120);
  reset();loading=false;
 }
 route.onchange=()=>void select();offset.onchange=()=>{if(!loading)reset();};

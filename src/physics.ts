@@ -110,10 +110,11 @@ export class CarPhysics {
     this.vz += (forwardZ * forwardAcceleration + rightZ * lateralAcceleration + dragZ) * dt;
     if (input.brake > 0 && speed < 0.5 && input.throttle === 0) this.vx = this.vz = 0;
     if (input.throttle === 0 && this.speed < 0.05) this.vx = this.vz = 0;
+    const previousX=this.x,previousZ=this.z;
     this.x += this.vx * dt;
     this.z += this.vz * dt;
     this.updateSurface();
-    this.resolveCollisions();
+    this.resolveCollisions(previousX,previousZ);
     this.updateSurface();
     const nearest = this.roadPosition(this.x, this.z);
     this.progress=nearest.progress;
@@ -146,7 +147,7 @@ export class CarPhysics {
     return true;
   }
 
-  private resolveCollisions(): void {
+  private resolveCollisions(previousX:number,previousZ:number): void {
     this.collided = false;
     const cos = Math.cos(this.yaw);
     const sin = Math.sin(this.yaw);
@@ -184,7 +185,7 @@ export class CarPhysics {
       for (const [localX, localZ] of BODY_CONTACTS) {
         const pointX = this.x + localX * cos + localZ * sin;
         const pointZ = this.z - localX * sin + localZ * cos;
-        const contact = this.track.walls.contact(pointX, pointZ, CAR_CONTACT_RADIUS, this.y);
+        const contact = this.track.walls.contact(pointX, pointZ, CAR_CONTACT_RADIUS, this.y, previousX, previousZ);
         if (!contact || contact.depth <= deepest) continue;
         deepest = contact.depth;
         inwardX = contact.normalX;

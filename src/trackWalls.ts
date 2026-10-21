@@ -291,7 +291,7 @@ export class TrackWalls {
     }
   }
 
-  contact(x: number, z: number, radius: number, height?: number): WallContact | null {
+  contact(x: number, z: number, radius: number, height?: number, fromX?: number, fromZ?: number): WallContact | null {
     const candidates = this.cells.get(key(Math.floor(x / CELL_SIZE), Math.floor(z / CELL_SIZE)));
     if (!candidates) return null;
     let best: WallContact | null = null;
@@ -303,9 +303,15 @@ export class TrackWalls {
       if (t < -.12 || t > 1.12) continue;
       if (height !== undefined && Math.abs(height - ((wall.heightA ?? 0)*(1-t)+(wall.heightB ?? 0)*t)) > 3) continue;
       const inwardDistance = (x - wall.ax) * wall.inwardX + (z - wall.az) * wall.inwardZ;
-      const depth = radius - (wall.twoSided ? Math.abs(inwardDistance) : inwardDistance);
+      const originDistance = fromX === undefined || fromZ === undefined ? inwardDistance
+        : (fromX-wall.ax)*wall.inwardX+(fromZ-wall.az)*wall.inwardZ;
+      // A one-sided rail bounds its own road. Its back face must not pull a
+      // car off a neighbouring straight. Keep the pre-movement side stable
+      // throughout penetration recovery, including for two-sided walls.
+      if (!wall.twoSided && fromX !== undefined && originDistance < -1e-6) continue;
+      const direction = wall.twoSided && originDistance < 0 ? -1 : 1;
+      const depth = radius - inwardDistance * direction;
       if (depth <= 0 || depth > 5 || (best && depth <= best.depth)) continue;
-      const direction = wall.twoSided && inwardDistance < 0 ? -1 : 1;
       best = { depth, normalX: wall.inwardX * direction, normalZ: wall.inwardZ * direction };
     }
     return best;

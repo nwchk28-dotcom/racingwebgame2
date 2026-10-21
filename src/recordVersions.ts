@@ -4,8 +4,8 @@ import type { TrackId } from './trackData';
  * Never decrease or reuse a revision: old, incompatible records must stay hidden.
  * Cosmetic/audio/UI changes do not need a revision increase. */
 export const RECORD_VERSIONS = {
-  // One continuous parametric surface for road, curbs and all driveable runoff.
-  global: 7,
+  // Resolve rail contacts from the pre-movement side, without pulling from adjacent roads.
+  global: 8,
   /** Increase only affected courses for layout, road width, wall or timing changes.
    * Missing entries have revision 0, preserving currently compatible records. */
   // Restore the native passable rail openings at both chicanes.
