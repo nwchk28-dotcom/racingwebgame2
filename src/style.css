@@ -15,78 +15,76 @@ html.chrome-ios-gutters #scene{left:calc(0px - var(--scene-overhang));right:calc
 .gear-label{margin-left:12px;color:#e7f0e9;letter-spacing:.13em}.gear-label b{font-family:'Barlow Condensed',sans-serif;font-size:16px;color:#ef5949;vertical-align:-1px}
 @media(orientation:portrait) and (pointer:coarse){.rotate-overlay{display:flex}}
 
-#start-overlay{overflow-y:auto}
-#start-overlay .menu-card{max-width:940px}
+#start-overlay{overflow-y:auto;justify-content:flex-start;padding:clamp(24px,5vh,64px) clamp(20px,5vw,80px) 36px}
+#start-overlay .menu-card{width:100%;max-width:1200px;margin:auto}
+#start-overlay .menu-footer{display:none}
 #start-overlay .menu-card h1{margin:17px 0 12px;font-size:clamp(74px,8vw,120px)}
 #start-overlay .menu-card p{margin:0 0 20px}
-.track-select-heading{display:flex;justify-content:space-between;gap:12px;max-width:810px;margin-bottom:8px;font-size:9px;font-weight:800;letter-spacing:.2em;color:#d8e5dd}
+.track-select-heading{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:12px;max-width:none;margin-bottom:12px;font-size:12px;font-weight:800;letter-spacing:.2em;color:#d8e5dd}
 .track-select-heading span:last-child{color:#96aca5}
-.track-pages{display:flex;align-items:center;gap:4px}
-.track-page{height:22px;padding:0 7px;border:1px solid #b9d1c966;border-radius:3px;background:#11272cbb;color:#d8e5dd;font-size:8px;font-weight:800;letter-spacing:.06em;touch-action:manipulation}
+.track-pages{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.track-page{flex-shrink:0;white-space:nowrap;height:32px;padding:0 10px;border:1px solid #b9d1c966;border-radius:3px;background:#11272cbb;color:#d8e5dd;font-size:11px;font-weight:800;letter-spacing:.06em;touch-action:manipulation}
 .track-page.selected{border-color:#f16b58;background:#67312ccc;color:#fff}
 .track-option[hidden]{display:none}
-.track-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:810px;margin-bottom:16px}
-.track-option{min-width:0;min-height:112px;padding:8px 10px;border:1px solid #b9d1c966;border-radius:4px;background:linear-gradient(145deg,#132b31e6,#0a171bdc);color:#f2f8f3;text-align:left;touch-action:manipulation;transition:border-color .15s,background .15s,transform .15s}
+.track-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;max-width:none;margin-bottom:20px}
+.track-option{min-width:0;min-height:250px;padding:16px 18px;border:1px solid #b9d1c966;border-radius:4px;background:linear-gradient(145deg,#132b31e6,#0a171bdc);color:#f2f8f3;text-align:left;touch-action:manipulation;transition:border-color .15s,background .15s,transform .15s}
 .track-option:hover{border-color:#e9f4ee;transform:translateY(-2px)}
 .track-option.selected{border-color:#f16b58;background:linear-gradient(145deg,#63312dd9,#182e31e8);box-shadow:inset 0 0 0 1px #e85a4d66,0 9px 32px #070f1780}
-.track-option-top,.track-option-bottom{display:flex;align-items:center;justify-content:space-between;gap:7px;font-size:9px;font-weight:700;letter-spacing:.1em;color:#abbfb9}
-.track-option-top b{color:#ed6c5b;font-size:13px}
-.track-option svg{display:block;width:100%;height:45px;margin:2px auto}
+.track-option-top,.track-option-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:700;letter-spacing:.08em;color:#c3d2cd}
+.track-option-top b{color:#ed6c5b;font-size:20px}
+.track-option svg{display:block;width:100%;height:100px;margin:8px auto}
 .track-option svg polyline{fill:none;stroke:#d9e5dc;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
-.track-option strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Barlow Condensed',Impact,sans-serif;font-size:22px;letter-spacing:.08em}
-.track-option-bottom{margin-top:4px;font-size:8px;letter-spacing:.04em}
-.track-option-bottom b{color:#fff;font-variant-numeric:tabular-nums}
+.track-option strong{display:block;min-height:2.1em;line-height:1.05;white-space:normal;overflow-wrap:anywhere;font-family:'Barlow Condensed',Impact,sans-serif;font-size:28px;letter-spacing:.04em}
+.track-option-bottom{align-items:stretch;flex-direction:column;gap:6px;margin-top:10px;font-size:13px;letter-spacing:.04em}
+.track-option-bottom>span:last-child{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.track-option-bottom b{color:#fff;font-size:22px;letter-spacing:0;font-variant-numeric:tabular-nums;white-space:nowrap}
 #start-button{max-width:810px}
 
-@media(orientation:landscape) and (min-height:541px) and (max-height:800px){
-  #start-overlay{padding:30px max(24px,env(safe-area-inset-right)) 24px max(24px,env(safe-area-inset-left))}
-  #start-overlay .menu-card{display:grid;grid-template-columns:minmax(180px,.58fr) minmax(0,1.65fr);grid-template-rows:auto auto auto 1fr;column-gap:20px;align-items:start;max-width:none}
-  #start-overlay .menu-kicker{grid-column:1;grid-row:1;font-size:9px;letter-spacing:.13em}
-  #start-overlay h1{grid-column:1;grid-row:2;font-size:clamp(58px,7vw,86px)!important;margin:23px 0 10px!important}
-  #start-overlay p{grid-column:1;grid-row:3;font-size:11px;margin:0!important}
-  #start-overlay .track-select-heading{grid-column:2;grid-row:1;margin:0 0 7px}
-  #start-overlay .track-options{grid-column:2;grid-row:2 / span 2;gap:7px;margin:0}
-  #start-overlay .track-option{min-height:98px;padding:6px}
-  #start-overlay .track-option svg{height:38px;margin:1px auto}
-  #start-overlay .track-option strong{font-size:17px}
-  #start-overlay .steering-select{grid-column:1;grid-row:4;align-self:center;flex-wrap:wrap;margin:0}
-  #start-overlay .primary-button{grid-column:2;grid-row:4;margin-top:12px;height:46px}
-  #start-overlay .menu-help,#start-overlay .menu-footer{display:none}
-}
-
-@media(orientation:landscape) and (max-height:540px){
-  #start-overlay{padding:22px max(22px,env(safe-area-inset-right)) 16px max(22px,env(safe-area-inset-left))}
-  #start-overlay .menu-card{display:grid;grid-template-columns:minmax(165px,.62fr) minmax(0,1.65fr);grid-template-rows:auto auto auto 1fr;column-gap:18px;align-items:start;max-width:none}
-  #start-overlay .menu-kicker{grid-column:1;grid-row:1;font-size:8px;letter-spacing:.1em}
-  #start-overlay h1{grid-column:1;grid-row:2;font-size:clamp(52px,7vw,73px)!important;margin:19px 0 6px!important}
-  #start-overlay p{grid-column:1;grid-row:3;font-size:10px;margin:0!important}
-  #start-overlay .track-select-heading{grid-column:2;grid-row:1;margin:0 0 5px;font-size:8px}
+/* Give the course cards the full width of short landscape screens. */
+@media(orientation:landscape) and (max-height:800px){
+  #start-overlay{padding:20px max(20px,env(safe-area-inset-right)) 20px max(20px,env(safe-area-inset-left))}
+  #start-overlay .menu-card{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:end;max-width:1200px}
+  #start-overlay .menu-kicker,#start-overlay h1,#start-overlay .menu-intro,#start-overlay .menu-footer{display:none}
+  #start-overlay .track-select-heading{grid-column:1 / -1;grid-row:1;align-items:center;margin:0;flex-wrap:wrap}
   #start-overlay .track-total{display:none}
-  #start-overlay .track-pages{display:flex}
-  #start-overlay .track-options{grid-column:2;grid-row:2 / span 2;gap:6px;margin:0}
-  #start-overlay .track-option{min-height:85px;padding:4px 6px}
-  #start-overlay .track-option svg{height:30px;margin:1px auto}
-  #start-overlay .track-option strong{font-size:16px}
-  #start-overlay .track-option-top,.track-option-bottom{font-size:7px}
-  #start-overlay .primary-button{grid-column:2;grid-row:4;margin-top:9px;height:43px}
-  #start-overlay .menu-help,#start-overlay .menu-footer{display:none}
+  #start-overlay .track-pages{gap:5px;flex-wrap:wrap}
+  #start-overlay .track-options{grid-column:1 / -1;grid-row:2;gap:14px;margin:0}
+  #start-overlay .track-option{min-height:clamp(190px,43vh,310px);padding:14px}
+  #start-overlay .track-option svg{height:clamp(50px,15vh,110px);margin:6px auto}
+  #start-overlay .track-option strong{font-size:clamp(20px,2.5vw,30px)}
+  #start-overlay .steering-select{grid-column:1;grid-row:3;display:block;margin:0;align-self:center}
+  #start-overlay .steering-select>span{display:block;margin-bottom:4px;font-size:9px}
+  #start-overlay .steering-options{gap:6px}
+  #start-overlay .steering-option{flex:1;min-width:0;height:32px;padding:0 5px;font-size:14px}
+  #start-overlay #layout-button{grid-column:2;grid-row:3;width:100%;height:48px;margin:0;font-size:16px}
+  #start-overlay #start-button{grid-column:3;grid-row:3;width:100%;height:48px;margin:0;font-size:22px}
 }
-
+@media(orientation:landscape) and (max-height:540px){
+  #start-overlay{padding:12px max(16px,env(safe-area-inset-right)) 12px max(16px,env(safe-area-inset-left))}
+  #start-overlay .menu-card{gap:10px}
+  #start-overlay .track-options{gap:10px}
+  #start-overlay .track-option{min-height:clamp(172px,49vh,240px);padding:10px 12px}
+  #start-overlay .track-option-top{font-size:11px;letter-spacing:.04em}
+  #start-overlay .track-option-top b{font-size:17px}
+  #start-overlay .track-option svg{height:clamp(44px,15vh,76px);margin:4px auto}
+  #start-overlay .track-option strong{font-size:clamp(18px,2.6vw,25px);letter-spacing:.025em}
+  #start-overlay .track-option-bottom{gap:3px;margin-top:5px;font-size:11px}
+  #start-overlay .track-option-bottom b{font-size:18px}
+  #start-overlay .track-select-heading{font-size:11px;letter-spacing:.1em}
+  #start-overlay #layout-button,#start-overlay #start-button{height:44px}
+  #start-overlay #layout-button{font-size:14px}
+  #start-overlay #start-button{font-size:18px;padding:0 14px}
+  #start-overlay .steering-option{height:28px;font-size:12px}
+}
 /* Touch controls use symbols alone; accessible names remain in the markup. */
 .steer-button span{font-size:clamp(27px,3.6vw,43px)}
 .pedal{justify-content:center;align-items:center}
 .pedal-bars{font-size:clamp(22px,3vw,34px);opacity:.9;line-height:1}
 
-@media(max-width:650px) and (orientation:landscape){
-  #start-overlay .menu-card{grid-template-columns:145px minmax(0,1fr);column-gap:10px}
-  #start-overlay .track-option-bottom{display:block}
-}
-
 @media(max-width:700px) and (orientation:landscape){
-  #start-overlay .track-option strong{font-size:11px;letter-spacing:.025em}
   #start-overlay .track-select-heading>span:first-child{display:none}
-  #start-overlay .track-pages{gap:3px;flex-wrap:wrap;justify-content:flex-end}
-  #start-overlay .track-page{padding:0 5px;font-size:7px}
+  #start-overlay .track-pages{width:100%;justify-content:space-between;gap:3px}
+  #start-overlay .track-page{padding:0 6px;font-size:10px}
 }
 
 .course-map{position:absolute;top:81px;right:clamp(22px,3.4vw,62px);z-index:2;display:none;width:180px;padding:11px 10px 8px;border:1px solid #d6ece044;border-radius:5px;background:linear-gradient(155deg,#102328e8,#08161bcf);box-shadow:0 12px 35px #06101482;backdrop-filter:blur(12px);pointer-events:none}
@@ -132,12 +130,7 @@ html.chrome-ios-gutters #scene{left:calc(0px - var(--scene-overhang));right:calc
 .steering-option.selected{border-color:#f16b58;background:#67312ccc;color:#fff}
 @media(max-height:500px) and (pointer:coarse){.steering-input{width:min(35vw,280px)}.steer-button{height:70px}.touch-controls{padding-bottom:max(31px,calc(env(safe-area-inset-bottom) + 22px))}}
 @media(max-width:700px) and (pointer:coarse){.steering-input{width:36vw}.steer-button{height:62px}.steer-button span{font-size:23px}.steer-button strong{font-size:11px}}
-@media(orientation:landscape) and (max-height:540px){
-  #start-overlay .steering-select{grid-column:1;grid-row:4;display:block;align-self:center;margin:0}
-  #start-overlay .steering-select>span{display:block;margin-bottom:4px;font-size:7px}
-  #start-overlay .steering-options{gap:4px}
-  #start-overlay .steering-option{flex:1;min-width:0;height:24px;padding:0 2px;font-size:10px}
-}
+
 
 /* A short install hint belongs to the start menu, not the driving view. */
 .install-tip{display:none;max-width:370px;margin:0 0 16px;padding:10px 12px;border-left:3px solid #e94b3c;background:#10262bdc;box-shadow:0 8px 24px #06101455;line-height:1.35}
