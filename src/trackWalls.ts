@@ -299,9 +299,12 @@ export class TrackWalls {
       const wall = this.segments[index];
       const dx = wall.bx - wall.ax;
       const dz = wall.bz - wall.az;
-      const t = ((x - wall.ax) * dx + (z - wall.az) * dz) / (dx * dx + dz * dz);
-      if (t < -.12 || t > 1.12) continue;
-      if (height !== undefined && Math.abs(height - ((wall.heightA ?? 0)*(1-t)+(wall.heightB ?? 0)*t)) > 3) continue;
+      const lengthSquared = dx * dx + dz * dz;
+      if (lengthSquared < 1e-9) continue;
+      const t = ((x - wall.ax) * dx + (z - wall.az) * dz) / lengthSquared;
+      const along = Math.max(0, Math.min(1, t));
+      if ((t-along)**2 * lengthSquared > radius * radius) continue;
+      if (height !== undefined && Math.abs(height - ((wall.heightA ?? 0)*(1-along)+(wall.heightB ?? 0)*along)) > 3) continue;
       const inwardDistance = (x - wall.ax) * wall.inwardX + (z - wall.az) * wall.inwardZ;
       const originDistance = fromX === undefined || fromZ === undefined ? inwardDistance
         : (fromX-wall.ax)*wall.inwardX+(fromZ-wall.az)*wall.inwardZ;
@@ -310,9 +313,19 @@ export class TrackWalls {
       // throughout penetration recovery, including for two-sided walls.
       if (!wall.twoSided && fromX !== undefined && originDistance < -1e-6) continue;
       const direction = wall.twoSided && originDistance < 0 ? -1 : 1;
-      const depth = radius - inwardDistance * direction;
+      let depth = radius - inwardDistance * direction;
+      let normalX = wall.inwardX * direction, normalZ = wall.inwardZ * direction;
+      if (t < 0 || t > 1) {
+        // A finite rail ends here: percentage padding would extend a 100 m
+        // escape rail by 12 m into the road. Only the contact radius reaches
+        // beyond its endpoint, with a rounded cap and an outward normal.
+        const endX = x - (wall.ax + dx * along), endZ = z - (wall.az + dz * along);
+        const gap = Math.hypot(endX, endZ);
+        depth = radius - gap;
+        if (gap > 1e-9) { normalX = endX / gap; normalZ = endZ / gap; }
+      }
       if (depth <= 0 || depth > 5 || (best && depth <= best.depth)) continue;
-      best = { depth, normalX: wall.inwardX * direction, normalZ: wall.inwardZ * direction };
+      best = { depth, normalX, normalZ };
     }
     return best;
   }
