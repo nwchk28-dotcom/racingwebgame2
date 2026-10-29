@@ -13,8 +13,8 @@ describe('engine gears', () => {
   });
 
   it('maps a given speed to one stable pitch, with a drop at each upshift', () => {
-    expect(pitchAtSpeed(0)).toBe(130);
-    expect(pitchAtSpeed(50)).toBe(156);
+    expect(pitchAtSpeed(0)).toBe(220);
+    expect(pitchAtSpeed(50)).toBe(264);
     const boundaries = [0, 50, 82, 116, 153, 190, 228, 265, 300];
     for (let gear = 0; gear < boundaries.length - 1; gear++) {
       const low = boundaries[gear];
@@ -55,6 +55,22 @@ describe('engine gears', () => {
     expect(accelerating.noiseGain).toBeGreaterThan(coasting.noiseGain);
     expect(accelerating.bodyCutoff).toBeGreaterThan(coasting.bodyCutoff);
     expect(engineToneAt(260, 1).noiseCutoff).toBeGreaterThan(accelerating.noiseCutoff);
+  });
+
+  it('increases irregular combustion under load and with revs', () => {
+    const idle = engineToneAt(0, 0);
+    const loaded = engineToneAt(49, 1);
+    expect(loaded.combustionRate).toBeGreaterThan(idle.combustionRate);
+    expect(loaded.pitchScatter).toBeGreaterThan(idle.pitchScatter);
+    expect(loaded.amplitudeScatter).toBeGreaterThan(idle.amplitudeScatter);
+    // Modulation must not invert either audible gain, even at full depth.
+    for (const speed of [0, 25, 49, 100, 200, 300]) {
+      for (const throttle of [0, 1]) {
+        const tone = engineToneAt(speed, throttle);
+        expect(tone.amplitudeScatter).toBeLessThan(tone.bodyGain);
+        expect(tone.amplitudeScatter).toBeLessThan(tone.biteGain);
+      }
+    }
   });
 
   it('crossfades recorded tones across the rev range of each gear', () => {

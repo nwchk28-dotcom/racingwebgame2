@@ -5,7 +5,7 @@ export { gearAtSpeed } from './vehicleTuning';
 
 export function pitchAtSpeed(kmh: number): number {
   const { gear, rev } = gearAtSpeed(kmh);
-  return 130 + (gear - 1) * 26 + rev * 75;
+  return 220 + (gear - 1) * 44 + rev * 130;
 }
 
 export function engineLayerWeightsAt(speedKmh: number): [number, number, number] {
@@ -18,12 +18,15 @@ export function engineToneAt(speedKmh: number, throttle: number) {
   const load = Math.max(0, Math.min(throttle, 1));
   const { rev } = gearAtSpeed(speedKmh);
   return {
-    bodyGain: 0.105 + speed * 0.025 + load * 0.035,
-    bodyCutoff: 850 + speed * 1400 + rev * 1100 + load * 900,
-    rumbleGain: 0.065 + (1 - speed) * 0.03,
-    biteGain: 0.014 + speed * 0.025 + rev * 0.025 + load * 0.045,
-    noiseGain: 0.006 + speed * 0.012 + load * 0.025 + (1 - load) * speed * 0.008,
-    noiseCutoff: 750 + speed * 2100 + load * 1100,
+    bodyGain: 0.09 + speed * 0.02 + load * 0.03,
+    bodyCutoff: 1600 + speed * 2200 + rev * 1600 + load * 1300,
+    rumbleGain: 0.028 + (1 - speed) * 0.02,
+    biteGain: 0.025 + speed * 0.035 + rev * 0.03 + load * 0.055,
+    noiseGain: 0.012 + speed * 0.018 + load * 0.035 + (1 - load) * speed * 0.008,
+    noiseCutoff: 1400 + speed * 2800 + load * 1500,
+    combustionRate: 45 + rev * 85 + speed * 40,
+    pitchScatter: 9 + rev * 6 + load * 13,
+    amplitudeScatter: 0.012 + load * 0.022,
   };
 }
 
@@ -57,6 +60,9 @@ export class EngineAudio {
   private biteGain: GainNode | null = null;
   private noiseGain: GainNode | null = null;
   private noiseFilter: BiquadFilterNode | null = null;
+  private combustionFilter: BiquadFilterNode | null = null;
+  private pitchScatter: GainNode | null = null;
+  private amplitudeScatter: GainNode | null = null;
   private active = false;
   private muted = false;
   private speed = 0;
@@ -106,7 +112,7 @@ export class EngineAudio {
       const curve = new Float32Array(new ArrayBuffer(1024 * Float32Array.BYTES_PER_ELEMENT));
       for (let i = 0; i < curve.length; i++) {
         const x = i / (curve.length - 1) * 2 - 1;
-        curve[i] = Math.tanh(x * 1.8) / Math.tanh(1.8);
+        curve[i] = Math.tanh(x * 2.8) / Math.tanh(2.8);
       }
       saturator.curve = curve;
       saturator.oversample = '2x';
@@ -154,17 +160,26 @@ export class EngineAudio {
       noiseFilter.connect(noiseGain);
       noiseGain.connect(this.gain!);
 
-      // Small amplitude irregularity makes combustion feel less perfectly
-      // periodic, without changing the pitch chosen from speed and gear.
-      for (const [frequency, depth] of [[7.1, 0.006], [10.7, 0.003]] as const) {
-        const pulse = context.createOscillator();
-        pulse.frequency.value = frequency;
-        const pulseDepth = context.createGain();
-        pulseDepth.gain.value = depth;
-        pulse.connect(pulseDepth);
-        pulseDepth.connect(bodyGain.gain);
-        pulse.start();
-      }
+      // Filtered random modulation breaks the repeating waveform into uneven
+      // combustion pulses. Shared detuning preserves phase during layer blends.
+      const combustionFilter = context.createBiquadFilter();
+      combustionFilter.type = 'lowpass';
+      combustionFilter.frequency.value = 45;
+      combustionFilter.Q.value = 0.5;
+      noiseSource.connect(combustionFilter);
+      const pitchScatter = context.createGain();
+      pitchScatter.gain.value = 9;
+      combustionFilter.connect(pitchScatter);
+      layerSources.forEach(source => pitchScatter.connect(source.detune));
+      pitchScatter.connect(rumbleSource.detune);
+      const amplitudeScatter = context.createGain();
+      amplitudeScatter.gain.value = 0.012;
+      combustionFilter.connect(amplitudeScatter);
+      amplitudeScatter.connect(bodyGain.gain);
+      amplitudeScatter.connect(biteGain.gain);
+      this.combustionFilter = combustionFilter;
+      this.pitchScatter = pitchScatter;
+      this.amplitudeScatter = amplitudeScatter;
 
       this.source = layerSources[0];
       this.layerSources = layerSources;
@@ -254,6 +269,9 @@ export class EngineAudio {
     this.biteGain?.gain.setTargetAtTime(tone.biteGain, now, 0.06);
     this.noiseGain?.gain.setTargetAtTime(tone.noiseGain, now, 0.08);
     this.noiseFilter?.frequency.setTargetAtTime(tone.noiseCutoff, now, 0.08);
+    this.combustionFilter?.frequency.setTargetAtTime(tone.combustionRate, now, 0.08);
+    this.pitchScatter?.gain.setTargetAtTime(tone.pitchScatter, now, 0.08);
+    this.amplitudeScatter?.gain.setTargetAtTime(tone.amplitudeScatter, now, 0.08);
     const sinceShift = now - this.lastUpshiftAt;
     const shiftCut = sinceShift < 0.09 ? 0.28 + 0.72 * sinceShift / 0.09 : 1;
     const master = this.gain.gain;
