@@ -190,7 +190,7 @@ describe('audio continuity', () => {
     audio.update(49, 1);
     context.currentTime = 10.1;
     audio.update(50, 1);
-    expect(master.linearRampToValueAtTime).toHaveBeenLastCalledWith(1, 10.24);
+    expect(master.linearRampToValueAtTime).toHaveBeenLastCalledWith(1, 10.15);
     expect(master.linearRampToValueAtTime).toHaveBeenCalledTimes(2);
     for (const [time, speed] of [[10.4, 49.8], [10.5, 50.2], [10.7, 49.9], [10.8, 50.1]]) {
       context.currentTime = time; audio.update(speed, 1);
@@ -217,12 +217,12 @@ describe('crisp downshift audio', () => {
     master.linearRampToValueAtTime.mockClear();
     context.currentTime = 21;
     audio.update(46, 0);
-    expect(master.linearRampToValueAtTime).toHaveBeenCalledWith(0, 21.008);
-    expect(master.setValueAtTime).toHaveBeenCalledWith(0, 21.11);
-    expect(master.linearRampToValueAtTime).toHaveBeenLastCalledWith(1, 21.14);
-    expect(frequency.setTargetAtTime).toHaveBeenLastCalledWith(pitchAtSpeed(46), 21, .006);
+    expect(master.linearRampToValueAtTime).toHaveBeenCalledWith(0, 21.005);
+    expect(master.setValueAtTime).toHaveBeenCalledWith(0, 21.025);
+    expect(master.linearRampToValueAtTime).toHaveBeenLastCalledWith(1, 21.05);
+    expect(frequency.setTargetAtTime).toHaveBeenLastCalledWith(pitchAtSpeed(46), 21, .004);
     master.setTargetAtTime.mockClear();
-    context.currentTime = 21.05;
+    context.currentTime = 21.02;
     audio.update(45, 0);
     expect(master.setTargetAtTime).not.toHaveBeenCalled();
     expect(master.linearRampToValueAtTime).toHaveBeenCalledTimes(2);

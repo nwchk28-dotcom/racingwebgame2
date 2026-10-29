@@ -258,7 +258,7 @@ export class EngineAudio {
     const rev = Math.max(0, Math.min(1, (speedKmh - low) / (high - low)));
     const pitch = 220 + (this.audioGear - 1) * 44 + rev * 130;
     // Settle the new note while silent, rather than gliding between gears.
-    const pitchResponse = now - this.lastShiftAt < 0.14 ? 0.006 : 0.055;
+    const pitchResponse = now - this.lastShiftAt < 0.05 ? 0.004 : 0.055;
     const tone = engineToneAt(speedKmh, throttle);
     this.source?.frequency.setTargetAtTime(pitch, now, pitchResponse);
     for (let i = 1; i < this.layerSources.length; i++) {
@@ -279,7 +279,7 @@ export class EngineAudio {
     this.pitchScatter?.gain.setTargetAtTime(tone.pitchScatter, now, 0.08);
     this.amplitudeScatter?.gain.setTargetAtTime(tone.amplitudeScatter, now, 0.08);
     const sinceShift = now - this.lastShiftAt;
-    const shiftCut = sinceShift < 0.11 ? 0 : Math.min(1, (sinceShift - 0.11) / 0.03);
+    const shiftCut = sinceShift < 0.025 ? 0 : Math.min(1, (sinceShift - 0.025) / 0.025);
     const master = this.gain.gain;
     const audible = this.active && !this.muted && Boolean(this.source);
     if (!audible) {
@@ -290,10 +290,10 @@ export class EngineAudio {
         // Recover on the audio clock even when WebGL stalls during the shift.
         master.cancelScheduledValues(now);
         master.setValueAtTime(master.value, now);
-        master.linearRampToValueAtTime(0, now + .008);
-        master.setValueAtTime(0, now + .11);
-        master.linearRampToValueAtTime(1, now + .14);
-      } else if (sinceShift >= .14) master.setTargetAtTime(1, now, .025);
+        master.linearRampToValueAtTime(0, now + .005);
+        master.setValueAtTime(0, now + .025);
+        master.linearRampToValueAtTime(1, now + .05);
+      } else if (sinceShift >= .05) master.setTargetAtTime(1, now, .025);
     } else master.setTargetAtTime(shiftCut, now, .025);
   }
 }
