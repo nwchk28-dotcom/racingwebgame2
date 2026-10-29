@@ -190,7 +190,7 @@ describe('audio continuity', () => {
     audio.update(49, 1);
     context.currentTime = 10.1;
     audio.update(50, 1);
-    expect(master.linearRampToValueAtTime).toHaveBeenLastCalledWith(1, 10.19);
+    expect(master.linearRampToValueAtTime).toHaveBeenLastCalledWith(1, 10.24);
     expect(master.linearRampToValueAtTime).toHaveBeenCalledTimes(2);
     for (const [time, speed] of [[10.4, 49.8], [10.5, 50.2], [10.7, 49.9], [10.8, 50.1]]) {
       context.currentTime = time; audio.update(speed, 1);
@@ -199,5 +199,32 @@ describe('audio continuity', () => {
     audio.setMuted(true);
     expect(master.cancelScheduledValues).toHaveBeenLastCalledWith(10.8);
     expect(master.setTargetAtTime).toHaveBeenLastCalledWith(0, 10.8, .025);
+  });
+});
+
+
+describe('crisp downshift audio', () => {
+  it('holds silence for a downshift and changes pitch quickly without retriggering near the boundary', () => {
+    const context = { currentTime: 20 };
+    const master = { value: 1, setTargetAtTime: vi.fn(), cancelScheduledValues: vi.fn(),
+      setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() };
+    const frequency = { setTargetAtTime: vi.fn() };
+    const source = { frequency };
+    const audio = new EngineAudio();
+    Object.assign(audio, { context, source, layerSources: [source], gain: { gain: master }, audioGear: 2 });
+    audio.setActive(true);
+    audio.update(60, 0);
+    master.linearRampToValueAtTime.mockClear();
+    context.currentTime = 21;
+    audio.update(46, 0);
+    expect(master.linearRampToValueAtTime).toHaveBeenCalledWith(0, 21.008);
+    expect(master.setValueAtTime).toHaveBeenCalledWith(0, 21.11);
+    expect(master.linearRampToValueAtTime).toHaveBeenLastCalledWith(1, 21.14);
+    expect(frequency.setTargetAtTime).toHaveBeenLastCalledWith(pitchAtSpeed(46), 21, .006);
+    master.setTargetAtTime.mockClear();
+    context.currentTime = 21.05;
+    audio.update(45, 0);
+    expect(master.setTargetAtTime).not.toHaveBeenCalled();
+    expect(master.linearRampToValueAtTime).toHaveBeenCalledTimes(2);
   });
 });

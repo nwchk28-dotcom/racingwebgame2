@@ -67,7 +67,7 @@ export class EngineAudio {
   private muted = false;
   private speed = 0;
   private throttle = 0;
-  private lastUpshiftAt = -Infinity;
+  private lastShiftAt = -Infinity;
   private audioGear = 1;
   private loading: Promise<void> | null = null;
   private changingState = false;
@@ -244,25 +244,31 @@ export class EngineAudio {
       return;
     }
     const now = this.context.currentTime;
-    const pitch = pitchAtSpeed(speedKmh);
     const gear = gearAtSpeed(speedKmh).gear;
-    // Pitch remains speed-derived. Only the short shift-volume effect is latched.
-    if (gear < this.audioGear && speedKmh < GEAR_END_SPEEDS[gear - 1] - 3) this.audioGear = gear;
-    const upshift = gear > this.audioGear;
-    if (upshift) this.audioGear = gear;
-    if (this.active && this.layerSources.length > 0 && upshift && now - this.lastUpshiftAt > 0.18) {
-      this.lastUpshiftAt = now;
-    }
+    // Hold the audible gear through boundary jitter. Switch pitch and the
+    // volume envelope together, including on downshifts.
+    const previousGear = this.audioGear;
+    const downshift = gear < previousGear && speedKmh < GEAR_END_SPEEDS[gear - 1] - 3;
+    const upshift = gear > previousGear;
+    if (upshift || downshift) this.audioGear = gear;
+    const shifted = this.audioGear !== previousGear && this.active && this.layerSources.length > 0;
+    if (shifted) this.lastShiftAt = now;
+    const low = this.audioGear === 1 ? 0 : GEAR_END_SPEEDS[this.audioGear - 2];
+    const high = GEAR_END_SPEEDS[this.audioGear - 1];
+    const rev = Math.max(0, Math.min(1, (speedKmh - low) / (high - low)));
+    const pitch = 220 + (this.audioGear - 1) * 44 + rev * 130;
+    // Settle the new note while silent, rather than gliding between gears.
+    const pitchResponse = now - this.lastShiftAt < 0.14 ? 0.006 : 0.055;
     const tone = engineToneAt(speedKmh, throttle);
-    this.source?.frequency.setTargetAtTime(pitch, now, 0.055);
+    this.source?.frequency.setTargetAtTime(pitch, now, pitchResponse);
     for (let i = 1; i < this.layerSources.length; i++) {
-      this.layerSources[i].frequency.setTargetAtTime(pitch, now, 0.055);
+      this.layerSources[i].frequency.setTargetAtTime(pitch, now, pitchResponse);
     }
     const weights = engineLayerWeightsAt(speedKmh);
     this.layerGains.forEach((level, index) => {
       level.gain.setTargetAtTime(weights[index] ?? 0, now, 0.065);
     });
-    this.rumbleSource?.frequency.setTargetAtTime(pitch * 0.5, now, 0.055);
+    this.rumbleSource?.frequency.setTargetAtTime(pitch * 0.5, now, pitchResponse);
     this.bodyGain?.gain.setTargetAtTime(tone.bodyGain, now, 0.06);
     this.bodyFilter?.frequency.setTargetAtTime(tone.bodyCutoff, now, 0.07);
     this.rumbleGain?.gain.setTargetAtTime(tone.rumbleGain, now, 0.07);
@@ -272,21 +278,22 @@ export class EngineAudio {
     this.combustionFilter?.frequency.setTargetAtTime(tone.combustionRate, now, 0.08);
     this.pitchScatter?.gain.setTargetAtTime(tone.pitchScatter, now, 0.08);
     this.amplitudeScatter?.gain.setTargetAtTime(tone.amplitudeScatter, now, 0.08);
-    const sinceShift = now - this.lastUpshiftAt;
-    const shiftCut = sinceShift < 0.09 ? 0.28 + 0.72 * sinceShift / 0.09 : 1;
+    const sinceShift = now - this.lastShiftAt;
+    const shiftCut = sinceShift < 0.11 ? 0 : Math.min(1, (sinceShift - 0.11) / 0.03);
     const master = this.gain.gain;
     const audible = this.active && !this.muted && Boolean(this.source);
     if (!audible) {
       master.cancelScheduledValues?.(now);
       master.setTargetAtTime(0, now, .025);
     } else if (typeof master.linearRampToValueAtTime === 'function') {
-      if (upshift && this.layerSources.length > 0 && this.lastUpshiftAt === now) {
+      if (shifted) {
         // Recover on the audio clock even when WebGL stalls during the shift.
         master.cancelScheduledValues(now);
         master.setValueAtTime(master.value, now);
-        master.linearRampToValueAtTime(.45, now + .015);
-        master.linearRampToValueAtTime(1, now + .09);
-      } else if (sinceShift >= .1) master.setTargetAtTime(1, now, .025);
+        master.linearRampToValueAtTime(0, now + .008);
+        master.setValueAtTime(0, now + .11);
+        master.linearRampToValueAtTime(1, now + .14);
+      } else if (sinceShift >= .14) master.setTargetAtTime(1, now, .025);
     } else master.setTargetAtTime(shiftCut, now, .025);
   }
 }
