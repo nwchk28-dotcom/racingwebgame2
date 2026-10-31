@@ -4,6 +4,9 @@ import { TrackPath } from './trackPath';
 import { drivingSurfaceGeometry } from './drivingSurface';
 import { terrainGeometry, apronGeometry, terrainHeight, perimeterHeight } from './terrainScenery';
 import { TrackWalls, type WallSegment } from './trackWalls';
+import { addSpaScenery } from './spaScenery';
+import { addCircuitScenery, prepareCircuitLandscape } from './sceneryBuilder';
+import { CIRCUIT_SCENERY } from './circuitSceneryProfiles';
 
 export interface ObstacleCollider {
   x: number;
@@ -179,6 +182,8 @@ export class Track extends TrackPath {
     scene.add(this.group);
     if (this.native) {
       this.samples.forEach((p,i) => { p.y=this.native.surface[i][0]; this.normals[i].y=Math.tan(this.native.surface[i][2]); });
+      const profile=CIRCUIT_SCENERY[definition.id];
+      if(profile)prepareCircuitLandscape(this,profile);
     }
     this.buildScene();
   }
@@ -218,7 +223,11 @@ export class Track extends TrackPath {
     if(this.native){
       const material=new THREE.MeshStandardMaterial({map:grassTexture,roughness:1,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2});
       for(const [name,geometry] of [['terrain-field',terrainGeometry(this.native.terrain)],['terrain-apron',apronGeometry(this.native,this.ribbon!)]] as const){
-        const mesh=new THREE.Mesh(geometry,material);mesh.name=name;mesh.receiveShadow=true;scene.add(mesh);
+        const surfaceMaterial=this.definition.id==='spa'&&name==='terrain-apron'?material.clone():material;
+        // The apron and field meet at the same depth. Give the apron explicit
+        // priority there while leaving the road's unbiased surface in front.
+        if(surfaceMaterial!==material){surfaceMaterial.polygonOffsetFactor=1;surfaceMaterial.polygonOffsetUnits=1;}
+        const mesh=new THREE.Mesh(geometry,surfaceMaterial);mesh.name=name;mesh.receiveShadow=true;scene.add(mesh);
       }
     }
     const railMaterial = new THREE.MeshStandardMaterial({ color: '#d7dedc', roughness: .35, metalness: .7, side: THREE.DoubleSide });
@@ -276,8 +285,9 @@ export class Track extends TrackPath {
     this.addTracksideWalls(scene);
     if (this.definition.id === 'monaco') this.addMonacoTunnel(scene);
     this.addStartLine(scene);
-    this.addBuildings(scene);
-    this.addTrees(scene);
+    if(this.definition.id==='spa'&&this.native) addSpaScenery(this,scene);
+    else if(this.native&&CIRCUIT_SCENERY[this.definition.id])addCircuitScenery(this,scene,CIRCUIT_SCENERY[this.definition.id]!);
+    else { this.addBuildings(scene); this.addTrees(scene); }
     if (this.native) {
       this.colliders.splice(0,this.colliders.length,...this.native.obstacles);
       // Lift the original scenery and timing gantry onto the local terrain.
@@ -572,6 +582,7 @@ export class Track extends TrackPath {
     const textures = new Set<THREE.Texture>();
     this.group.traverse(object => {
       if (object instanceof THREE.Mesh) {
+        if(object instanceof THREE.InstancedMesh)object.dispose();
         geometries.add(object.geometry);
         for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
           materials.add(material);

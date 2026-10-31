@@ -1,0 +1,146 @@
+
+> formula-q@1.0.0 test
+> vitest run
+
+
+ RUN  v3.2.7 /Users/niwakazuchika/Documents/ChatGPT/レースゲームwebゲーム開発/formula-q-scenery
+
+ ✓ src/trackWalls.test.ts (34 tests) 7183ms
+   ✓ trackside walls > has independently placed left and right wall zones for every circuit  743ms
+   ✓ trackside walls > does not intrude onto the sampled racing centerlines  710ms
+   ✓ trackside walls > keeps a car clear of walls throughout 'monaco' driving lanes  326ms
+   ✓ trackside walls > keeps a car clear of walls throughout 'jeddah' driving lanes  470ms
+   ✓ trackside walls > keeps a car clear of walls throughout 'miami' driving lanes  329ms
+   ✓ trackside walls > keeps a car clear of walls throughout 'imola' driving lanes  328ms
+ ✓ src/terrainScenery.test.ts (4 tests) 13426ms
+   ✓ spa places perimeter rails and posts on native ground and joins trackside rails to the terrain  3128ms
+   ✓ suzuka places perimeter rails and posts on native ground and joins trackside rails to the terrain  2991ms
+   ✓ keeps the Suzuka final chicane asphalt above the escape paving  6227ms
+ ✓ src/track.test.ts (27 tests) 4426ms
+   ✓ track scenes > places 'monza' facilities outside the road and releases its scene  394ms
+   ✓ track scenes > places 'spa' facilities outside the road and releases its scene  338ms
+ ✓ src/spaScenery.test.ts (7 tests) 12022ms
+   ✓ retains the documented range, monotonic slopes and periodic pit plateau  861ms
+   ✓ reconstructs deterministically without changing exported geometry or other courses  1199ms
+   ✓ keeps the new road C1 continuous through every sampled boundary  552ms
+   ✓ keeps contact, all four wheels and lap validity through a full Spa centerline replay  3907ms
+   ✓ places every named facility outside every road arm and runoff corridor  415ms
+   ✓ keeps upper stand rows farther from the road on both sides of the circuit  2262ms
+   ✓ grounds a persistent forest with all crowns present and releases its shared geometry  1873ms
+ ✓ src/bankOcclusion.test.ts (25 tests) 20679ms
+   ✓ 'monza' keeps grass below the banked asphalt  1228ms
+   ✓ 'silverstone' keeps grass below the banked asphalt  849ms
+   ✓ 'albert-park' keeps grass below the banked asphalt  556ms
+   ✓ 'mexico-city' keeps grass below the banked asphalt  855ms
+   ✓ 'gilles-villeneuve' keeps grass below the banked asphalt  646ms
+   ✓ 'monaco' keeps grass below the banked asphalt  310ms
+   ✓ 'spa' keeps grass below the banked asphalt  1459ms
+   ✓ 'sao-paulo' keeps grass below the banked asphalt  824ms
+   ✓ 'jeddah' keeps grass below the banked asphalt  448ms
+   ✓ 'baku' keeps grass below the banked asphalt  606ms
+   ✓ 'abu-dhabi' keeps grass below the banked asphalt  576ms
+   ✓ 'singapore' keeps grass below the banked asphalt  484ms
+   ✓ 'shanghai' keeps grass below the banked asphalt  1983ms
+   ✓ 'bahrain' keeps grass below the banked asphalt  964ms
+   ✓ 'miami' keeps grass below the banked asphalt  432ms
+   ✓ 'imola' keeps grass below the banked asphalt  472ms
+   ✓ 'barcelona' keeps grass below the banked asphalt  480ms
+   ✓ 'austria' keeps grass below the banked asphalt  458ms
+   ✓ 'hungary' keeps grass below the banked asphalt  589ms
+   ✓ 'zandvoort' keeps grass below the banked asphalt  524ms
+   ✓ 'austin' keeps grass below the banked asphalt  527ms
+   ✓ 'las-vegas' keeps grass below the banked asphalt  652ms
+   ✓ 'lusail' keeps grass below the banked asphalt  569ms
+   ✓ 'sepang' keeps grass below the banked asphalt  736ms
+   ✓ 'suzuka' keeps grass below the banked asphalt  871ms
+ ✓ src/trackPath.test.ts (11 tests) 3702ms
+   ✓ all circuits > keeps the requested lap lengths and a dense, closed centerline  1549ms
+   ✓ all circuits > keeps both curb edges moving forward through tight corners  1361ms
+ ✓ src/runoffContinuity.test.ts (28 tests) 2444ms
+ ✓ src/frameBudget.test.ts (5 tests) 3191ms
+   ✓ presentation frame budget > keeps the same fixed physics steps and car position with 30 or 60 fps presentation  3186ms
+ ✓ src/trackWidths.test.ts (2 tests) 1478ms
+   ✓ circuit widths in metres > has continuous widths across every transition and the finish-line wrap  1443ms
+ ✓ src/nativeCircuit.test.ts (29 tests) 2185ms
+ ✓ src/roadContact.test.ts (3 tests) 1815ms
+   ✓ keeps wheels, contact height and lap validity on both levels of Suzuka  635ms
+ ✓ src/bakuParallel.test.ts (6 tests) 481ms
+ ✓ src/suzukaApproach.test.ts (5 tests) 991ms
+ ✓ src/surfaceJitter.test.ts (1 test) 1432ms
+   ✓ keeps gradients continuous across road sample boundaries  1431ms
+ ✓ src/renderPose.test.ts (3 tests) 76ms
+ ✓ src/trackDirection.test.ts (3 tests) 382ms
+ ✓ src/courseMap.test.ts (2 tests) 309ms
+   ✓ course map > projects the live car position and line onto each selected circuit  306ms
+ ✓ src/physics.test.ts (12 tests) 38ms
+ ✓ src/engineWaveform.test.ts (2 tests) 29ms
+ ✓ src/serviceWorker.test.ts (4 tests) 18ms
+ ✓ src/engineAudio.test.ts (13 tests) 25ms
+ ✓ src/controls.test.ts (8 tests) 17ms
+ ✓ src/sectors.test.ts (5 tests) 9ms
+ ✓ src/recordVersions.test.ts (5 tests) 11ms
+ ✓ src/lapHud.test.ts (4 tests) 5ms
+ ✓ src/bestTimes.test.ts (6 tests) 8ms
+ ✓ src/wallContactSides.test.ts (4 tests) 4ms
+ ✓ src/gameViewport.test.ts (5 tests) 4ms
+ ✓ src/renderQuality.test.ts (4 tests) 4ms
+ ✓ src/appMode.test.ts (2 tests) 4ms
+ ✓ src/lap.test.ts (7 tests) 6ms
+ ✓ src/controlLayout.test.ts (2 tests) 2ms
+ ✓ src/circuitScenery.test.ts (26 tests) 30516ms
+   ✓ 'monza' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  2362ms
+   ✓ 'silverstone' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  1291ms
+   ✓ 'albert-park' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  1897ms
+   ✓ 'mexico-city' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  1121ms
+   ✓ 'gilles-villeneuve' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  1408ms
+   ✓ 'monaco' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  1053ms
+   ✓ 'sao-paulo' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  1151ms
+   ✓ 'jeddah' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  2369ms
+   ✓ 'baku' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  826ms
+   ✓ 'abu-dhabi' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  847ms
+   ✓ 'singapore' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  718ms
+   ✓ 'shanghai' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  873ms
+   ✓ 'bahrain' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  794ms
+   ✓ 'miami' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  725ms
+   ✓ 'imola' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  1412ms
+   ✓ 'barcelona' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  866ms
+   ✓ 'austria' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  1024ms
+   ✓ 'hungary' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  1161ms
+   ✓ 'zandvoort' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  419ms
+   ✓ 'austin' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  854ms
+   ✓ 'las-vegas' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  770ms
+   ✓ 'lusail' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  726ms
+   ✓ 'sepang' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  1374ms
+   ✓ 'suzuka' grounds scenery, clears every road arm, faces stands toward the road and disposes its resources  2272ms
+   ✓ carves water beds away from the driving surface without mutating the source or lowering water on reload  1187ms
+ ✓ src/drivingSurface.test.ts (50 tests) 35707ms
+   ✓ 'monza' draws exactly one surface outside either curb  2456ms
+   ✓ 'silverstone' draws exactly one surface outside either curb  2191ms
+   ✓ 'albert-park' draws exactly one surface outside either curb  1734ms
+   ✓ 'mexico-city' draws exactly one surface outside either curb  1535ms
+   ✓ 'gilles-villeneuve' draws exactly one surface outside either curb  2427ms
+   ✓ 'monaco' draws exactly one surface outside either curb  1013ms
+   ✓ 'spa' draws exactly one surface outside either curb  1992ms
+   ✓ 'sao-paulo' draws exactly one surface outside either curb  1138ms
+   ✓ 'jeddah' draws exactly one surface outside either curb  1403ms
+   ✓ 'baku' draws exactly one surface outside either curb  1353ms
+   ✓ 'abu-dhabi' draws exactly one surface outside either curb  1429ms
+   ✓ 'singapore' draws exactly one surface outside either curb  830ms
+   ✓ 'shanghai' draws exactly one surface outside either curb  1553ms
+   ✓ 'bahrain' draws exactly one surface outside either curb  1525ms
+   ✓ 'miami' draws exactly one surface outside either curb  1113ms
+   ✓ 'imola' draws exactly one surface outside either curb  1150ms
+   ✓ 'barcelona' draws exactly one surface outside either curb  1029ms
+   ✓ 'austria' draws exactly one surface outside either curb  964ms
+   ✓ 'hungary' draws exactly one surface outside either curb  832ms
+   ✓ 'zandvoort' draws exactly one surface outside either curb  685ms
+   ✓ 'austin' draws exactly one surface outside either curb  860ms
+   ✓ 'las-vegas' draws exactly one surface outside either curb  727ms
+   ✓ 'lusail' draws exactly one surface outside either curb  725ms
+   ✓ 'sepang' draws exactly one surface outside either curb  746ms
+   ✓ 'suzuka' draws exactly one surface outside either curb  1000ms
+
+ Test Files  34 passed (34)
+      Tests  354 passed (354)
+   Start at  23:39:12
+   Duration  36.23s (transform 11.18s, setup 0ms, collect 5.84s, tests 142.63s, environment 5ms, prepare 2.92s)

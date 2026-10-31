@@ -1,0 +1,129 @@
+
+> formula-q@1.0.0 test
+> vitest run
+
+
+ RUN  v3.2.7 /Users/niwakazuchika/Documents/ChatGPT/レースゲームwebゲーム開発/formula-q-scenery
+
+ ✓ src/track.test.ts (27 tests) 7210ms
+   ✓ track scenes > places 'monza' facilities outside the road and releases its scene  717ms
+   ✓ track scenes > places 'albert-park' facilities outside the road and releases its scene  604ms
+   ✓ track scenes > places 'gilles-villeneuve' facilities outside the road and releases its scene  331ms
+   ✓ track scenes > places 'spa' facilities outside the road and releases its scene  695ms
+   ✓ track scenes > places 'barcelona' facilities outside the road and releases its scene  363ms
+   ✓ track scenes > places 'austria' facilities outside the road and releases its scene  332ms
+   ✓ track scenes > places 'hungary' facilities outside the road and releases its scene  336ms
+   ✓ track scenes > places 'zandvoort' facilities outside the road and releases its scene  405ms
+   ✓ track scenes > places 'suzuka' facilities outside the road and releases its scene  347ms
+ ✓ src/trackWalls.test.ts (34 tests) 8637ms
+   ✓ trackside walls > has independently placed left and right wall zones for every circuit  672ms
+   ✓ trackside walls > does not intrude onto the sampled racing centerlines  816ms
+   ✓ trackside walls > keeps a car clear of walls throughout 'monza' driving lanes  374ms
+   ✓ trackside walls > keeps a car clear of walls throughout 'mexico-city' driving lanes  329ms
+   ✓ trackside walls > keeps a car clear of walls throughout 'monaco' driving lanes  336ms
+   ✓ trackside walls > keeps a car clear of walls throughout 'jeddah' driving lanes  334ms
+   ✓ trackside walls > keeps a car clear of walls throughout 'singapore' driving lanes  374ms
+   ✓ trackside walls > keeps a car clear of walls throughout 'imola' driving lanes  406ms
+ ✓ src/spaScenery.test.ts (6 tests) 13048ms
+   ✓ retains the documented range, monotonic slopes and periodic pit plateau  1349ms
+   ✓ reconstructs deterministically without changing exported geometry or other courses  1361ms
+   ✓ keeps the new road C1 continuous through every sampled boundary  470ms
+   ✓ keeps contact, all four wheels and lap validity through a full Spa centerline replay  4249ms
+   ✓ places every named facility outside every road arm and runoff corridor  457ms
+   ✓ grounds a dense, reproducible forest and releases all LOD geometry on course changes  3651ms
+ ✓ src/trackPath.test.ts (11 tests) 6439ms
+   ✓ all circuits > keeps the requested lap lengths and a dense, closed centerline  2122ms
+   ✓ all circuits > finds the closest segment near a curb, including close parallel sections  451ms
+   ✓ all circuits > keeps both curb edges moving forward through tight corners  3027ms
+ ✓ src/runoffContinuity.test.ts (28 tests) 2709ms
+ ✓ src/frameBudget.test.ts (5 tests) 3796ms
+   ✓ presentation frame budget > keeps the same fixed physics steps and car position with 30 or 60 fps presentation  3790ms
+ ✓ src/terrainScenery.test.ts (4 tests) 9620ms
+   ✓ spa places perimeter rails and posts on native ground and joins trackside rails to the terrain  3823ms
+   ✓ suzuka places perimeter rails and posts on native ground and joins trackside rails to the terrain  1269ms
+   ✓ keeps the Suzuka final chicane asphalt above the escape paving  3428ms
+ ✓ src/trackWidths.test.ts (2 tests) 1722ms
+   ✓ circuit widths in metres > has continuous widths across every transition and the finish-line wrap  1675ms
+ ✓ src/nativeCircuit.test.ts (29 tests) 2300ms
+ ✓ src/roadContact.test.ts (3 tests) 1721ms
+   ✓ keeps wheels, contact height and lap validity on both levels of Suzuka  562ms
+ ✓ src/bankOcclusion.test.ts (25 tests) 22012ms
+   ✓ 'monza' keeps grass below the banked asphalt  1204ms
+   ✓ 'silverstone' keeps grass below the banked asphalt  1226ms
+   ✓ 'albert-park' keeps grass below the banked asphalt  640ms
+   ✓ 'mexico-city' keeps grass below the banked asphalt  532ms
+   ✓ 'gilles-villeneuve' keeps grass below the banked asphalt  666ms
+   ✓ 'monaco' keeps grass below the banked asphalt  560ms
+   ✓ 'spa' keeps grass below the banked asphalt  2098ms
+   ✓ 'sao-paulo' keeps grass below the banked asphalt  809ms
+   ✓ 'jeddah' keeps grass below the banked asphalt  510ms
+   ✓ 'baku' keeps grass below the banked asphalt  680ms
+   ✓ 'abu-dhabi' keeps grass below the banked asphalt  888ms
+   ✓ 'singapore' keeps grass below the banked asphalt  434ms
+   ✓ 'shanghai' keeps grass below the banked asphalt  1191ms
+   ✓ 'bahrain' keeps grass below the banked asphalt  1641ms
+   ✓ 'miami' keeps grass below the banked asphalt  468ms
+   ✓ 'imola' keeps grass below the banked asphalt  506ms
+   ✓ 'barcelona' keeps grass below the banked asphalt  575ms
+   ✓ 'austria' keeps grass below the banked asphalt  649ms
+   ✓ 'hungary' keeps grass below the banked asphalt  561ms
+   ✓ 'zandvoort' keeps grass below the banked asphalt  674ms
+   ✓ 'austin' keeps grass below the banked asphalt  783ms
+   ✓ 'las-vegas' keeps grass below the banked asphalt  470ms
+   ✓ 'lusail' keeps grass below the banked asphalt  496ms
+   ✓ 'sepang' keeps grass below the banked asphalt  681ms
+   ✓ 'suzuka' keeps grass below the banked asphalt  1040ms
+ ✓ src/suzukaApproach.test.ts (5 tests) 975ms
+ ✓ src/bakuParallel.test.ts (6 tests) 477ms
+ ✓ src/surfaceJitter.test.ts (1 test) 1425ms
+   ✓ keeps gradients continuous across road sample boundaries  1423ms
+ ✓ src/trackDirection.test.ts (3 tests) 436ms
+ ✓ src/renderPose.test.ts (3 tests) 101ms
+ ✓ src/physics.test.ts (12 tests) 44ms
+ ✓ src/engineWaveform.test.ts (2 tests) 24ms
+ ✓ src/courseMap.test.ts (2 tests) 319ms
+   ✓ course map > projects the live car position and line onto each selected circuit  315ms
+ ✓ src/engineAudio.test.ts (13 tests) 20ms
+ ✓ src/serviceWorker.test.ts (4 tests) 25ms
+ ✓ src/controls.test.ts (8 tests) 14ms
+ ✓ src/sectors.test.ts (5 tests) 8ms
+ ✓ src/lapHud.test.ts (4 tests) 7ms
+ ✓ src/bestTimes.test.ts (5 tests) 11ms
+ ✓ src/gameViewport.test.ts (5 tests) 5ms
+ ✓ src/recordVersions.test.ts (5 tests) 7ms
+ ✓ src/controlLayout.test.ts (2 tests) 3ms
+ ✓ src/lap.test.ts (7 tests) 5ms
+ ✓ src/wallContactSides.test.ts (4 tests) 3ms
+ ✓ src/renderQuality.test.ts (4 tests) 5ms
+ ✓ src/appMode.test.ts (2 tests) 3ms
+ ✓ src/drivingSurface.test.ts (50 tests) 34348ms
+   ✓ 'monza' draws exactly one surface outside either curb  2661ms
+   ✓ 'silverstone' draws exactly one surface outside either curb  3023ms
+   ✓ 'albert-park' draws exactly one surface outside either curb  2012ms
+   ✓ 'mexico-city' draws exactly one surface outside either curb  1772ms
+   ✓ 'gilles-villeneuve' draws exactly one surface outside either curb  2636ms
+   ✓ 'monaco' draws exactly one surface outside either curb  860ms
+   ✓ 'spa' draws exactly one surface outside either curb  2214ms
+   ✓ 'sao-paulo' draws exactly one surface outside either curb  1420ms
+   ✓ 'jeddah' draws exactly one surface outside either curb  1372ms
+   ✓ 'baku' draws exactly one surface outside either curb  1364ms
+   ✓ 'abu-dhabi' draws exactly one surface outside either curb  1289ms
+   ✓ 'singapore' draws exactly one surface outside either curb  937ms
+   ✓ 'shanghai' draws exactly one surface outside either curb  872ms
+   ✓ 'bahrain' draws exactly one surface outside either curb  835ms
+   ✓ 'miami' draws exactly one surface outside either curb  592ms
+   ✓ 'imola' draws exactly one surface outside either curb  633ms
+   ✓ 'barcelona' draws exactly one surface outside either curb  615ms
+   ✓ 'austria' draws exactly one surface outside either curb  558ms
+   ✓ 'hungary' draws exactly one surface outside either curb  646ms
+   ✓ 'zandvoort' draws exactly one surface outside either curb  529ms
+   ✓ 'austin' draws exactly one surface outside either curb  747ms
+   ✓ 'las-vegas' draws exactly one surface outside either curb  619ms
+   ✓ 'lusail' draws exactly one surface outside either curb  673ms
+   ✓ 'sepang' draws exactly one surface outside either curb  945ms
+   ✓ 'suzuka' draws exactly one surface outside either curb  1125ms
+
+ Test Files  33 passed (33)
+      Tests  326 passed (326)
+   Start at  19:06:14
+   Duration  34.92s (transform 16.58s, setup 0ms, collect 6.41s, tests 117.48s, environment 18ms, prepare 3.15s)

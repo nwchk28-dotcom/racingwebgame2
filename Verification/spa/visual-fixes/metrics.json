@@ -1,0 +1,26 @@
+{
+  "performance": {
+    "renderSize": "844,390",
+    "replayedMetres": 5211,
+    "samples": 3750,
+    "p50": 17,
+    "p95": 17,
+    "preparationMs": 729,
+    "maxCalls": 266,
+    "maxTriangles": 560308
+  },
+  "courseReloadMemory": [
+    {
+      "geometries": 103,
+      "textures": 2
+    },
+    {
+      "geometries": 103,
+      "textures": 2
+    },
+    {
+      "geometries": 103,
+      "textures": 2
+    }
+  ]
+}

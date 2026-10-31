@@ -1,0 +1,1202 @@
+[
+  {
+    "id": "monza",
+    "preparationMs": 497.9999999999927,
+    "trees": 2400,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 103,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 202,
+        "triangles": 468452
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 262,
+        "triangles": 492976
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 356,
+        "triangles": 528684
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 215,
+        "triangles": 472412
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 274,
+        "triangles": 496576
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 356,
+        "triangles": 528684
+      }
+    ]
+  },
+  {
+    "id": "silverstone",
+    "preparationMs": 208,
+    "trees": 420,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 103,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 149,
+        "triangles": 447998
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 39,
+        "triangles": 430376
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 178,
+        "triangles": 485464
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 166,
+        "triangles": 458966
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 39,
+        "triangles": 430376
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 178,
+        "triangles": 485464
+      }
+    ]
+  },
+  {
+    "id": "albert-park",
+    "preparationMs": 170,
+    "trees": 1600,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 104,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 166,
+        "triangles": 404712
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 14,
+        "triangles": 333308
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 259,
+        "triangles": 451464
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 180,
+        "triangles": 410196
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 15,
+        "triangles": 333462
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 259,
+        "triangles": 451464
+      }
+    ]
+  },
+  {
+    "id": "mexico-city",
+    "preparationMs": 134,
+    "trees": 1000,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 103,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 148,
+        "triangles": 356322
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 30,
+        "triangles": 281502
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 173,
+        "triangles": 379606
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 161,
+        "triangles": 358256
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 32,
+        "triangles": 281702
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 173,
+        "triangles": 379606
+      }
+    ]
+  },
+  {
+    "id": "gilles-villeneuve",
+    "preparationMs": 429,
+    "trees": 1800,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 104,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 149,
+        "triangles": 322154
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 23,
+        "triangles": 273264
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 224,
+        "triangles": 388096
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 150,
+        "triangles": 322274
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 24,
+        "triangles": 273404
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 224,
+        "triangles": 388096
+      }
+    ]
+  },
+  {
+    "id": "monaco",
+    "preparationMs": 153,
+    "trees": 180,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 109,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 113,
+        "triangles": 237954
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 63,
+        "triangles": 230177
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 76,
+        "triangles": 231401
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 127,
+        "triangles": 247442
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 63,
+        "triangles": 230177
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 76,
+        "triangles": 231401
+      }
+    ]
+  },
+  {
+    "id": "spa",
+    "preparationMs": 709,
+    "trees": 2700,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 103,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 121,
+        "triangles": 507548
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 40,
+        "triangles": 495210
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 392,
+        "triangles": 618696
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 121,
+        "triangles": 507548
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 64,
+        "triangles": 498900
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 392,
+        "triangles": 618696
+      }
+    ]
+  },
+  {
+    "id": "sao-paulo",
+    "preparationMs": 106.00000000000728,
+    "trees": 800,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 102,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 112,
+        "triangles": 314022
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 117,
+        "triangles": 334658
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 140,
+        "triangles": 351914
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 112,
+        "triangles": 314022
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 133,
+        "triangles": 341788
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 140,
+        "triangles": 351914
+      }
+    ]
+  },
+  {
+    "id": "jeddah",
+    "preparationMs": 119,
+    "trees": 400,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 103,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 148,
+        "triangles": 371082
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 25,
+        "triangles": 327740
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 144,
+        "triangles": 380352
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 148,
+        "triangles": 371082
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 25,
+        "triangles": 327740
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 144,
+        "triangles": 380352
+      }
+    ]
+  },
+  {
+    "id": "baku",
+    "preparationMs": 116,
+    "trees": 300,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 109,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 112,
+        "triangles": 355204
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 21,
+        "triangles": 311656
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 95,
+        "triangles": 354630
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 112,
+        "triangles": 355204
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 21,
+        "triangles": 311656
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 95,
+        "triangles": 354630
+      }
+    ]
+  },
+  {
+    "id": "abu-dhabi",
+    "preparationMs": 120.00000000000728,
+    "trees": 450,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 115,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 133,
+        "triangles": 373482
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 48,
+        "triangles": 341914
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 127,
+        "triangles": 393562
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 135,
+        "triangles": 373752
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 51,
+        "triangles": 342106
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 127,
+        "triangles": 393562
+      }
+    ]
+  },
+  {
+    "id": "singapore",
+    "preparationMs": 99,
+    "trees": 450,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 122,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 110,
+        "triangles": 275706
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 129,
+        "triangles": 285476
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 152,
+        "triangles": 298900
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 110,
+        "triangles": 275706
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 135,
+        "triangles": 287444
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 152,
+        "triangles": 298900
+      }
+    ]
+  },
+  {
+    "id": "shanghai",
+    "preparationMs": 309,
+    "trees": 850,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 110,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 158,
+        "triangles": 418130
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 119,
+        "triangles": 423736
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 185,
+        "triangles": 440938
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 169,
+        "triangles": 420852
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 132,
+        "triangles": 424060
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 185,
+        "triangles": 440938
+      }
+    ]
+  },
+  {
+    "id": "bahrain",
+    "preparationMs": 139,
+    "trees": 140,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 112,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 144,
+        "triangles": 403524
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 34,
+        "triangles": 360476
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 69,
+        "triangles": 402608
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 146,
+        "triangles": 412440
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 34,
+        "triangles": 360476
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 69,
+        "triangles": 402608
+      }
+    ]
+  },
+  {
+    "id": "miami",
+    "preparationMs": 244,
+    "trees": 600,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 102,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 128,
+        "triangles": 322018
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 47,
+        "triangles": 291376
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 141,
+        "triangles": 356032
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 128,
+        "triangles": 322018
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 51,
+        "triangles": 292048
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 141,
+        "triangles": 356032
+      }
+    ]
+  },
+  {
+    "id": "imola",
+    "preparationMs": 576,
+    "trees": 2100,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 112,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 197,
+        "triangles": 396528
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 83,
+        "triangles": 325520
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 258,
+        "triangles": 430286
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 206,
+        "triangles": 400554
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 97,
+        "triangles": 327608
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 258,
+        "triangles": 430286
+      }
+    ]
+  },
+  {
+    "id": "barcelona",
+    "preparationMs": 343,
+    "trees": 1100,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 102,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 187,
+        "triangles": 362208
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 86,
+        "triangles": 331718
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 194,
+        "triangles": 380776
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 189,
+        "triangles": 362864
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 99,
+        "triangles": 342366
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 194,
+        "triangles": 380776
+      }
+    ]
+  },
+  {
+    "id": "austria",
+    "preparationMs": 369,
+    "trees": 1800,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 112,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 145,
+        "triangles": 329762
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 80,
+        "triangles": 298970
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 229,
+        "triangles": 392504
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 153,
+        "triangles": 331790
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 90,
+        "triangles": 300658
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 229,
+        "triangles": 392504
+      }
+    ]
+  },
+  {
+    "id": "hungary",
+    "preparationMs": 173,
+    "trees": 1700,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 103,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 132,
+        "triangles": 347444
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 185,
+        "triangles": 400472
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 239,
+        "triangles": 416494
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 134,
+        "triangles": 348088
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 196,
+        "triangles": 401898
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 239,
+        "triangles": 416494
+      }
+    ]
+  },
+  {
+    "id": "zandvoort",
+    "preparationMs": 91,
+    "trees": 200,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 104,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 128,
+        "triangles": 319670
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 60,
+        "triangles": 301054
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 99,
+        "triangles": 315410
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 132,
+        "triangles": 320156
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 63,
+        "triangles": 301338
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 99,
+        "triangles": 315410
+      }
+    ]
+  },
+  {
+    "id": "austin",
+    "preparationMs": 149,
+    "trees": 950,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 112,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 126,
+        "triangles": 416310
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 161,
+        "triangles": 426928
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 222,
+        "triangles": 461270
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 127,
+        "triangles": 416330
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 165,
+        "triangles": 427710
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 222,
+        "triangles": 461270
+      }
+    ]
+  },
+  {
+    "id": "las-vegas",
+    "preparationMs": 101,
+    "trees": 170,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 102,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 107,
+        "triangles": 364558
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 103,
+        "triangles": 365522
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 110,
+        "triangles": 376658
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 107,
+        "triangles": 364558
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 105,
+        "triangles": 365570
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 110,
+        "triangles": 376658
+      }
+    ]
+  },
+  {
+    "id": "lusail",
+    "preparationMs": 98,
+    "trees": 130,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 103,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 141,
+        "triangles": 385710
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 45,
+        "triangles": 372570
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 74,
+        "triangles": 385902
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 143,
+        "triangles": 386146
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 48,
+        "triangles": 372576
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 74,
+        "triangles": 385902
+      }
+    ]
+  },
+  {
+    "id": "sepang",
+    "preparationMs": 222,
+    "trees": 1700,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 127,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 190,
+        "triangles": 460894
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 79,
+        "triangles": 447648
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 204,
+        "triangles": 520466
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 198,
+        "triangles": 466558
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 86,
+        "triangles": 452944
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 204,
+        "triangles": 520466
+      }
+    ]
+  },
+  {
+    "id": "suzuka",
+    "preparationMs": 403,
+    "trees": 2000,
+    "missingFacilities": [],
+    "resources": {
+      "geometries": 123,
+      "textures": 2
+    },
+    "views": [
+      {
+        "resolution": "1280,720",
+        "mode": "onboard",
+        "draws": 147,
+        "triangles": 534092
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "landmark",
+        "draws": 43,
+        "triangles": 482488
+      },
+      {
+        "resolution": "1280,720",
+        "mode": "overview",
+        "draws": 272,
+        "triangles": 608382
+      },
+      {
+        "resolution": "844,390",
+        "mode": "onboard",
+        "draws": 152,
+        "triangles": 534502
+      },
+      {
+        "resolution": "844,390",
+        "mode": "landmark",
+        "draws": 43,
+        "triangles": 482488
+      },
+      {
+        "resolution": "844,390",
+        "mode": "overview",
+        "draws": 272,
+        "triangles": 608382
+      }
+    ]
+  }
+]

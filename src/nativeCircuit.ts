@@ -1,3 +1,7 @@
+import { prepareSpaTerrain } from './spaTerrain';
+import { CIRCUIT_SCENERY } from './circuitSceneryProfiles';
+import type { TrackId } from './trackData';
+
 /** Baked from FormulaWorldIOS Core and Resources. Coordinates are already world-space. */
 export interface NativeCircuit {
   id: string; length: number; startYaw: number; curbWidth: number;
@@ -19,5 +23,8 @@ export async function loadNativeCircuit(id:string):Promise<void> {
   if(nativeCircuits[id])return;
   const load=files[`./nativeCircuits/${id}.json`];
   if(!load)throw Error(`Missing circuit: ${id}`);
-  nativeCircuits[id]=await load();
+  const data=await load();
+  // Replaced generic buildings must not leave invisible collision circles.
+  // Preserve all road, ground and rail data for the additional scenery courses.
+  nativeCircuits[id]=id==='spa'?prepareSpaTerrain(data):CIRCUIT_SCENERY[id as TrackId]?{...data,obstacles:[]}:data;
 }

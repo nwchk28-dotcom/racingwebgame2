@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { bestTimeKey, readBestTime, saveBestTime } from './bestTimes';
+import { TRACKS } from './trackData';
 
 describe('per-circuit best laps', () => {
   it('separates all available circuits without changing the old NOVA record', () => {
@@ -8,7 +9,7 @@ describe('per-circuit best laps', () => {
       getItem: (key: string) => values.get(key) ?? null,
       setItem: (key: string, value: string) => { values.set(key, value); },
     };
-    expect(bestTimeKey('monza')).toBe('apex-one:best-lap:v1:monza:rules-9:course-0');
+    expect(bestTimeKey('monza')).toBe('apex-one:best-lap:v1:monza:rules-9:course-1');
     expect(readBestTime('monza', storage)).toBeNull();
     saveBestTime('monza', 112.3, storage);
     saveBestTime('silverstone', 118.2, storage);
@@ -51,7 +52,21 @@ describe('per-circuit best laps', () => {
     saveBestTime('singapore', 110.456, storage);
     expect(readBestTime('singapore', storage)).toBe(110.456);
     expect(values.get(oldKey)).toBe('90.123');
-    expect(bestTimeKey('monza')).toBe('apex-one:best-lap:v1:monza:rules-9:course-0');
+    expect(bestTimeKey('monza')).toBe('apex-one:best-lap:v1:monza:rules-9:course-1');
+  });
+
+  it('retains old scenery-course records without comparing them to new conditions, keeping Spa compatible',()=>{
+    const values=new Map<string,string>(),storage={getItem:(key:string)=>values.get(key)??null,setItem:(key:string,value:string)=>{values.set(key,value);}};
+    for(const t of TRACKS){
+      const oldRevision=['spa','monaco','suzuka'].includes(t.id)?1:0;
+      const direction=t.id==='singapore'?':direction-v2':'';
+      const oldKey=`apex-one:best-lap:v1:${t.id}${direction}:rules-9:course-${oldRevision}`;
+      values.set(oldKey,'100');
+      expect(readBestTime(t.id,storage),t.id).toBe(t.id==='spa'?100:null);
+      saveBestTime(t.id,99,storage);
+      expect(readBestTime(t.id,storage)).toBe(99);
+      if(t.id!=='spa')expect(values.get(oldKey)).toBe('100');
+    }
   });
 
   it('ignores invalid or unavailable storage values', () => {

@@ -8,6 +8,10 @@ export const RECORD_VERSIONS = {
   global: 9,
   /** Increase only affected courses for layout, road width, wall or timing changes.
    * Missing entries have revision 0, preserving currently compatible records. */
-  // Restore the native passable rail openings at both chicanes.
-  tracks: {monaco:1,suzuka:1} as Partial<Record<TrackId, number>>,
+  // Native scenery replaces generic buildings and their old collision circles.
+  // Spa keeps its approved revision; only newly replaced courses increase here.
+  tracks: {spa:1,monaco:2,suzuka:2,monza:1,silverstone:1,'albert-park':1,'mexico-city':1,
+    'gilles-villeneuve':1,'sao-paulo':1,jeddah:1,baku:1,'abu-dhabi':1,singapore:1,
+    shanghai:1,bahrain:1,miami:1,imola:1,barcelona:1,austria:1,hungary:1,
+    zandvoort:1,austin:1,'las-vegas':1,lusail:1,sepang:1} as Partial<Record<TrackId, number>>,
 };

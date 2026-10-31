@@ -1,0 +1,45 @@
+
+> formula-q@1.0.0 build
+> tsc --noEmit && vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 68 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                1.05 kB │ gzip:   0.57 kB
+dist/assets/index-DjjeBv5b.css                31.11 kB │ gzip:   7.33 kB
+dist/assets/index-BpVwtp7i.js                  5.33 kB │ gzip:   2.44 kB
+dist/assets/nativeCircuit-CZT17lwE.js        200.09 kB │ gzip:  57.79 kB
+dist/assets/game-DF-EFkYA.js                 470.53 kB │ gzip: 134.63 kB
+dist/assets/zandvoort-C4K64Z_g.js            988.05 kB │ gzip: 238.96 kB
+dist/assets/austria-DxeXP7m4.js              997.82 kB │ gzip: 240.39 kB
+dist/assets/gilles-villeneuve-D7t93BWI.js  1,012.97 kB │ gzip: 237.47 kB
+dist/assets/sao-paulo-CXOhL3Rx.js          1,013.14 kB │ gzip: 247.86 kB
+dist/assets/mexico-city-NiY3Bw8N.js        1,017.92 kB │ gzip: 230.90 kB
+dist/assets/hungary-CnODs366.js            1,033.61 kB │ gzip: 241.36 kB
+dist/assets/barcelona-BIOgMbA6.js          1,079.29 kB │ gzip: 255.07 kB
+dist/assets/imola-DKXCvLQU.js              1,133.11 kB │ gzip: 260.55 kB
+dist/assets/singapore-CCHrivkv.js          1,141.18 kB │ gzip: 257.63 kB
+dist/assets/miami-DTG2MAlx.js              1,178.02 kB │ gzip: 254.42 kB
+dist/assets/monaco-Dvu3UujU.js             1,187.82 kB │ gzip: 288.90 kB
+dist/assets/abu-dhabi-9hserV4z.js          1,216.85 kB │ gzip: 285.72 kB
+dist/assets/lusail-Dwc3vblk.js             1,233.97 kB │ gzip: 275.55 kB
+dist/assets/albert-park-rLdeMokx.js        1,237.72 kB │ gzip: 291.71 kB
+dist/assets/bahrain-BolfZdhL.js            1,250.00 kB │ gzip: 286.75 kB
+dist/assets/shanghai-Dr1BQFkV.js           1,269.32 kB │ gzip: 300.65 kB
+dist/assets/sepang-C-YsgmEq.js             1,275.75 kB │ gzip: 298.01 kB
+dist/assets/austin-CQ3ho7QY.js             1,305.93 kB │ gzip: 312.65 kB
+dist/assets/baku-DMrsv4eM.js               1,372.42 kB │ gzip: 307.10 kB
+dist/assets/silverstone-BGS1UCJ3.js        1,375.00 kB │ gzip: 319.22 kB
+dist/assets/monza-CCScDjg5.js              1,381.04 kB │ gzip: 316.46 kB
+dist/assets/jeddah-CEddCBxJ.js             1,435.47 kB │ gzip: 329.46 kB
+dist/assets/las-vegas-vusvSmRD.js          1,436.42 kB │ gzip: 320.47 kB
+dist/assets/spa-Cb5-8aMz.js                1,686.55 kB │ gzip: 399.19 kB
+dist/assets/suzuka-DdjZAa_s.js             2,309.70 kB │ gzip: 578.99 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 6.29s

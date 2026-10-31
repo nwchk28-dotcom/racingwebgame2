@@ -1,0 +1,37 @@
+
+> formula-q@1.0.0 test
+> vitest run src/spaScenery.test.ts src/terrainScenery.test.ts src/bankOcclusion.test.ts
+
+
+ RUN  v3.2.7 /Users/niwakazuchika/Documents/ChatGPT/レースゲームwebゲーム開発/formula-q-scenery
+
+ ✓ src/terrainScenery.test.ts (4 tests) 6219ms
+   ✓ spa places perimeter rails and posts on native ground and joins trackside rails to the terrain  2057ms
+   ✓ suzuka places perimeter rails and posts on native ground and joins trackside rails to the terrain  956ms
+   ✓ keeps the Suzuka final chicane asphalt above the escape paving  2551ms
+ ✓ src/spaScenery.test.ts (6 tests) 6666ms
+   ✓ retains the documented range, monotonic slopes and periodic pit plateau  825ms
+   ✓ reconstructs deterministically without changing exported geometry or other courses  813ms
+   ✓ keeps contact, all four wheels and lap validity through a full Spa centerline replay  2157ms
+   ✓ grounds a dense, reproducible forest and releases all LOD geometry on course changes  1788ms
+ ✓ src/bankOcclusion.test.ts (25 tests) 10916ms
+   ✓ 'monza' keeps grass below the banked asphalt  733ms
+   ✓ 'silverstone' keeps grass below the banked asphalt  520ms
+   ✓ 'albert-park' keeps grass below the banked asphalt  421ms
+   ✓ 'mexico-city' keeps grass below the banked asphalt  323ms
+   ✓ 'gilles-villeneuve' keeps grass below the banked asphalt  431ms
+   ✓ 'spa' keeps grass below the banked asphalt  1086ms
+   ✓ 'sao-paulo' keeps grass below the banked asphalt  503ms
+   ✓ 'jeddah' keeps grass below the banked asphalt  443ms
+   ✓ 'abu-dhabi' keeps grass below the banked asphalt  508ms
+   ✓ 'shanghai' keeps grass below the banked asphalt  532ms
+   ✓ 'bahrain' keeps grass below the banked asphalt  509ms
+   ✓ 'miami' keeps grass below the banked asphalt  453ms
+   ✓ 'imola' keeps grass below the banked asphalt  338ms
+   ✓ 'sepang' keeps grass below the banked asphalt  338ms
+   ✓ 'suzuka' keeps grass below the banked asphalt  390ms
+
+ Test Files  3 passed (3)
+      Tests  35 passed (35)
+   Start at  19:03:57
+   Duration  11.29s (transform 9.55s, setup 0ms, collect 1.44s, tests 23.80s, environment 0ms, prepare 151ms)
